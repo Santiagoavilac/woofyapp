@@ -1,0 +1,167 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:mi_app/app/back_fallback_scope.dart';
+import 'package:mi_app/app/route_names.dart';
+import 'package:mi_app/core/errors/app_exception.dart';
+import 'package:mi_app/features/applications/data/application_models.dart';
+import 'package:mi_app/features/applications/data/applications_providers.dart';
+import 'package:mi_app/features/applications/presentation/widgets/application_form.dart';
+import 'package:mi_app/features/applications/presentation/widgets/application_status_card.dart';
+import 'package:mi_app/features/auth/providers/auth_providers.dart';
+import 'package:mi_app/features/dogs/data/dog_models.dart';
+import 'package:mi_app/features/dogs/data/dog_repository_provider.dart';
+import 'package:mi_app/shared/widgets/woofy_app_bar.dart';
+import 'package:mi_app/shared/widgets/woofy_button.dart';
+import 'package:mi_app/shared/widgets/woofy_empty_state.dart';
+import 'package:mi_app/shared/widgets/woofy_error.dart';
+import 'package:mi_app/shared/widgets/woofy_loading.dart';
+
+class ApplicationFormPage extends ConsumerWidget {
+  const ApplicationFormPage({required this.slug, super.key});
+
+  final String slug;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final detail = ref.watch(dogDetailProvider(slug));
+    return BackFallbackScope(
+      fallbackLocation: RoutePaths.dogDetail(slug),
+      child: Scaffold(
+        appBar: const WoofyAppBar(title: 'Postulación'),
+        body: SafeArea(
+          child: detail.when(
+            loading: () => const WoofyLoading(message: 'Cargando formulario…'),
+            error: (_, _) => WoofyError(
+              message: 'No pudimos cargar el formulario.',
+              onRetry: () => ref.invalidate(dogDetailProvider(slug)),
+            ),
+            data: (value) => value == null
+                ? const WoofyEmptyState(
+                    title: 'Perrito no disponible',
+                    message:
+                        'Este perrito ya no está disponible para postular.',
+                  )
+                : _ApplicationBody(dog: value.dog),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ApplicationBody extends ConsumerWidget {
+  const _ApplicationBody({required this.dog});
+
+  final Dog dog;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final existing = ref.watch(currentDogApplicationProvider(dog.id));
+    final submission = ref.watch(applicationSubmissionProvider(dog.id));
+    final profile = ref.watch(currentProfileProvider).value;
+    final completed = submission.value;
+
+    if (completed != null) {
+      return _Result(
+        dog: dog,
+        application: completed,
+        message: 'Tu postulación fue enviada correctamente.',
+      );
+    }
+
+    return existing.when(
+      loading: () => const WoofyLoading(message: 'Revisando tu postulación…'),
+      error: (_, _) => WoofyError(
+        message: 'No pudimos revisar tu postulación.',
+        onRetry: () => ref.invalidate(currentDogApplicationProvider(dog.id)),
+      ),
+      data: (application) {
+        if (application != null) {
+          return _Result(dog: dog, application: application);
+        }
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 680),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'Postular a ${dog.name}',
+                    style: Theme.of(context).textTheme.headlineMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Contanos sobre tu hogar para que el refugio pueda evaluar la adopción.',
+                  ),
+                  const SizedBox(height: 24),
+                  if (submission.hasError) ...[
+                    Text(
+                      submission.error is AppException
+                          ? (submission.error! as AppException).message
+                          : 'No pudimos enviar la postulación.',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  ApplicationForm(
+                    initialPhone: profile?.phone,
+                    isLoading: submission.isLoading,
+                    onSubmit: (formData) async {
+                      try {
+                        await ref
+                            .read(
+                              applicationSubmissionProvider(dog.id).notifier,
+                            )
+                            .submit(dog, formData);
+                      } catch (_) {}
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _Result extends StatelessWidget {
+  const _Result({required this.dog, required this.application, this.message});
+
+  final Dog dog;
+  final AdoptionApplication application;
+  final String? message;
+
+  @override
+  Widget build(BuildContext context) => Center(
+    child: SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 620),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (message != null) ...[
+              Text(message!, style: Theme.of(context).textTheme.titleLarge),
+              const SizedBox(height: 16),
+            ],
+            ApplicationStatusCard(application: application),
+            const SizedBox(height: 20),
+            WoofyButton(
+              label: 'Volver al perfil de ${dog.name}',
+              onPressed: () => context.go(RoutePaths.dogDetail(dog.slug)),
+              variant: WoofyButtonVariant.secondary,
+              isExpanded: true,
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
