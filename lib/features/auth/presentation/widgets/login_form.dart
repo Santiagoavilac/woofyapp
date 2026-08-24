@@ -41,12 +41,11 @@ class _LoginFormState extends State<LoginForm> {
           WoofyTextField(
             key: const ValueKey('login-email'),
             controller: _emailController,
-            label: 'Correo electrónico',
-            validator: Validators.email,
-            keyboardType: TextInputType.emailAddress,
-            autofillHints: const [AutofillHints.email],
+            label: 'Email o nombre de usuario',
+            validator: Validators.required,
+            keyboardType: TextInputType.text,
             textInputAction: TextInputAction.next,
-            prefixIcon: const Icon(Icons.email_outlined),
+            prefixIcon: const Icon(Icons.person_outline_rounded),
           ),
           const SizedBox(height: 16),
           WoofyTextField(

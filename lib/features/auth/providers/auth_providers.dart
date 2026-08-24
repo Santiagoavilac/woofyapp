@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mi_app/core/errors/app_exception.dart';
 import 'package:mi_app/core/errors/error_mapper.dart';
 import 'package:mi_app/core/services/supabase_service.dart';
 import 'package:mi_app/features/auth/data/auth_models.dart';
@@ -47,9 +48,22 @@ class AuthController extends AsyncNotifier<void> {
   Future<void> signIn({required String email, required String password}) async {
     state = const AsyncLoading();
     try {
+      String resolvedEmail = email.trim();
+      if (!resolvedEmail.contains('@')) {
+        final found = await ref
+            .read(profileRepositoryProvider)
+            .fetchEmailByFullName(resolvedEmail);
+        if (found == null || found.isEmpty) {
+          throw const AppException(
+            code: 'user_not_found',
+            message: 'No encontramos un usuario con ese nombre.',
+          );
+        }
+        resolvedEmail = found;
+      }
       final user = await ref
           .read(authRepositoryProvider)
-          .signInWithEmailAndPassword(email: email, password: password);
+          .signInWithEmailAndPassword(email: resolvedEmail, password: password);
       await ensureAuthenticatedProfile(user);
     } catch (error, stackTrace) {
       state = AsyncError(ErrorMapper.map(error, stackTrace), stackTrace);
@@ -149,6 +163,30 @@ class AuthController extends AsyncNotifier<void> {
       state = const AsyncData(null);
     } catch (error, stackTrace) {
       state = AsyncError(ErrorMapper.map(error, stackTrace), stackTrace);
+      rethrow;
+    }
+  }
+
+  Future<void> updateProfile({String? fullName, String? phone}) async {
+    state = const AsyncLoading();
+    try {
+      final user = ref.read(currentUserProvider);
+      if (user == null) {
+        throw const AppException(
+          code: 'auth_required',
+          message: 'Necesitás iniciar sesión.',
+        );
+      }
+      await ref
+          .read(profileRepositoryProvider)
+          .updateProfile(userId: user.id, fullName: fullName, phone: phone);
+      ref.invalidate(currentProfileProvider);
+      state = const AsyncData(null);
+    } catch (error, stackTrace) {
+      state = AsyncError(
+        error is AppException ? error : ErrorMapper.map(error, stackTrace),
+        stackTrace,
+      );
       rethrow;
     }
   }

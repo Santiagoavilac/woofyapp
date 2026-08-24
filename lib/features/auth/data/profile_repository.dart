@@ -7,12 +7,27 @@ abstract interface class ProfileRepository {
   Future<UserProfile?> fetchCurrentProfile(AppUser user);
 
   Future<UserProfile> ensureCurrentUserProfile(AppUser user);
+
+  Future<String?> fetchEmailByFullName(String name);
+
+  Future<UserProfile> updateProfile({
+    required String userId,
+    String? fullName,
+    String? phone,
+  });
 }
 
 abstract interface class ProfileDataSource {
   Future<Map<String, dynamic>?> fetchByUserId(String userId);
 
+  Future<Map<String, dynamic>?> fetchByFullName(String name);
+
   Future<Map<String, dynamic>> insertProfile(Map<String, dynamic> values);
+
+  Future<Map<String, dynamic>> updateProfile(
+    String userId,
+    Map<String, dynamic> values,
+  );
 }
 
 class SupabaseProfileDataSource implements ProfileDataSource {
@@ -26,10 +41,35 @@ class SupabaseProfileDataSource implements ProfileDataSource {
   }
 
   @override
+  Future<Map<String, dynamic>?> fetchByFullName(String name) async {
+    final email =
+        await _client.rpc(
+              'lookup_email_by_username',
+              params: {'username': name.trim()},
+            )
+            as String?;
+    if (email == null || email.isEmpty) return null;
+    return {'email': email};
+  }
+
+  @override
   Future<Map<String, dynamic>> insertProfile(
     Map<String, dynamic> values,
   ) async {
     return _client.from('profiles').insert(values).select().single();
+  }
+
+  @override
+  Future<Map<String, dynamic>> updateProfile(
+    String userId,
+    Map<String, dynamic> values,
+  ) async {
+    return _client
+        .from('profiles')
+        .update(values)
+        .eq('id', userId)
+        .select()
+        .single();
   }
 }
 
@@ -47,6 +87,16 @@ class SupabaseProfileRepository implements ProfileRepository {
     try {
       final json = await _source.fetchByUserId(user.id);
       return json == null ? null : UserProfile.fromJson(json);
+    } catch (error, stackTrace) {
+      throw ErrorMapper.map(error, stackTrace);
+    }
+  }
+
+  @override
+  Future<String?> fetchEmailByFullName(String name) async {
+    try {
+      final json = await _source.fetchByFullName(name);
+      return json?['email'] as String?;
     } catch (error, stackTrace) {
       throw ErrorMapper.map(error, stackTrace);
     }
@@ -77,6 +127,34 @@ class SupabaseProfileRepository implements ProfileRepository {
         );
       }
     } catch (error, stackTrace) {
+      throw ErrorMapper.map(error, stackTrace);
+    }
+  }
+
+  @override
+  Future<UserProfile> updateProfile({
+    required String userId,
+    String? fullName,
+    String? phone,
+  }) async {
+    try {
+      final values = <String, dynamic>{};
+      if (fullName != null) values['full_name'] = _optional(fullName);
+      if (phone != null) values['phone'] = _optional(phone);
+      if (values.isEmpty) {
+        final current = await _source.fetchByUserId(userId);
+        if (current == null) {
+          throw const AppException(
+            code: 'profile_missing',
+            message: 'No encontramos tu perfil.',
+          );
+        }
+        return UserProfile.fromJson(current);
+      }
+      final row = await _source.updateProfile(userId, values);
+      return UserProfile.fromJson(row);
+    } catch (error, stackTrace) {
+      if (error is AppException) rethrow;
       throw ErrorMapper.map(error, stackTrace);
     }
   }

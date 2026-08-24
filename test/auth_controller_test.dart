@@ -89,12 +89,23 @@ void main() {
     expect(auth.signOutCalls, 1);
   });
 
-  test('Google login stays disabled and does not create a profile', () async {
+  test('Google login delegates to the auth repository', () async {
+    final auth = _FakeAuthRepository(user: user);
+    final profiles = _FakeProfileRepository();
+    final container = _container(auth, profiles);
+    addTearDown(container.dispose);
+
+    await container.read(authControllerProvider.notifier).signInWithGoogle();
+
+    expect(auth.googleSignInCalls, 1);
+  });
+
+  test('Google login surfaces repository errors', () async {
     final auth = _FakeAuthRepository(
       user: user,
       googleSignInError: const AppException(
-        code: 'google_oauth_disabled',
-        message: 'Google login no está disponible por ahora.',
+        code: 'google_oauth_failed',
+        message: 'No pudimos iniciar sesión con Google.',
       ),
     );
     final profiles = _FakeProfileRepository();
@@ -107,7 +118,7 @@ void main() {
         isA<AppException>().having(
           (error) => error.code,
           'code',
-          'google_oauth_disabled',
+          'google_oauth_failed',
         ),
       ),
     );
@@ -200,4 +211,14 @@ class _FakeProfileRepository implements ProfileRepository {
 
   @override
   Future<UserProfile?> fetchCurrentProfile(AppUser user) async => null;
+
+  @override
+  Future<String?> fetchEmailByFullName(String name) async => null;
+
+  @override
+  Future<UserProfile> updateProfile({
+    required String userId,
+    String? fullName,
+    String? phone,
+  }) async => UserProfile(id: userId, role: 'adopter');
 }

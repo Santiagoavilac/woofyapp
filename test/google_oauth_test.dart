@@ -1,25 +1,18 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mi_app/core/errors/app_exception.dart';
-import 'package:mi_app/features/auth/data/auth_repository.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:mi_app/core/config/env.dart';
 
 void main() {
-  test('Google OAuth is disabled during Fase 4A', () async {
-    final repository = SupabaseAuthRepository(
-      SupabaseClient('https://example.supabase.co', 'publishable-key'),
-    );
+  test('OAuth mobile redirect matches the AndroidManifest deep link', () {
+    final redirect = Uri.parse(Env.oauthMobileRedirect);
+    final manifest = File(
+      'android/app/src/main/AndroidManifest.xml',
+    ).readAsStringSync();
 
-    await expectLater(
-      repository.signInWithGoogle(),
-      throwsA(
-        isA<AppException>()
-            .having((error) => error.code, 'code', 'google_oauth_disabled')
-            .having(
-              (error) => error.message,
-              'message',
-              'Google login no está disponible por ahora.',
-            ),
-      ),
-    );
+    expect(redirect.scheme, 'io.woofy.app');
+    expect(redirect.host, 'login-callback');
+    expect(manifest, contains('android:scheme="${redirect.scheme}"'));
+    expect(manifest, contains('android:host="${redirect.host}"'));
   });
 }

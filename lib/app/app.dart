@@ -69,8 +69,19 @@ class _WoofyAppState extends ConsumerState<WoofyApp>
   String? _fallbackFor(Uri uri) {
     final path = uri.path;
     if (path == RoutePaths.dogs) return RoutePaths.landing;
-    if (path == RoutePaths.profile || path == RoutePaths.favorites) {
+    if (path == RoutePaths.shelterLogin) return RoutePaths.dogs;
+    if (path == RoutePaths.profile ||
+        path == RoutePaths.favorites ||
+        path == RoutePaths.messages) {
       return RoutePaths.dogs;
+    }
+    if (path == RoutePaths.adopterEditProfile ||
+        path == RoutePaths.shelterEditProfile ||
+        path == RoutePaths.deleteAccount) {
+      return RoutePaths.profile;
+    }
+    if (RegExp(r'^/mensajes/[^/]+$').hasMatch(path)) {
+      return RoutePaths.messages;
     }
     final applicationMatch = RegExp(
       r'^/perros/([^/]+)/postular$',

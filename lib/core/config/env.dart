@@ -5,6 +5,11 @@ abstract final class Env {
   static const _supabasePublishableKey = 'SUPABASE_PUBLISHABLE_KEY';
   static const _authEmailRedirectToKey = 'AUTH_EMAIL_REDIRECT_TO';
 
+  /// Deep link para el retorno de Google OAuth en móvil. Debe coincidir
+  /// exactamente con el intent-filter de AndroidManifest.xml y con las
+  /// Redirect URLs configuradas en Supabase Auth.
+  static const oauthMobileRedirect = 'io.woofy.app://login-callback';
+
   static Future<void> load({String fileName = '.env'}) async {
     await dotenv.load(fileName: fileName);
     validate();

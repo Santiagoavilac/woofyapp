@@ -1,5 +1,4 @@
 import 'package:mi_app/core/config/env.dart';
-import 'package:mi_app/core/errors/app_exception.dart';
 import 'package:mi_app/core/errors/error_mapper.dart';
 import 'package:mi_app/features/auth/data/auth_models.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -41,10 +40,15 @@ class SupabaseAuthRepository implements AuthRepository {
 
   @override
   Future<void> signInWithGoogle() async {
-    throw const AppException(
-      code: 'google_oauth_disabled',
-      message: 'Google login no está disponible por ahora.',
-    );
+    try {
+      await _client.auth.signInWithOAuth(
+        OAuthProvider.google,
+        redirectTo: Env.oauthMobileRedirect,
+        authScreenLaunchMode: LaunchMode.externalApplication,
+      );
+    } catch (error, stackTrace) {
+      throw ErrorMapper.map(error, stackTrace);
+    }
   }
 
   @override

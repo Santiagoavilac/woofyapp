@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -51,19 +52,43 @@ void main() {
     );
   });
 
-  testWidgets('Google login is hidden in login and registration modes', (
+  testWidgets('Google login is shown and delegates to auth on Android', (
     tester,
   ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
     final auth = FakeAuthRepository();
     addTearDown(auth.dispose);
-    await _pumpRoute(tester, auth, _FakeProfileRepository(), RoutePaths.auth);
+    try {
+      await _pumpRoute(tester, auth, _FakeProfileRepository(), RoutePaths.auth);
 
-    expect(find.text('Continuar con Google'), findsNothing);
+      final googleButton = find.text('Continuar con Google');
+      expect(googleButton, findsOneWidget);
 
-    await tester.tap(find.text('Crear cuenta'));
-    await tester.pumpAndSettle();
-    expect(find.text('Continuar con Google'), findsNothing);
-    expect(auth.googleSignInCalls, 0);
+      await tester.ensureVisible(googleButton);
+      await tester.tap(googleButton);
+      await tester.pumpAndSettle();
+      expect(auth.googleSignInCalls, 1);
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+    }
+  });
+
+  testWidgets('Google login is hidden on iOS', (tester) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+    final auth = FakeAuthRepository();
+    addTearDown(auth.dispose);
+    try {
+      await _pumpRoute(tester, auth, _FakeProfileRepository(), RoutePaths.auth);
+
+      expect(find.text('Continuar con Google'), findsNothing);
+
+      await tester.tap(find.text('Crear cuenta'));
+      await tester.pumpAndSettle();
+      expect(find.text('Continuar con Google'), findsNothing);
+      expect(auth.googleSignInCalls, 0);
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+    }
   });
 
   testWidgets('registration error does not show the confirmation message', (
@@ -127,7 +152,34 @@ void main() {
     expect(find.text('ana@example.com'), findsOneWidget);
     expect(find.text('+59170000000'), findsOneWidget);
     expect(find.text('adopter'), findsNothing);
+    expect(find.text('Mis mensajes'), findsOneWidget);
     expect(find.text('Cerrar sesión'), findsOneWidget);
+    expect(find.text('Legal y soporte'), findsOneWidget);
+    expect(find.text('Términos de uso'), findsOneWidget);
+    expect(find.text('Política de privacidad'), findsOneWidget);
+    expect(find.text('Eliminar cuenta'), findsOneWidget);
+  });
+
+  testWidgets('profile links to the delete account page', (tester) async {
+    const user = AppUser(id: 'user-1', email: 'ana@example.com');
+    final auth = FakeAuthRepository(user: user);
+    addTearDown(auth.dispose);
+    final profiles = _FakeProfileRepository(
+      profile: const UserProfile(
+        id: 'user-1',
+        role: 'adopter',
+        fullName: 'Ana Pérez',
+        email: 'ana@example.com',
+      ),
+    );
+    await _pumpRoute(tester, auth, profiles, RoutePaths.profile);
+
+    final deleteButton = find.text('Eliminar cuenta');
+    await tester.ensureVisible(deleteButton);
+    await tester.tap(deleteButton);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Eliminar tu cuenta'), findsOneWidget);
   });
 
   testWidgets('missing profile provides an idempotent creation retry', (
@@ -201,4 +253,14 @@ class _FakeProfileRepository implements ProfileRepository {
 
   @override
   Future<UserProfile?> fetchCurrentProfile(AppUser user) async => profile;
+
+  @override
+  Future<String?> fetchEmailByFullName(String name) async => null;
+
+  @override
+  Future<UserProfile> updateProfile({
+    required String userId,
+    String? fullName,
+    String? phone,
+  }) async => UserProfile(id: userId, role: 'adopter');
 }

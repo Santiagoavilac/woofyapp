@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mi_app/app/back_fallback_scope.dart';
 import 'package:mi_app/app/route_names.dart';
 import 'package:mi_app/core/errors/app_exception.dart';
 import 'package:mi_app/features/auth/presentation/widgets/auth_toggle_header.dart';
@@ -8,6 +10,7 @@ import 'package:mi_app/features/auth/presentation/widgets/login_form.dart';
 import 'package:mi_app/features/auth/presentation/widgets/register_form.dart';
 import 'package:mi_app/features/auth/providers/auth_providers.dart';
 import 'package:mi_app/shared/widgets/woofy_app_bar.dart';
+import 'package:mi_app/shared/widgets/woofy_button.dart';
 import 'package:mi_app/shared/widgets/woofy_card.dart';
 
 class AuthPage extends ConsumerStatefulWidget {
@@ -26,7 +29,14 @@ class _AuthPageState extends ConsumerState<AuthPage> {
       await ref
           .read(authControllerProvider.notifier)
           .signIn(email: email, password: password);
-      if (mounted) context.go(RoutePaths.profile);
+      if (!mounted) return;
+      context.go(RoutePaths.profile);
+    } catch (_) {}
+  }
+
+  Future<void> _loginWithGoogle() async {
+    try {
+      await ref.read(authControllerProvider.notifier).signInWithGoogle();
     } catch (_) {}
   }
 
@@ -58,71 +68,100 @@ class _AuthPageState extends ConsumerState<AuthPage> {
     final state = ref.watch(authControllerProvider);
     final error = state.error;
 
-    return Scaffold(
-      appBar: const WoofyAppBar(title: 'Cuenta Woofy'),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 520),
-              child: Column(
-                children: [
-                  Text(
-                    _isRegistering ? 'Creá tu cuenta' : 'Ingresar a Woofy',
-                    style: Theme.of(context).textTheme.headlineMedium,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    _isRegistering
-                        ? 'Prepará tu perfil para adoptar responsablemente.'
-                        : 'Accedé a tu cuenta de adoptante.',
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 20),
-                  AuthToggleHeader(
-                    isRegistering: _isRegistering,
-                    onChanged: (value) => setState(() {
-                      _isRegistering = value;
-                      _confirmationMessage = null;
-                    }),
-                  ),
-                  const SizedBox(height: 20),
-                  WoofyCard(
-                    child: Column(
-                      children: [
-                        if (_isRegistering)
-                          RegisterForm(
-                            isLoading: state.isLoading,
-                            onSubmit: _register,
-                          )
-                        else
-                          LoginForm(
-                            isLoading: state.isLoading,
-                            onSubmit: _login,
+    return BackFallbackScope(
+      fallbackLocation: RoutePaths.landing,
+      child: Scaffold(
+        appBar: const WoofyAppBar(title: 'Cuenta Woofy'),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 520),
+                child: Column(
+                  children: [
+                    Text(
+                      _isRegistering ? 'Creá tu cuenta' : 'Ingresar a Woofy',
+                      style: Theme.of(context).textTheme.headlineMedium,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      _isRegistering
+                          ? 'Prepará tu perfil para adoptar responsablemente.'
+                          : 'Accedé a tu cuenta de Woofy.',
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 20),
+                    AuthToggleHeader(
+                      isRegistering: _isRegistering,
+                      onChanged: (value) => setState(() {
+                        _isRegistering = value;
+                        _confirmationMessage = null;
+                      }),
+                    ),
+                    const SizedBox(height: 20),
+                    WoofyCard(
+                      child: Column(
+                        children: [
+                          if (_isRegistering)
+                            RegisterForm(
+                              isLoading: state.isLoading,
+                              onSubmit: _register,
+                            )
+                          else
+                            LoginForm(
+                              isLoading: state.isLoading,
+                              onSubmit: _login,
+                            ),
+                        ],
+                      ),
+                    ),
+                    if (defaultTargetPlatform == TargetPlatform.android) ...[
+                      const SizedBox(height: 20),
+                      Row(
+                        children: [
+                          const Expanded(child: Divider()),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            child: Text(
+                              'o',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
                           ),
-                      ],
-                    ),
-                  ),
-                  if (_confirmationMessage != null) ...[
-                    const SizedBox(height: 16),
-                    _StatusMessage(
-                      icon: Icons.mark_email_read_outlined,
-                      message: _confirmationMessage!,
-                    ),
+                          const Expanded(child: Divider()),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      WoofyButton(
+                        key: const ValueKey('google-signin'),
+                        label: 'Continuar con Google',
+                        icon: Icons.login,
+                        variant: WoofyButtonVariant.secondary,
+                        isLoading: state.isLoading,
+                        isExpanded: true,
+                        onPressed: _loginWithGoogle,
+                      ),
+                    ],
+                    if (_confirmationMessage != null) ...[
+                      const SizedBox(height: 16),
+                      _StatusMessage(
+                        icon: Icons.mark_email_read_outlined,
+                        message: _confirmationMessage!,
+                      ),
+                    ],
+                    if (error != null) ...[
+                      const SizedBox(height: 16),
+                      _StatusMessage(
+                        icon: Icons.error_outline_rounded,
+                        message: error is AppException
+                            ? error.message
+                            : 'No pudimos completar la autenticación.',
+                        isError: true,
+                      ),
+                    ],
                   ],
-                  if (error != null) ...[
-                    const SizedBox(height: 16),
-                    _StatusMessage(
-                      icon: Icons.error_outline_rounded,
-                      message: error is AppException
-                          ? error.message
-                          : 'No pudimos completar la autenticación.',
-                      isError: true,
-                    ),
-                  ],
-                ],
+                ),
               ),
             ),
           ),

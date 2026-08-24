@@ -83,11 +83,22 @@ class _FakeProfileDataSource implements ProfileDataSource {
   }
 
   @override
+  Future<Map<String, dynamic>?> fetchByFullName(String name) async => null;
+
+  @override
   Future<Map<String, dynamic>> insertProfile(
     Map<String, dynamic> values,
   ) async {
     insertCalls.add(values);
     if (insertError case final error?) throw error;
     return insertResult!;
+  }
+
+  @override
+  Future<Map<String, dynamic>> updateProfile(
+    String userId,
+    Map<String, dynamic> values,
+  ) async {
+    return {'id': userId, 'role': 'adopter', ...values};
   }
 }

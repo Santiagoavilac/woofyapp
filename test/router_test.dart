@@ -13,6 +13,9 @@ import 'package:mi_app/features/auth/providers/auth_providers.dart';
 import 'package:mi_app/features/dogs/data/dog_models.dart';
 import 'package:mi_app/features/dogs/data/dog_repository.dart';
 import 'package:mi_app/features/dogs/data/dog_repository_provider.dart';
+import 'package:mi_app/features/messages/data/message_models.dart';
+import 'package:mi_app/features/messages/data/messages_providers.dart';
+import 'package:mi_app/features/messages/data/messages_repository.dart';
 
 import 'support/fake_auth_repository.dart';
 
@@ -29,13 +32,12 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Encontrá a tu próximo mejor amigo'), findsOneWidget);
     final router = container.read(routerProvider);
-
     router.go(RoutePaths.dogs);
     await tester.pumpAndSettle();
+
     expect(
-      find.text('No encontramos perritos publicados todavía.'),
+      find.text('No encontramos animales publicados todavía.'),
       findsOneWidget,
     );
 
@@ -49,6 +51,14 @@ void main() {
     expect(router.routeInformationProvider.value.uri.path, RoutePaths.auth);
 
     router.go(RoutePaths.favorites);
+    await tester.pumpAndSettle();
+    expect(router.routeInformationProvider.value.uri.path, RoutePaths.auth);
+
+    router.go(RoutePaths.messages);
+    await tester.pumpAndSettle();
+    expect(router.routeInformationProvider.value.uri.path, RoutePaths.auth);
+
+    router.go(RoutePaths.conversation('thread-1'));
     await tester.pumpAndSettle();
     expect(router.routeInformationProvider.value.uri.path, RoutePaths.auth);
 
@@ -78,11 +88,8 @@ void main() {
 
     await _androidBack(tester);
 
-    expect(router.routeInformationProvider.value.uri.path, RoutePaths.dogs);
-    expect(
-      find.text('No encontramos perritos publicados todavía.'),
-      findsOneWidget,
-    );
+    expect(router.routeInformationProvider.value.uri.path, RoutePaths.landing);
+    expect(find.text('Hola 👋'), findsOneWidget);
   });
 
   testWidgets('auth stream refreshes the same router without redirect loops', (
@@ -173,6 +180,148 @@ void main() {
     );
     expect(find.text('Una historia real.'), findsOneWidget);
   });
+
+  testWidgets('conversation Android back returns to messages', (tester) async {
+    const user = AppUser(id: 'user-1', email: 'ana@example.com');
+    final auth = FakeAuthRepository(user: user);
+    addTearDown(auth.dispose);
+    final container = _container(
+      auth,
+      messages: _FakeMessagesRepository.withMessages(),
+    );
+    addTearDown(container.dispose);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(container: container, child: const WoofyApp()),
+    );
+    final router = container.read(routerProvider);
+
+    router.go(RoutePaths.conversation('thread-1'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Conversación'), findsOneWidget);
+    expect(find.text('Hola refugio'), findsOneWidget);
+
+    await _androidBack(tester);
+
+    expect(router.routeInformationProvider.value.uri.path, RoutePaths.messages);
+    expect(find.text('Mensajes'), findsOneWidget);
+  });
+
+  testWidgets('messages empty state opens dogs page', (tester) async {
+    const user = AppUser(id: 'user-1', email: 'ana@example.com');
+    final auth = FakeAuthRepository(user: user);
+    addTearDown(auth.dispose);
+    final container = _container(auth, messages: _FakeMessagesRepository());
+    addTearDown(container.dispose);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(container: container, child: const WoofyApp()),
+    );
+    final router = container.read(routerProvider);
+
+    router.go(RoutePaths.messages);
+    await tester.pumpAndSettle();
+    expect(find.text('Todavía no tenés conversaciones.'), findsOneWidget);
+
+    await tester.tap(find.text('Ver perritos'));
+    await tester.pumpAndSettle();
+
+    expect(router.routeInformationProvider.value.uri.path, RoutePaths.dogs);
+    expect(
+      find.text('No encontramos animales publicados todavía.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('catalog messages icon opens messages for authenticated users', (
+    tester,
+  ) async {
+    const user = AppUser(id: 'user-1', email: 'ana@example.com');
+    final auth = FakeAuthRepository(user: user);
+    addTearDown(auth.dispose);
+    final container = _container(auth, messages: _FakeMessagesRepository());
+    addTearDown(container.dispose);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(container: container, child: const WoofyApp()),
+    );
+    final router = container.read(routerProvider);
+
+    router.go(RoutePaths.dogs);
+    await tester.pumpAndSettle();
+
+    expect(find.byIcon(Icons.chat_bubble_outline), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Mis mensajes'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Mensajes'), findsOneWidget);
+  });
+
+  testWidgets('detail with application opens direct thread when it exists', (
+    tester,
+  ) async {
+    const user = AppUser(id: 'user-1', email: 'ana@example.com');
+    final auth = FakeAuthRepository(user: user);
+    addTearDown(auth.dispose);
+    final dog = _sampleDog();
+    final container = _container(
+      auth,
+      dogRepository: _SingleDogRepository(dog),
+      applications: _AppliedApplicationsRepository(),
+      messages: _FakeMessagesRepository(openThread: _thread()),
+    );
+    addTearDown(container.dispose);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(container: container, child: const WoofyApp()),
+    );
+    final router = container.read(routerProvider);
+
+    router.go(RoutePaths.dogDetail(dog.slug));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Escribir al refugio'));
+
+    expect(find.text('Tu postulación'), findsOneWidget);
+    expect(find.text('Escribir al refugio'), findsOneWidget);
+
+    await tester.tap(find.text('Escribir al refugio'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Conversación'), findsOneWidget);
+  });
+
+  testWidgets(
+    'detail with application creates and opens thread without existing thread',
+    (tester) async {
+      const user = AppUser(id: 'user-1', email: 'ana@example.com');
+      final auth = FakeAuthRepository(user: user);
+      addTearDown(auth.dispose);
+      final dog = _sampleDog();
+      final messages = _FakeMessagesRepository(openThread: _thread());
+      final container = _container(
+        auth,
+        dogRepository: _SingleDogRepository(dog),
+        applications: _AppliedApplicationsRepository(),
+        messages: messages,
+      );
+      addTearDown(container.dispose);
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const WoofyApp(),
+        ),
+      );
+      final router = container.read(routerProvider);
+
+      router.go(RoutePaths.dogDetail(dog.slug));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Escribir al refugio'));
+
+      await tester.tap(find.text('Escribir al refugio'));
+      await tester.pumpAndSettle();
+
+      expect(messages.openDogIds, ['dog-1']);
+      expect(find.text('Conversación'), findsOneWidget);
+    },
+  );
 }
 
 ProviderContainer _container(
@@ -180,6 +329,7 @@ ProviderContainer _container(
   _EmptyProfileRepository? profiles,
   DogRepository? dogRepository,
   ApplicationsRepository? applications,
+  MessagesRepository? messages,
 }) {
   return ProviderContainer(
     overrides: [
@@ -192,6 +342,8 @@ ProviderContainer _container(
       ),
       if (applications != null)
         applicationsRepositoryProvider.overrideWithValue(applications),
+      if (messages != null)
+        messagesRepositoryProvider.overrideWithValue(messages),
     ],
   );
 }
@@ -215,6 +367,16 @@ class _EmptyProfileRepository implements ProfileRepository {
 
   @override
   Future<UserProfile?> fetchCurrentProfile(AppUser user) async => null;
+
+  @override
+  Future<String?> fetchEmailByFullName(String name) async => null;
+
+  @override
+  Future<UserProfile> updateProfile({
+    required String userId,
+    String? fullName,
+    String? phone,
+  }) async => UserProfile(id: userId, role: 'adopter');
 }
 
 Dog _sampleDog() => const Dog(
@@ -256,6 +418,94 @@ class _EmptyApplicationsRepository implements ApplicationsRepository {
     throw UnimplementedError('No se usa en esta prueba.');
   }
 }
+
+class _AppliedApplicationsRepository implements ApplicationsRepository {
+  @override
+  Future<AdoptionApplication?> fetchMyApplicationForDog(String dogId) async =>
+      AdoptionApplication(
+        id: 'application-1',
+        dogId: dogId,
+        adopterId: 'user-1',
+        shelterId: 'shelter-1',
+        status: ApplicationStatus.submitted,
+        createdAt: DateTime(2026, 6, 23, 10),
+      );
+
+  @override
+  Future<AdoptionApplication> createApplication(
+    Dog dog,
+    ApplicationFormData formData,
+  ) {
+    throw UnimplementedError('No se usa en esta prueba.');
+  }
+}
+
+class _FakeMessagesRepository implements MessagesRepository {
+  _FakeMessagesRepository({this.messages = const [], this.openThread});
+
+  factory _FakeMessagesRepository.withMessages() => _FakeMessagesRepository(
+    messages: [
+      Message(
+        id: 'message-1',
+        threadId: 'thread-1',
+        senderId: 'user-1',
+        body: 'Hola refugio',
+        hiddenByAdmin: false,
+        createdAt: DateTime(2026, 6, 23, 10),
+      ),
+    ],
+  );
+
+  final List<Message> messages;
+  final ConversationThread? openThread;
+  final openDogIds = <String>[];
+
+  @override
+  Future<List<ConversationThread>> fetchMyThreads() async => messages.isEmpty
+      ? const <ConversationThread>[]
+      : [_thread(lastMessagePreview: 'Hola refugio')];
+
+  @override
+  Future<ConversationThread> fetchThreadById(String threadId) async =>
+      _thread();
+
+  @override
+  Future<ConversationThread?> fetchThreadForDog(String dogId) async =>
+      dogId == 'dog-1' ? openThread : null;
+
+  @override
+  Future<ConversationThread> getOrCreateThreadForDog(String dogId) async {
+    openDogIds.add(dogId);
+    return openThread ?? _thread();
+  }
+
+  @override
+  Future<ConversationThread> getOrCreateInquiryThreadForDog(
+    String dogId,
+  ) async {
+    openDogIds.add(dogId);
+    return openThread ?? _thread();
+  }
+
+  @override
+  Future<List<Message>> fetchMessages(String threadId) async => messages;
+
+  @override
+  Future<void> sendMessage(String threadId, String body) async {}
+}
+
+ConversationThread _thread({String? lastMessagePreview}) => ConversationThread(
+  id: 'thread-1',
+  dogId: 'dog-1',
+  shelterId: 'shelter-1',
+  adopterId: 'user-1',
+  status: 'open',
+  createdAt: DateTime(2026, 6, 23, 10),
+  updatedAt: DateTime(2026, 6, 23, 10),
+  dogName: 'Milo',
+  shelterName: 'Woofy',
+  lastMessagePreview: lastMessagePreview,
+);
 
 Future<void> _androidBack(WidgetTester tester) async {
   await tester.binding.handlePopRoute();
