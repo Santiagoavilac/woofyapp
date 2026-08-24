@@ -29,6 +29,8 @@
 	</array>
 	<key>CFBundleName</key>
 	<string>Woofy</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Woofy necesita acceso a tus fotos para que puedas elegir la imagen de tu perfil y de los perros en adopción.</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
