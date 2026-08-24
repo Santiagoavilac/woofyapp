@@ -253,6 +253,7 @@ class _ShelterEditFormState extends ConsumerState<_ShelterEditForm> {
                         enabled: !disabled,
                         minLines: 2,
                         maxLines: 4,
+                    maxLength: 1000,
                         decoration: const InputDecoration(
                           labelText: 'Notas de ubicación',
                         ),

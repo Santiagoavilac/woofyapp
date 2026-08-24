@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:woofy/app/back_fallback_scope.dart';
 import 'package:woofy/app/route_names.dart';
 import 'package:woofy/core/errors/app_exception.dart';
+import 'package:woofy/features/legal/data/legal_links.dart';
 import 'package:woofy/features/auth/presentation/widgets/auth_toggle_header.dart';
 import 'package:woofy/features/auth/presentation/widgets/login_form.dart';
 import 'package:woofy/features/auth/presentation/widgets/register_form.dart';
@@ -243,6 +244,16 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                             'Cancelaste el ingreso con Google. Probá de nuevo.',
                       ),
                     ],
+                    const SizedBox(height: 8),
+                    TextButton(
+                      key: const ValueKey('auth-support-link'),
+                      onPressed: () => openSupportEmail(
+                        subject: 'Ayuda con mi cuenta de Woofy',
+                      ),
+                      child: const Text(
+                        '¿Problemas o algo que denunciar? Escribinos',
+                      ),
+                    ),
                     if (error != null) ...[
                       const SizedBox(height: 16),
                       _StatusMessage(

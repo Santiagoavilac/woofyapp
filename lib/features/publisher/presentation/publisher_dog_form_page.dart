@@ -498,6 +498,7 @@ class _DogFormState extends ConsumerState<_DogForm> {
                       enabled: !_isSaving,
                       minLines: 3,
                       maxLines: 8,
+                      maxLength: 2000,
                       decoration: const InputDecoration(labelText: 'Historia'),
                       validator: (v) => (v == null || v.trim().isEmpty)
                           ? 'Contá la historia del perro'
@@ -696,6 +697,9 @@ class _MultilineField extends StatelessWidget {
         enabled: enabled,
         minLines: 2,
         maxLines: 6,
+        // Mismo tope que el CHECK de dog_details en la base: sin esto, el
+        // rechazo llegaría recién al guardar.
+        maxLength: 2000,
         decoration: InputDecoration(labelText: label),
       ),
     );
@@ -865,6 +869,7 @@ class _MedicalEventCardState extends State<_MedicalEventCard> {
             enabled: widget.enabled,
             minLines: 2,
             maxLines: 5,
+            maxLength: 1000,
             decoration: const InputDecoration(labelText: 'Descripción'),
           ),
           Align(

@@ -35,6 +35,7 @@ void main() {
       find.byKey(const ValueKey('register-confirm-password')),
       'secreto1',
     );
+    await _acceptTerms(tester);
     final submit = find.widgetWithText(FilledButton, 'Crear cuenta');
     await tester.ensureVisible(submit);
     await tester.tap(submit);
@@ -126,6 +127,7 @@ void main() {
       find.byKey(const ValueKey('register-confirm-password')),
       'secreto1',
     );
+    await _acceptTerms(tester);
     final submit = find.widgetWithText(FilledButton, 'Crear cuenta');
     await tester.ensureVisible(submit);
     await tester.tap(submit);
@@ -248,6 +250,7 @@ void main() {
       find.byKey(const ValueKey('register-confirm-password')),
       'secreto1',
     );
+    await _acceptTerms(tester);
     final submit = find.widgetWithText(FilledButton, 'Crear cuenta');
     await tester.ensureVisible(submit);
     await tester.tap(submit);
@@ -313,6 +316,64 @@ void main() {
     }
   });
 
+
+  testWidgets('registration is blocked until the terms are accepted', (
+    tester,
+  ) async {
+    final auth = FakeAuthRepository();
+    addTearDown(auth.dispose);
+    await _pumpRoute(tester, auth, _FakeProfileRepository(), RoutePaths.auth);
+
+    await tester.tap(find.text('Crear cuenta'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const ValueKey('register-name')), 'Ana');
+    await tester.enterText(
+      find.byKey(const ValueKey('register-email')),
+      'ana@example.com',
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey('register-password')),
+      'secreto1',
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey('register-confirm-password')),
+      'secreto1',
+    );
+
+    // Sin marcar la casilla el formulario es válido, así que el corte tiene
+    // que venir de la aceptación y no de los validadores.
+    final submit = find.widgetWithText(FilledButton, 'Crear cuenta');
+    await tester.ensureVisible(submit);
+    await tester.tap(submit);
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Necesitamos que aceptes los términos para continuar.'),
+      findsOneWidget,
+    );
+
+    await _acceptTerms(tester);
+    await tester.ensureVisible(submit);
+    await tester.tap(submit);
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Te enviamos un correo de confirmación. Abrilo y luego iniciá sesión.',
+      ),
+      findsOneWidget,
+    );
+  });
+
+}
+
+/// El registro exige aceptar los términos, como pide App Review para apps con
+/// contenido de usuarios.
+Future<void> _acceptTerms(WidgetTester tester) async {
+  final checkbox = find.byKey(const ValueKey('register-accept-terms'));
+  await tester.ensureVisible(checkbox);
+  await tester.tap(checkbox);
+  await tester.pumpAndSettle();
 }
 
 Future<void> _pumpRoute(

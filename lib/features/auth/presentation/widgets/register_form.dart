@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:woofy/core/utils/validators.dart';
+import 'package:woofy/features/legal/data/legal_links.dart';
 import 'package:woofy/shared/widgets/woofy_button.dart';
 import 'package:woofy/shared/widgets/woofy_text_field.dart';
 
@@ -39,6 +40,8 @@ class _RegisterFormState extends State<RegisterForm> {
   final _passwordController = TextEditingController();
   final _confirmationController = TextEditingController();
   bool _obscurePassword = true;
+  bool _acceptedTerms = false;
+  bool _termsError = false;
 
   @override
   void dispose() {
@@ -52,6 +55,10 @@ class _RegisterFormState extends State<RegisterForm> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+    if (!_acceptedTerms) {
+      setState(() => _termsError = true);
+      return;
+    }
     final phone = _phoneController.text.trim();
     await widget.onSubmit(
       RegistrationInput(
@@ -137,7 +144,48 @@ class _RegisterFormState extends State<RegisterForm> {
             onFieldSubmitted: (_) => _submit(),
             prefixIcon: const Icon(Icons.lock_reset_rounded),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
+          // App Review pide, para apps con contenido de usuarios, que los
+          // términos y la política de tolerancia cero se acepten al crear la
+          // cuenta, no después.
+          CheckboxListTile(
+            key: const ValueKey('register-accept-terms'),
+            value: _acceptedTerms,
+            onChanged: (value) => setState(() {
+              _acceptedTerms = value ?? false;
+              if (_acceptedTerms) _termsError = false;
+            }),
+            controlAffinity: ListTileControlAffinity.leading,
+            contentPadding: EdgeInsets.zero,
+            title: const Text(
+              'Acepto los Términos de uso y la Política de privacidad, y '
+              'entiendo que Woofy no tolera contenido ofensivo ni conductas '
+              'abusivas.',
+            ),
+          ),
+          Row(
+            children: [
+              TextButton(
+                key: const ValueKey('register-terms-link'),
+                onPressed: () => openLegalUrl(LegalLinks.terminos),
+                child: const Text('Ver términos'),
+              ),
+              TextButton(
+                key: const ValueKey('register-privacy-link'),
+                onPressed: () => openLegalUrl(LegalLinks.privacidad),
+                child: const Text('Ver privacidad'),
+              ),
+            ],
+          ),
+          if (_termsError)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text(
+                'Necesitamos que aceptes los términos para continuar.',
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            ),
+          const SizedBox(height: 8),
           WoofyButton(
             label: 'Crear cuenta',
             onPressed: _submit,
