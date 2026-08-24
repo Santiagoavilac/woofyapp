@@ -344,6 +344,15 @@ class _AdopterSection extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             WoofyButton(
+              key: const ValueKey('blocked-accounts'),
+              label: 'Cuentas bloqueadas',
+              icon: Icons.block_outlined,
+              variant: WoofyButtonVariant.secondary,
+              isExpanded: true,
+              onPressed: () => context.push(RoutePaths.blockedAccounts),
+            ),
+            const SizedBox(height: 12),
+            WoofyButton(
               label: 'Eliminar cuenta',
               icon: Icons.delete_outline_rounded,
               variant: WoofyButtonVariant.secondary,

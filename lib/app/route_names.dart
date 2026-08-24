@@ -17,6 +17,7 @@ abstract final class RouteNames {
   static const deleteAccount = 'delete-account';
   static const forgotPassword = 'forgot-password';
   static const newPassword = 'new-password';
+  static const blockedAccounts = 'blocked-accounts';
 }
 
 abstract final class RoutePaths {
@@ -39,6 +40,7 @@ abstract final class RoutePaths {
   // Sin acentos ni ñ: estas rutas viajan en deep links y logs.
   static const forgotPassword = '/auth/recuperar';
   static const newPassword = '/auth/nueva-contrasena';
+  static const blockedAccounts = '/perfil/bloqueados';
 
   static String dogDetail(String slug) =>
       '/perros/${Uri.encodeComponent(slug)}';

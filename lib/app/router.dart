@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:woofy/app/route_names.dart';
 import 'package:woofy/features/auth/data/auth_models.dart';
 import 'package:woofy/features/auth/presentation/auth_page.dart';
+import 'package:woofy/features/blocks/presentation/blocked_accounts_page.dart';
 import 'package:woofy/features/auth/presentation/forgot_password_page.dart';
 import 'package:woofy/features/auth/presentation/new_password_page.dart';
 import 'package:woofy/features/auth/presentation/profile_page.dart';
@@ -137,6 +138,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const AdopterEditProfilePage(),
       ),
       GoRoute(
+        name: RouteNames.blockedAccounts,
+        path: RoutePaths.blockedAccounts,
+        builder: (context, state) => const BlockedAccountsPage(),
+      ),
+      GoRoute(
         name: RouteNames.deleteAccount,
         path: RoutePaths.deleteAccount,
         builder: (context, state) => const DeleteAccountPage(),
@@ -167,6 +173,9 @@ final routerProvider = Provider<GoRouter>((ref) {
         return RoutePaths.auth;
       }
       if (location == RoutePaths.adopterEditProfile && !hasSession) {
+        return RoutePaths.auth;
+      }
+      if (location == RoutePaths.blockedAccounts && !hasSession) {
         return RoutePaths.auth;
       }
       if (location == RoutePaths.deleteAccount && !hasSession) {
