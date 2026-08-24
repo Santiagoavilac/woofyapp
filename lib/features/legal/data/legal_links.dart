@@ -12,7 +12,7 @@ abstract final class LegalLinks {
 
   /// Contacto para denuncias y problemas. La guía 1.2 pide que sea fácil de
   /// alcanzar, así que también se ofrece sin haber iniciado sesión.
-  static const soporteEmail = 'woofy@woofybolivia.com';
+  static const soporteEmail = 'woofy@woofy.com.bo';
 }
 
 /// Abre un documento legal en un navegador in-app (Custom Tab en Android,
