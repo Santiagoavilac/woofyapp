@@ -15,6 +15,8 @@ import 'package:woofy/shared/widgets/woofy_error.dart';
 import 'package:woofy/shared/widgets/woofy_loading.dart';
 import 'package:go_router/go_router.dart';
 import 'package:woofy/app/route_names.dart';
+import 'package:woofy/features/reports/data/report_models.dart';
+import 'package:woofy/features/reports/presentation/widgets/report_sheet.dart';
 import 'package:woofy/core/errors/app_exception.dart';
 import 'package:woofy/features/applications/data/applications_providers.dart';
 import 'package:woofy/features/applications/presentation/widgets/application_status_card.dart';
@@ -33,7 +35,37 @@ class DogDetailPage extends ConsumerWidget {
     return BackFallbackScope(
       fallbackLocation: RoutePaths.dogs,
       child: Scaffold(
-        appBar: const WoofyAppBar(title: 'Perfil del perrito'),
+        appBar: WoofyAppBar(
+          title: 'Perfil del perrito',
+          actions: [
+            if (detail.value case final value?)
+              PopupMenuButton<String>(
+                key: const ValueKey('dog-detail-menu'),
+                onSelected: (choice) => showReportSheet(
+                  context,
+                  targetType: choice == 'dog'
+                      ? ReportTargetType.dog
+                      : ReportTargetType.shelter,
+                  targetId: choice == 'dog'
+                      ? value.dog.id
+                      : value.dog.shelterId,
+                  title: choice == 'dog'
+                      ? 'Denunciar publicación'
+                      : 'Denunciar refugio',
+                ),
+                itemBuilder: (context) => const [
+                  PopupMenuItem(
+                    value: 'dog',
+                    child: Text('Denunciar publicación'),
+                  ),
+                  PopupMenuItem(
+                    value: 'shelter',
+                    child: Text('Denunciar refugio'),
+                  ),
+                ],
+              ),
+          ],
+        ),
         body: SafeArea(
           child: detail.when(
             loading: () => const WoofyLoading(

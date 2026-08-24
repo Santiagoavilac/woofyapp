@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:woofy/features/messages/data/message_models.dart';
+import 'package:woofy/features/reports/data/report_models.dart';
+import 'package:woofy/features/reports/presentation/widgets/report_sheet.dart';
 
 class MessageBubble extends StatelessWidget {
   const MessageBubble({required this.message, required this.isMine, super.key});
@@ -26,7 +28,17 @@ class MessageBubble extends StatelessWidget {
 
     return Align(
       alignment: alignment,
-      child: ConstrainedBox(
+      child: GestureDetector(
+        // Denunciar solo tiene sentido sobre lo que escribió la otra parte.
+        onLongPress: isMine
+            ? null
+            : () => showReportSheet(
+                context,
+                targetType: ReportTargetType.message,
+                targetId: message.id,
+                title: 'Denunciar mensaje',
+              ),
+        child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 310),
         child: DecoratedBox(
           decoration: BoxDecoration(color: background, borderRadius: radius),
@@ -52,6 +64,7 @@ class MessageBubble extends StatelessWidget {
             ),
           ),
         ),
+      ),
       ),
     );
   }

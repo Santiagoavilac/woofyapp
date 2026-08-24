@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:woofy/app/back_fallback_scope.dart';
 import 'package:woofy/app/route_names.dart';
+import 'package:go_router/go_router.dart';
 import 'package:woofy/features/auth/providers/auth_providers.dart';
+import 'package:woofy/features/blocks/providers/blocks_providers.dart';
+import 'package:woofy/features/reports/data/report_models.dart';
+import 'package:woofy/features/reports/presentation/widgets/report_sheet.dart';
 import 'package:woofy/features/messages/data/messages_providers.dart';
 import 'package:woofy/features/messages/presentation/widgets/conversation_header.dart';
 import 'package:woofy/features/messages/presentation/widgets/message_bubble.dart';
@@ -17,6 +21,49 @@ class ConversationPage extends ConsumerWidget {
 
   final String threadId;
 
+  Future<void> _blockShelter(
+    BuildContext context,
+    WidgetRef ref,
+    String shelterId,
+    String shelterName,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        title: const Text('Bloquear refugio'),
+        content: Text(
+          'No vas a recibir más mensajes de $shelterName y la conversación '
+          'desaparece de tu bandeja. Podés desbloquearlo desde tu perfil.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(true),
+            child: const Text('Bloquear'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    try {
+      await ref.read(blockControllerProvider.notifier).blockShelter(shelterId);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Bloqueaste a $shelterName.')),
+      );
+      context.go(RoutePaths.messages);
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No pudimos bloquear al refugio.')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final thread = ref.watch(threadProvider(threadId));
@@ -27,7 +74,44 @@ class ConversationPage extends ConsumerWidget {
     return BackFallbackScope(
       fallbackLocation: RoutePaths.messages,
       child: Scaffold(
-        appBar: const WoofyAppBar(title: 'Conversación'),
+        appBar: WoofyAppBar(
+          title: 'Conversación',
+          actions: [
+            PopupMenuButton<String>(
+              key: const ValueKey('conversation-menu'),
+              onSelected: (value) {
+                final threadData = thread.value;
+                if (threadData == null) return;
+                switch (value) {
+                  case 'report':
+                    showReportSheet(
+                      context,
+                      targetType: ReportTargetType.conversation,
+                      targetId: threadId,
+                      title: 'Denunciar conversación',
+                    );
+                  case 'block':
+                    _blockShelter(
+                      context,
+                      ref,
+                      threadData.shelterId,
+                      threadData.displayShelterName,
+                    );
+                }
+              },
+              itemBuilder: (context) => const [
+                PopupMenuItem(
+                  value: 'report',
+                  child: Text('Denunciar conversación'),
+                ),
+                PopupMenuItem(
+                  value: 'block',
+                  child: Text('Bloquear refugio'),
+                ),
+              ],
+            ),
+          ],
+        ),
         body: SafeArea(
           child: thread.when(
             loading: () =>
