@@ -1,0 +1,13 @@
+# Copiá este archivo como android/key.properties y completá los valores.
+# key.properties y los .jks están gitignoreados: el keystore nunca va al repo.
+#
+# Para crear el keystore:
+#   keytool -genkey -v -keystore ~/keys/woofy-upload.jks \
+#     -storetype JKS -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+#
+# Respaldá el .jks fuera de la máquina: si se pierde, no se puede volver a
+# actualizar la app en Play.
+storePassword=
+keyPassword=
+keyAlias=upload
+storeFile=/Users/tu-usuario/keys/woofy-upload.jks
