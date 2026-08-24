@@ -275,6 +275,44 @@ void main() {
     );
   });
 
+
+  testWidgets('Apple sign-in is offered on iOS', (tester) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+    final auth = FakeAuthRepository();
+    addTearDown(auth.dispose);
+    try {
+      await _pumpRoute(tester, auth, _FakeProfileRepository(), RoutePaths.auth);
+
+      final appleButton = find.byKey(const ValueKey('apple-signin'));
+      expect(appleButton, findsOneWidget);
+
+      await tester.ensureVisible(appleButton);
+      await tester.tap(appleButton);
+      await tester.pumpAndSettle();
+      expect(auth.appleSignInCalls, 1);
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+    }
+  });
+
+  testWidgets('Apple sign-in stays off Android, where it is not required', (
+    tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    final auth = FakeAuthRepository();
+    addTearDown(auth.dispose);
+    try {
+      await _pumpRoute(tester, auth, _FakeProfileRepository(), RoutePaths.auth);
+
+      expect(find.byKey(const ValueKey('apple-signin')), findsNothing);
+      // Google sí, para que no se lea como que quedamos sin proveedores.
+      expect(find.byKey(const ValueKey('google-signin')), findsOneWidget);
+      expect(auth.appleSignInCalls, 0);
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+    }
+  });
+
 }
 
 Future<void> _pumpRoute(

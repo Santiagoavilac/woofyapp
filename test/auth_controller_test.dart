@@ -249,6 +249,16 @@ ProviderContainer _container(AuthRepository auth, ProfileRepository profiles) {
 
 class _FakeAuthRepository implements AuthRepository {
 
+  @override
+  bool get hasAppleIdentity => false;
+
+  @override
+  Future<AppUser> signInWithApple() async =>
+      user ?? const AppUser(id: 'apple-user', email: 'apple@example.com');
+
+  @override
+  Future<String> reauthenticateWithApple() async => 'apple-auth-code';
+
   String? lastResetEmail;
   String? lastUpdatedPassword;
   String? lastResendEmail;

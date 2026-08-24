@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:woofy/app/back_fallback_scope.dart';
 import 'package:woofy/app/route_names.dart';
 import 'package:woofy/core/errors/app_exception.dart';
@@ -19,17 +20,23 @@ class DeleteAccountPage extends ConsumerStatefulWidget {
 
 class _DeleteAccountPageState extends ConsumerState<DeleteAccountPage> {
   bool _isSubmitting = false;
-  bool _requested = false;
   String? _error;
 
-  Future<void> _confirmAndRequest() async {
+  Future<void> _confirmAndDelete() async {
+    final usesApple = ref.read(authRepositoryProvider).hasAppleIdentity;
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogCtx) => AlertDialog(
-        title: const Text('Solicitar eliminación de cuenta'),
-        content: const Text(
-          '¿Querés enviar una solicitud para eliminar tu cuenta de Woofy? '
-          'Vamos a procesarla y te avisaremos por correo.',
+        title: const Text('Eliminar cuenta'),
+        content: Text(
+          usesApple
+              ? '¿Seguro que querés eliminar tu cuenta de Woofy? Vamos a '
+                    'pedirte confirmar con Apple para revocar el acceso. '
+                    'Esta acción no se puede deshacer.'
+              : '¿Seguro que querés eliminar tu cuenta de Woofy? Se borran '
+                    'tus datos de forma definitiva y esta acción no se puede '
+                    'deshacer.',
         ),
         actions: [
           TextButton(
@@ -38,30 +45,44 @@ class _DeleteAccountPageState extends ConsumerState<DeleteAccountPage> {
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogCtx).pop(true),
-            child: const Text('Solicitar eliminación'),
+            child: const Text('Eliminar definitivamente'),
           ),
         ],
       ),
     );
     if (confirmed != true) return;
 
-    final user = ref.read(currentUserProvider);
-    if (user == null) return;
-
     setState(() {
       _isSubmitting = true;
       _error = null;
     });
     try {
-      await ref.read(accountDeletionRepositoryProvider).requestDeletion(user);
+      // Apple exige revocar los tokens al eliminar la cuenta. Pedimos un
+      // código fresco en este momento en vez de guardar uno de larga
+      // duración en la base.
+      String? appleCode;
+      if (usesApple) {
+        appleCode = await ref
+            .read(authRepositoryProvider)
+            .reauthenticateWithApple();
+      }
+
+      await ref
+          .read(accountDeletionRepositoryProvider)
+          .deleteAccount(appleAuthorizationCode: appleCode);
+
+      await ref.read(authControllerProvider.notifier).signOut();
       if (!mounted) return;
-      setState(() => _requested = true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Tu cuenta fue eliminada.')),
+      );
+      context.go(RoutePaths.landing);
     } catch (error) {
       if (!mounted) return;
       setState(
         () => _error = error is AppException
             ? error.message
-            : 'No pudimos registrar tu solicitud. Intentá nuevamente.',
+            : 'No pudimos eliminar tu cuenta. Intentá nuevamente.',
       );
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
@@ -95,7 +116,7 @@ class _DeleteAccountPageState extends ConsumerState<DeleteAccountPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Qué pasa cuando solicitás la eliminación',
+                            'Qué pasa cuando eliminás tu cuenta',
                             style: theme.textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.w800,
                             ),
@@ -121,44 +142,23 @@ class _DeleteAccountPageState extends ConsumerState<DeleteAccountPage> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    if (_requested)
-                      WoofyCard(
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.check_circle_outline_rounded,
-                              color: theme.colorScheme.primary,
-                            ),
-                            const SizedBox(width: 12),
-                            const Expanded(
-                              child: Text(
-                                'Recibimos tu solicitud de eliminación. Te '
-                                'contactaremos por correo para continuar.',
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    else ...[
-                      WoofyButton(
-                        key: const ValueKey('request-deletion'),
-                        label: 'Solicitar eliminación de cuenta',
-                        icon: Icons.delete_outline_rounded,
-                        variant: WoofyButtonVariant.secondary,
-                        isExpanded: true,
-                        isLoading: _isSubmitting,
-                        onPressed: _confirmAndRequest,
-                      ),
-                      const SizedBox(height: 12),
-                      WoofyButton(
-                        label: 'Ver política de eliminación',
-                        icon: Icons.open_in_new_rounded,
-                        variant: WoofyButtonVariant.secondary,
-                        isExpanded: true,
-                        onPressed: () =>
-                            openLegalUrl(LegalLinks.eliminarCuenta),
-                      ),
-                    ],
+                    WoofyButton(
+                      key: const ValueKey('request-deletion'),
+                      label: 'Eliminar mi cuenta',
+                      icon: Icons.delete_outline_rounded,
+                      variant: WoofyButtonVariant.secondary,
+                      isExpanded: true,
+                      isLoading: _isSubmitting,
+                      onPressed: _confirmAndDelete,
+                    ),
+                    const SizedBox(height: 12),
+                    WoofyButton(
+                      label: 'Ver política de eliminación',
+                      icon: Icons.open_in_new_rounded,
+                      variant: WoofyButtonVariant.secondary,
+                      isExpanded: true,
+                      onPressed: () => openLegalUrl(LegalLinks.eliminarCuenta),
+                    ),
                     if (_error != null) ...[
                       const SizedBox(height: 16),
                       Row(

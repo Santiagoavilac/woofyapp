@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:woofy/app/app.dart';
 import 'package:woofy/app/route_names.dart';
+import 'package:woofy/core/errors/app_exception.dart';
 import 'package:woofy/app/router.dart';
 import 'package:woofy/features/auth/data/auth_models.dart';
 import 'package:woofy/features/auth/data/profile_repository.dart';
@@ -15,7 +16,7 @@ import 'support/fake_auth_repository.dart';
 void main() {
   const user = AppUser(id: 'user-1', email: 'ana@example.com');
 
-  testWidgets('requesting deletion registers the request and confirms', (
+  testWidgets('a non-Apple account deletes without an authorization code', (
     tester,
   ) async {
     final auth = FakeAuthRepository(user: user);
@@ -25,21 +26,53 @@ void main() {
 
     expect(find.text('Eliminar tu cuenta'), findsOneWidget);
 
-    final submit = find.byKey(const ValueKey('request-deletion'));
-    await tester.ensureVisible(submit);
-    await tester.tap(submit);
-    await tester.pumpAndSettle();
+    await _confirmDeletion(tester);
 
-    await tester.tap(find.text('Solicitar eliminación'));
-    await tester.pumpAndSettle();
-
-    expect(deletion.requests, [user]);
-    expect(find.textContaining('Recibimos tu solicitud'), findsOneWidget);
+    expect(deletion.calls, hasLength(1));
+    expect(deletion.calls.single, isNull);
+    expect(auth.appleReauthCalls, 0);
+    expect(auth.signOutCalls, 1);
   });
 
-  testWidgets('cancelling the dialog does not register a request', (
+  testWidgets('an Apple account revokes access before deleting', (
     tester,
   ) async {
+    final auth = FakeAuthRepository(user: user)..appleIdentity = true;
+    addTearDown(auth.dispose);
+    final deletion = _FakeAccountDeletionRepository();
+    await _pumpDeleteAccount(tester, auth, deletion);
+
+    await _confirmDeletion(tester);
+
+    expect(auth.appleReauthCalls, 1);
+    expect(deletion.calls.single, 'apple-auth-code');
+    expect(auth.signOutCalls, 1);
+  });
+
+  testWidgets('a failed Apple re-authentication keeps the account', (
+    tester,
+  ) async {
+    final auth = FakeAuthRepository(user: user)
+      ..appleIdentity = true
+      ..appleReauthError = const AppException(
+        code: 'apple_missing_code',
+        message: 'Apple no devolvió el código de autorización.',
+      );
+    addTearDown(auth.dispose);
+    final deletion = _FakeAccountDeletionRepository();
+    await _pumpDeleteAccount(tester, auth, deletion);
+
+    await _confirmDeletion(tester);
+
+    expect(deletion.calls, isEmpty);
+    expect(auth.signOutCalls, 0);
+    expect(
+      find.text('Apple no devolvió el código de autorización.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('cancelling the dialog deletes nothing', (tester) async {
     final auth = FakeAuthRepository(user: user);
     addTearDown(auth.dispose);
     final deletion = _FakeAccountDeletionRepository();
@@ -53,8 +86,18 @@ void main() {
     await tester.tap(find.text('Cancelar'));
     await tester.pumpAndSettle();
 
-    expect(deletion.requests, isEmpty);
+    expect(deletion.calls, isEmpty);
+    expect(auth.signOutCalls, 0);
   });
+}
+
+Future<void> _confirmDeletion(WidgetTester tester) async {
+  final submit = find.byKey(const ValueKey('request-deletion'));
+  await tester.ensureVisible(submit);
+  await tester.tap(submit);
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('Eliminar definitivamente'));
+  await tester.pumpAndSettle();
 }
 
 Future<void> _pumpDeleteAccount(
@@ -78,11 +121,15 @@ Future<void> _pumpDeleteAccount(
 }
 
 class _FakeAccountDeletionRepository implements AccountDeletionRepository {
-  final List<AppUser> requests = [];
+  /// Guarda el código de Apple recibido en cada llamada, o null si no vino.
+  final List<String?> calls = [];
 
   @override
-  Future<void> requestDeletion(AppUser user, {String? reason}) async {
-    requests.add(user);
+  Future<void> deleteAccount({
+    String? appleAuthorizationCode,
+    String? reason,
+  }) async {
+    calls.add(appleAuthorizationCode);
   }
 }
 

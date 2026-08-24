@@ -12,16 +12,25 @@ class FakeAuthRepository implements AuthRepository {
   final authEventChanges = StreamController<AuthLifecycleEvent>.broadcast();
   int signOutCalls = 0;
   int googleSignInCalls = 0;
+  int appleSignInCalls = 0;
+  int appleReauthCalls = 0;
   int resetEmailCalls = 0;
   int resendCalls = 0;
   String? lastResetEmail;
   String? lastResendEmail;
   String? lastUpdatedPassword;
   Object? googleSignInError;
+  Object? appleSignInError;
+  Object? appleReauthError;
   Object? registrationError;
   Object? resetEmailError;
   Object? resendError;
   Object? updatePasswordError;
+
+  bool appleIdentity = false;
+
+  @override
+  bool get hasAppleIdentity => appleIdentity;
 
   @override
   AppUser? get currentUser => user;
@@ -55,6 +64,23 @@ class FakeAuthRepository implements AuthRepository {
     resendCalls += 1;
     lastResendEmail = email;
     if (resendError case final error?) throw error;
+  }
+
+  @override
+  Future<AppUser> signInWithApple() async {
+    appleSignInCalls += 1;
+    if (appleSignInError case final error?) throw error;
+    final signedInUser =
+        user ?? const AppUser(id: 'apple-user', email: 'apple@example.com');
+    setUser(signedInUser);
+    return signedInUser;
+  }
+
+  @override
+  Future<String> reauthenticateWithApple() async {
+    appleReauthCalls += 1;
+    if (appleReauthError case final error?) throw error;
+    return 'apple-auth-code';
   }
 
   @override

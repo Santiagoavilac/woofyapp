@@ -55,6 +55,16 @@ void main() {
 class _FakeAuthRepository implements AuthRepository {
 
   @override
+  bool get hasAppleIdentity => false;
+
+  @override
+  Future<AppUser> signInWithApple() async =>
+      user ?? const AppUser(id: 'apple-user', email: 'apple@example.com');
+
+  @override
+  Future<String> reauthenticateWithApple() async => 'apple-auth-code';
+
+  @override
   Stream<AuthLifecycleEvent> get authEvents => const Stream.empty();
 
   @override

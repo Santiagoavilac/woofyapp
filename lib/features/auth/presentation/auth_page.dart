@@ -1,6 +1,8 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:woofy/app/back_fallback_scope.dart';
@@ -70,6 +72,14 @@ class _AuthPageState extends ConsumerState<AuthPage> {
       await ref
           .read(authControllerProvider.notifier)
           .signIn(email: email, password: password);
+      if (!mounted) return;
+      context.go(RoutePaths.profile);
+    } catch (_) {}
+  }
+
+  Future<void> _loginWithApple() async {
+    try {
+      await ref.read(authControllerProvider.notifier).signInWithApple();
       if (!mounted) return;
       context.go(RoutePaths.profile);
     } catch (_) {}
@@ -182,6 +192,20 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                         ],
                       ),
                       const SizedBox(height: 20),
+                      if (defaultTargetPlatform == TargetPlatform.iOS) ...[
+                        // Widget oficial del paquete: respeta las pautas de
+                        // Apple, que el review verifica.
+                        SignInWithAppleButton(
+                          key: const ValueKey('apple-signin'),
+                          text: 'Continuar con Apple',
+                          height: 52,
+                          borderRadius: const BorderRadius.all(
+                            Radius.circular(26),
+                          ),
+                          onPressed: _loginWithApple,
+                        ),
+                        const SizedBox(height: 12),
+                      ],
                       WoofyButton(
                         key: const ValueKey('google-signin'),
                         label: 'Continuar con Google',

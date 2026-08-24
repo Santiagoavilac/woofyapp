@@ -148,6 +148,17 @@ class AuthController extends AsyncNotifier<void> {
     }
   }
 
+  Future<void> signInWithApple() async {
+    state = const AsyncLoading();
+    try {
+      final user = await ref.read(authRepositoryProvider).signInWithApple();
+      await ensureAuthenticatedProfile(user);
+    } catch (error, stackTrace) {
+      state = AsyncError(ErrorMapper.map(error, stackTrace), stackTrace);
+      rethrow;
+    }
+  }
+
   /// Acepta email o nombre de usuario, igual que el formulario de ingreso.
   Future<String> _resolveEmail(String input) async {
     final value = input.trim();
