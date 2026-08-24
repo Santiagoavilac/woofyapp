@@ -25,7 +25,8 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('Todavía no guardaste favoritos'), findsOneWidget);
-    expect(find.text('Ver perros'), findsOneWidget);
+    expect(find.text('Ver animales'), findsOneWidget);
+    expect(find.byKey(const ValueKey('favorites-empty-image')), findsOneWidget);
 
     await tester.pumpWidget(
       ProviderScope(

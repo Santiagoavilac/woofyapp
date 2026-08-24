@@ -10,6 +10,7 @@ import 'package:mi_app/features/auth/providers/auth_providers.dart';
 import 'package:mi_app/features/dogs/data/dog_models.dart';
 import 'package:mi_app/features/dogs/data/dog_repository.dart';
 import 'package:mi_app/features/dogs/data/dog_repository_provider.dart';
+import 'package:mi_app/features/dogs/presentation/dogs_page.dart';
 
 import 'support/fake_auth_repository.dart';
 
@@ -19,7 +20,7 @@ void main() {
     final loadingRepository = FakeDogRepository(dogsFuture: completer.future);
     final loading = await _pumpDogs(tester, loadingRepository);
 
-    expect(find.text('Cargando perritos…'), findsOneWidget);
+    expect(find.text('Cargando animales…'), findsOneWidget);
     loading.dispose();
 
     await tester.pumpWidget(const SizedBox.shrink());
@@ -27,7 +28,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.text('No encontramos perritos publicados todavía.'),
+      find.text('No encontramos animales publicados todavía.'),
       findsOneWidget,
     );
     empty.dispose();
@@ -40,7 +41,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('No pudimos cargar los perritos.'), findsOneWidget);
+    expect(find.text('No pudimos cargar los animales.'), findsOneWidget);
     expect(find.text('Reintentar'), findsOneWidget);
     expect(find.textContaining('network detail'), findsNothing);
     container.dispose();
@@ -57,10 +58,6 @@ void main() {
       container.read(routerProvider).routeInformationProvider.value.uri.path,
       RoutePaths.dogs,
     );
-    expect(
-      find.text('No encontramos perritos publicados todavía.'),
-      findsOneWidget,
-    );
 
     await _androidBack(tester);
 
@@ -68,7 +65,7 @@ void main() {
       container.read(routerProvider).routeInformationProvider.value.uri.path,
       RoutePaths.landing,
     );
-    expect(find.text('Encontrá a tu próximo mejor amigo'), findsOneWidget);
+    expect(find.text('Hola 👋'), findsOneWidget);
     container.dispose();
   });
 
@@ -98,7 +95,7 @@ void main() {
       container.read(routerProvider).routeInformationProvider.value.uri.path,
       RoutePaths.dogs,
     );
-    expect(find.text('Encontrá a tu compañero'), findsOneWidget);
+    expect(find.text('Encontrá a tu compañero ideal'), findsOneWidget);
     container.dispose();
   });
 
@@ -114,7 +111,84 @@ void main() {
     container.dispose();
   });
 
-  for (final size in <Size>[const Size(320, 568), const Size(800, 1200)]) {
+  testWidgets(
+    'catalog uses the ivory system background, not a celeste override',
+    (tester) async {
+      final container = await _pumpDogs(
+        tester,
+        FakeDogRepository(dogs: [sampleDog()]),
+      );
+      await tester.pumpAndSettle();
+
+      final scaffold = tester.widget<Scaffold>(
+        find.descendant(
+          of: find.byType(DogsPage),
+          matching: find.byType(Scaffold),
+        ),
+      );
+      // A null backgroundColor means the Scaffold inherits the theme's ivory
+      // scaffoldBackgroundColor instead of forcing its own palette.
+      expect(scaffold.backgroundColor, isNull);
+      container.dispose();
+    },
+  );
+
+  testWidgets('catalog opens the filter sheet', (tester) async {
+    final container = await _pumpDogs(
+      tester,
+      FakeDogRepository(dogs: [sampleDog()]),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.tune_rounded));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Filtros'), findsOneWidget);
+    expect(find.text('Tamaño'), findsOneWidget);
+    expect(find.text('Sexo'), findsOneWidget);
+    container.dispose();
+  });
+
+  testWidgets('bottom navigation exposes the three shell destinations', (
+    tester,
+  ) async {
+    final container = await _pumpRoute(
+      tester,
+      FakeDogRepository(dogs: const []),
+      RoutePaths.landing,
+    );
+    await tester.pumpAndSettle();
+
+    final nav = find.byType(NavigationBar);
+    expect(
+      find.descendant(of: nav, matching: find.text('Inicio')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: nav, matching: find.text('Explorar')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: nav, matching: find.text('Perfil')),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.descendant(of: nav, matching: find.text('Explorar')));
+    await tester.pumpAndSettle();
+
+    expect(
+      container.read(routerProvider).routeInformationProvider.value.uri.path,
+      RoutePaths.dogs,
+    );
+    container.dispose();
+  });
+
+  for (final size in <Size>[
+    const Size(320, 568),
+    const Size(360, 640),
+    const Size(390, 844),
+    const Size(412, 915),
+  ]) {
     testWidgets('catalog has no overflow at ${size.width}x${size.height}', (
       tester,
     ) async {

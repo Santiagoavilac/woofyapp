@@ -1,9 +1,12 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:mi_app/core/theme/woofy_spacing.dart';
 import 'package:mi_app/features/dogs/data/dog_models.dart';
 import 'package:mi_app/features/dogs/presentation/widgets/dog_info_chip.dart';
 import 'package:mi_app/shared/widgets/woofy_card.dart';
 
+/// Editorial adoption card: a large photo takes the lead, an info panel below
+/// keeps name, location and quick facts scannable in a couple of seconds.
 class DogCard extends StatelessWidget {
   const DogCard({
     required this.dog,
@@ -18,6 +21,12 @@ class DogCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final locationParts = [
+      dog.shelter?.name,
+      dog.shelter?.city,
+    ].whereType<String>().where((value) => value.isNotEmpty).toList();
+
     return WoofyCard(
       key: ValueKey('dog-card-${dog.slug}'),
       tapKey: ValueKey('dog-card-${dog.slug}-tap'),
@@ -29,38 +38,58 @@ class DogCard extends StatelessWidget {
           Stack(
             children: [
               AspectRatio(
-                aspectRatio: 16 / 10,
+                aspectRatio: 16 / 11,
                 child: _DogCardPhoto(dog: dog),
               ),
               if (overlay != null)
-                Positioned(top: 10, right: 10, child: overlay!),
+                Positioned(
+                  top: WoofySpacing.md,
+                  right: WoofySpacing.md,
+                  child: overlay!,
+                ),
             ],
           ),
           Padding(
-            padding: const EdgeInsets.all(18),
+            padding: const EdgeInsets.all(WoofySpacing.lg),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   dog.name,
-                  style: Theme.of(context).textTheme.headlineSmall,
+                  style: theme.textTheme.titleLarge,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                if (dog.shelter?.name case final shelterName?) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    shelterName,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                if (locationParts.isNotEmpty) ...[
+                  const SizedBox(height: WoofySpacing.xs),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.place_outlined,
+                        size: 16,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                      const SizedBox(width: WoofySpacing.xs),
+                      Expanded(
+                        child: Text(
+                          locationParts.join(' · '),
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
                 if (dog.ageLabel != null ||
                     dog.size != null ||
                     dog.sex != null) ...[
-                  const SizedBox(height: 12),
+                  const SizedBox(height: WoofySpacing.md),
                   Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
+                    spacing: WoofySpacing.sm,
+                    runSpacing: WoofySpacing.sm,
                     children: [
                       if (dog.ageLabel case final age?)
                         DogInfoChip(label: age, icon: Icons.cake_outlined),
@@ -92,8 +121,7 @@ class _DogCardPhoto extends StatelessWidget {
     return CachedNetworkImage(
       imageUrl: url,
       fit: BoxFit.cover,
-      placeholder: (context, url) =>
-          const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+      placeholder: (context, url) => const DogPhotoPlaceholder(),
       errorWidget: (context, url, error) => const DogPhotoPlaceholder(),
     );
   }
@@ -104,14 +132,24 @@ class DogPhotoPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ColoredBox(
+    final theme = Theme.of(context);
+    return DecoratedBox(
       key: const ValueKey('dog-photo-placeholder'),
-      color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.25),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            theme.colorScheme.secondaryContainer,
+            theme.colorScheme.primaryContainer,
+          ],
+        ),
+      ),
       child: Center(
         child: Icon(
           Icons.pets_rounded,
           size: 56,
-          color: Theme.of(context).colorScheme.primary,
+          color: theme.colorScheme.primary,
         ),
       ),
     );

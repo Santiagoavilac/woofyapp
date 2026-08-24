@@ -15,10 +15,12 @@ import 'package:mi_app/shared/widgets/woofy_error.dart';
 import 'package:mi_app/shared/widgets/woofy_loading.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mi_app/app/route_names.dart';
+import 'package:mi_app/core/errors/app_exception.dart';
 import 'package:mi_app/features/applications/data/applications_providers.dart';
 import 'package:mi_app/features/applications/presentation/widgets/application_status_card.dart';
 import 'package:mi_app/features/auth/providers/auth_providers.dart';
 import 'package:mi_app/features/favorites/presentation/widgets/favorite_toggle_button.dart';
+import 'package:mi_app/features/messages/data/messages_providers.dart';
 
 class DogDetailPage extends ConsumerWidget {
   const DogDetailPage({required this.slug, super.key});
@@ -110,6 +112,8 @@ class _DogDetailContent extends ConsumerWidget {
               ],
               const SizedBox(height: 24),
               _ApplicationAction(dog: dog),
+              const SizedBox(height: 12),
+              _InquiryButton(dog: dog),
             ],
           ),
         ),
@@ -157,8 +161,89 @@ class _ApplicationAction extends ConsumerWidget {
                   icon: Icons.favorite_outline,
                   isExpanded: true,
                 )
-              : ApplicationStatusCard(application: application),
+              : ApplicationStatusCard(
+                  application: application,
+                  action: _WriteToShelterButton(dogId: dog.id),
+                ),
         );
+  }
+}
+
+class _WriteToShelterButton extends ConsumerWidget {
+  const _WriteToShelterButton({required this.dogId});
+
+  final String dogId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isOpening = ref.watch(dogConversationControllerProvider(dogId));
+
+    return WoofyButton(
+      label: isOpening ? 'Abriendo conversación…' : 'Escribir al refugio',
+      onPressed: isOpening
+          ? null
+          : () async {
+              try {
+                final thread = await ref
+                    .read(dogConversationControllerProvider(dogId).notifier)
+                    .open();
+                if (!context.mounted || thread == null) return;
+                context.push(RoutePaths.conversation(thread.id));
+              } catch (error) {
+                if (!context.mounted) return;
+                final message = error is AppException
+                    ? error.message
+                    : 'No pudimos abrir esta conversación.';
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text(message)));
+              }
+            },
+      icon: Icons.chat_bubble_outline,
+      variant: WoofyButtonVariant.secondary,
+    );
+  }
+}
+
+class _InquiryButton extends ConsumerWidget {
+  const _InquiryButton({required this.dog});
+
+  final Dog dog;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(currentUserProvider);
+    final isOpening = ref.watch(dogInquiryControllerProvider(dog.id));
+
+    return WoofyButton(
+      label: isOpening ? 'Abriendo conversación…' : 'Consultar',
+      isLoading: isOpening,
+      isExpanded: true,
+      variant: WoofyButtonVariant.secondary,
+      icon: Icons.chat_bubble_outline,
+      onPressed: isOpening
+          ? null
+          : () async {
+              if (user == null) {
+                context.go(RoutePaths.auth);
+                return;
+              }
+              final router = GoRouter.of(context);
+              final messenger = ScaffoldMessenger.of(context);
+              try {
+                final thread = await ref
+                    .read(dogInquiryControllerProvider(dog.id).notifier)
+                    .open();
+                if (thread == null) return;
+                router.push(RoutePaths.conversation(thread.id));
+              } catch (error) {
+                final message = error is AppException
+                    ? error.message
+                    : 'No pudimos abrir esta conversación.';
+                messenger.showSnackBar(SnackBar(content: Text(message)));
+              }
+            },
+    );
   }
 }
 

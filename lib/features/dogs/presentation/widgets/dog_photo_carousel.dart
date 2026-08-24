@@ -44,8 +44,7 @@ class _Photo extends StatelessWidget {
     return CachedNetworkImage(
       imageUrl: url,
       fit: BoxFit.cover,
-      placeholder: (context, url) =>
-          const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+      placeholder: (context, url) => const DogPhotoPlaceholder(),
       errorWidget: (context, url, error) => const DogPhotoPlaceholder(),
     );
   }
