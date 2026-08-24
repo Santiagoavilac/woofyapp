@@ -3,8 +3,8 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:woofy/core/errors/app_exception.dart';
+import 'package:woofy/core/services/secure_storage_service.dart';
 import 'package:woofy/core/services/supabase_service.dart';
 import 'package:woofy/features/auth/providers/auth_providers.dart';
 import 'package:woofy/features/dogs/data/dog_models.dart';
@@ -40,10 +40,10 @@ final shelterPortalSessionProvider =
 class ShelterPortalNotifier extends AsyncNotifier<ShelterPortalSession?> {
   @override
   Future<ShelterPortalSession?> build() async {
-    const storage = FlutterSecureStorage();
+    final storage = ref.read(secureStorageServiceProvider);
     ShelterPortalSession? stored;
     try {
-      final raw = await storage.read(key: _shelterSessionKey);
+      final raw = await storage.read(_shelterSessionKey);
       if (raw == null) return null;
       stored = ShelterPortalSession.fromJson(
         jsonDecode(raw) as Map<String, dynamic>,
@@ -52,7 +52,7 @@ class ShelterPortalNotifier extends AsyncNotifier<ShelterPortalSession?> {
       debugPrint('shelter_portal: no se pudo leer secure_storage: $error');
       debugPrintStack(stackTrace: stack);
       try {
-        await storage.delete(key: _shelterSessionKey);
+        await storage.delete(_shelterSessionKey);
       } catch (_) {}
       return null;
     }
@@ -66,9 +66,9 @@ class ShelterPortalNotifier extends AsyncNotifier<ShelterPortalSession?> {
       final refreshed = await ref
           .read(shelterPortalRepositoryProvider)
           .refreshSession(stored);
-      await const FlutterSecureStorage().write(
-        key: _shelterSessionKey,
-        value: jsonEncode(refreshed.toJson()),
+      await ref.read(secureStorageServiceProvider).write(
+        _shelterSessionKey,
+        jsonEncode(refreshed.toJson()),
       );
       state = AsyncData(refreshed);
     } on AppException catch (error) {
@@ -77,7 +77,7 @@ class ShelterPortalNotifier extends AsyncNotifier<ShelterPortalSession?> {
           'shelter_portal: sesión inválida en server (${error.code}), '
           'cerrando sesión local.',
         );
-        await const FlutterSecureStorage().delete(key: _shelterSessionKey);
+        await ref.read(secureStorageServiceProvider).delete(_shelterSessionKey);
         state = const AsyncData(null);
       } else {
         debugPrint(
@@ -102,9 +102,9 @@ class ShelterPortalNotifier extends AsyncNotifier<ShelterPortalSession?> {
       final session = await ref
           .read(shelterPortalRepositoryProvider)
           .login(loginCode.trim(), password);
-      await const FlutterSecureStorage().write(
-        key: _shelterSessionKey,
-        value: jsonEncode(session.toJson()),
+      await ref.read(secureStorageServiceProvider).write(
+        _shelterSessionKey,
+        jsonEncode(session.toJson()),
       );
       state = AsyncData(session);
     } catch (error, stackTrace) {
@@ -115,7 +115,7 @@ class ShelterPortalNotifier extends AsyncNotifier<ShelterPortalSession?> {
 
   Future<void> logout() async {
     final current = state.value;
-    await const FlutterSecureStorage().delete(key: _shelterSessionKey);
+    await ref.read(secureStorageServiceProvider).delete(_shelterSessionKey);
     state = const AsyncData(null);
     if (current != null) {
       try {
@@ -130,9 +130,9 @@ class ShelterPortalNotifier extends AsyncNotifier<ShelterPortalSession?> {
     final updated = await ref
         .read(shelterPortalRepositoryProvider)
         .updateShelter(current, data);
-    await const FlutterSecureStorage().write(
-      key: _shelterSessionKey,
-      value: jsonEncode(updated.toJson()),
+    await ref.read(secureStorageServiceProvider).write(
+      _shelterSessionKey,
+      jsonEncode(updated.toJson()),
     );
     state = AsyncData(updated);
   }
@@ -147,9 +147,9 @@ class ShelterPortalNotifier extends AsyncNotifier<ShelterPortalSession?> {
       mimeType,
     );
     final updated = await repo.updateShelterProfileImage(current, path);
-    await const FlutterSecureStorage().write(
-      key: _shelterSessionKey,
-      value: jsonEncode(updated.toJson()),
+    await ref.read(secureStorageServiceProvider).write(
+      _shelterSessionKey,
+      jsonEncode(updated.toJson()),
     );
     state = AsyncData(updated);
   }

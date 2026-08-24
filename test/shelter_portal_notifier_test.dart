@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:woofy/core/errors/app_exception.dart';
+import 'package:woofy/core/services/secure_storage_service.dart';
 import 'package:woofy/features/dogs/data/dog_models.dart';
 import 'package:woofy/features/publisher/data/publisher_models.dart';
 import 'package:woofy/features/publisher/data/publisher_providers.dart';
@@ -146,23 +147,61 @@ void main() {
       expect(container.read(shelterPortalSessionProvider).value, isNull);
     },
   );
+
+  test('the session survives through the injected storage service', () async {
+    // El refactor a secureStorageServiceProvider existe para esto: probar el
+    // ciclo de vida de la sesión sin mockear el canal nativo del plugin.
+    final fakeStorage = _FakeSecureStorage();
+    final container = ProviderContainer(
+      overrides: [
+        secureStorageServiceProvider.overrideWithValue(fakeStorage),
+        shelterPortalRepositoryProvider.overrideWithValue(
+          _FakeRepo.logsIn(_storedSession),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await container.read(shelterPortalSessionProvider.future);
+    await container
+        .read(shelterPortalSessionProvider.notifier)
+        .login('refugio-1', 'clave');
+
+    expect(fakeStorage.values[_kSessionKey], isNotNull);
+    expect(
+      jsonDecode(fakeStorage.values[_kSessionKey]!)['session_id'],
+      'session-1',
+    );
+
+    await container.read(shelterPortalSessionProvider.notifier).logout();
+    expect(fakeStorage.values.containsKey(_kSessionKey), isFalse);
+  });
+
 }
 
 class _FakeRepo implements ShelterPortalRepository {
-  _FakeRepo._({this.refreshDelay = Duration.zero, this.refreshError});
+  _FakeRepo._({
+    this.refreshDelay = Duration.zero,
+    this.refreshError,
+    this.loginSession,
+  });
 
   factory _FakeRepo.ok({Duration refreshDelay = Duration.zero}) =>
       _FakeRepo._(refreshDelay: refreshDelay);
+
+  factory _FakeRepo.logsIn(ShelterPortalSession session) =>
+      _FakeRepo._(loginSession: session);
 
   factory _FakeRepo.throwsOnRefresh(Object error) =>
       _FakeRepo._(refreshError: error);
 
   final Duration refreshDelay;
   final Object? refreshError;
+  final ShelterPortalSession? loginSession;
 
   @override
-  Future<ShelterPortalSession> login(String loginCode, String password) =>
-      throw UnimplementedError();
+  Future<ShelterPortalSession> login(String loginCode, String password) async =>
+      loginSession ?? (throw UnimplementedError());
 
   @override
   Future<void> logout(ShelterPortalSession session) async {}
@@ -220,4 +259,26 @@ class _FakeRepo implements ShelterPortalRepository {
     ShelterPortalSession session,
     String storagePath,
   ) async => session;
+}
+
+class _FakeSecureStorage implements SecureStorageService {
+  final Map<String, String> values = {};
+
+  @override
+  Future<String?> read(String key) async => values[key];
+
+  @override
+  Future<void> write(String key, String value) async {
+    values[key] = value;
+  }
+
+  @override
+  Future<void> delete(String key) async {
+    values.remove(key);
+  }
+
+  @override
+  Future<void> deleteAll() async {
+    values.clear();
+  }
 }
