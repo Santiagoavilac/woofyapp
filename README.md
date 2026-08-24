@@ -81,7 +81,7 @@ RPC `lookup_email_by_username`.
 
 **Deep links.** `io.woofy.app://login-callback` cierra el OAuth de Google y la
 recuperación de contraseña. Que el esquema no coincida con el bundle id
-(`com.woofy.app`) es intencional: está registrado así en el AndroidManifest y en
+(`bo.com.woofy.app`) es intencional: está registrado así en el AndroidManifest y en
 las Redirect URLs de Supabase.
 
 Sign in with Apple usa la hoja nativa del sistema y solo se ofrece en iOS, que es
@@ -135,7 +135,7 @@ Fuera del repo, en las consolas:
 
 - **Supabase Auth** → Redirect URLs con `io.woofy.app://login-callback`;
   proveedores Google y Apple habilitados.
-- **Apple Developer** → capacidad Sign in with Apple en el App ID `com.woofy.app`
+- **Apple Developer** → capacidad Sign in with Apple en el App ID `bo.com.woofy.app`
   y una Key `.p8`.
 - **Edge Function `delete-account`** → secretos `APPLE_TEAM_ID`, `APPLE_KEY_ID`,
   `APPLE_CLIENT_ID` y `APPLE_PRIVATE_KEY`.

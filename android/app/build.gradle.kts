@@ -17,7 +17,7 @@ plugins {
 }
 
 android {
-    namespace = "com.woofy.app"
+    namespace = "bo.com.woofy.app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -27,7 +27,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.woofy.app"
+        applicationId = "bo.com.woofy.app"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion

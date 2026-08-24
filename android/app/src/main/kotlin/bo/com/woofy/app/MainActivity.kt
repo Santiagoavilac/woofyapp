@@ -1,4 +1,4 @@
-package com.woofy.app
+package bo.com.woofy.app
 
 import io.flutter.embedding.android.FlutterActivity
 
