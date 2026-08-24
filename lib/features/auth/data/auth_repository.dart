@@ -8,7 +8,18 @@ abstract interface class AuthRepository {
 
   Stream<AppUser?> get authStateChanges;
 
+  Stream<AuthLifecycleEvent> get authEvents;
+
   Future<void> signInWithGoogle();
+
+  /// Envía el correo de recuperación. Vuelve a la app por deep link.
+  Future<void> sendPasswordResetEmail({required String email});
+
+  /// Cambia la contraseña del usuario con sesión de recuperación activa.
+  Future<void> updatePassword({required String newPassword});
+
+  /// Reenvía el correo de confirmación de registro.
+  Future<void> resendConfirmationEmail({required String email});
 
   Future<AppUser> signInWithEmailAndPassword({
     required String email,
@@ -37,6 +48,55 @@ class SupabaseAuthRepository implements AuthRepository {
   Stream<AppUser?> get authStateChanges => _client.auth.onAuthStateChange.map(
     (state) => _mapUser(state.session?.user),
   );
+
+  @override
+  Stream<AuthLifecycleEvent> get authEvents =>
+      _client.auth.onAuthStateChange.map(
+        (state) => switch (state.event) {
+          AuthChangeEvent.passwordRecovery =>
+            AuthLifecycleEvent.passwordRecovery,
+          AuthChangeEvent.signedIn => AuthLifecycleEvent.signedIn,
+          AuthChangeEvent.signedOut => AuthLifecycleEvent.signedOut,
+          AuthChangeEvent.userUpdated => AuthLifecycleEvent.userUpdated,
+          _ => AuthLifecycleEvent.other,
+        },
+      );
+
+  @override
+  Future<void> sendPasswordResetEmail({required String email}) async {
+    try {
+      // Reusa el deep link del OAuth: ya está en las Redirect URLs de
+      // Supabase, así que el flujo no necesita configuración nueva.
+      await _client.auth.resetPasswordForEmail(
+        email.trim(),
+        redirectTo: Env.oauthMobileRedirect,
+      );
+    } catch (error, stackTrace) {
+      throw ErrorMapper.map(error, stackTrace);
+    }
+  }
+
+  @override
+  Future<void> updatePassword({required String newPassword}) async {
+    try {
+      await _client.auth.updateUser(UserAttributes(password: newPassword));
+    } catch (error, stackTrace) {
+      throw ErrorMapper.map(error, stackTrace);
+    }
+  }
+
+  @override
+  Future<void> resendConfirmationEmail({required String email}) async {
+    try {
+      await _client.auth.resend(
+        type: OtpType.signup,
+        email: email.trim(),
+        emailRedirectTo: Env.authEmailRedirectTo,
+      );
+    } catch (error, stackTrace) {
+      throw ErrorMapper.map(error, stackTrace);
+    }
+  }
 
   @override
   Future<void> signInWithGoogle() async {

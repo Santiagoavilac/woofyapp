@@ -1,4 +1,5 @@
-import 'package:flutter/foundation.dart';
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -23,6 +24,46 @@ class AuthPage extends ConsumerStatefulWidget {
 class _AuthPageState extends ConsumerState<AuthPage> {
   bool _isRegistering = false;
   String? _confirmationMessage;
+  String? _pendingConfirmationEmail;
+  Timer? _resendTimer;
+  int _resendCooldown = 0;
+
+  @override
+  void dispose() {
+    _resendTimer?.cancel();
+    super.dispose();
+  }
+
+  /// Supabase limita el reenvío a ~1 correo por minuto. Sin este contador el
+  /// botón devolvería un error de rate limit y parecería roto.
+  void _startResendCooldown() {
+    setState(() => _resendCooldown = 60);
+    _resendTimer?.cancel();
+    _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      setState(() => _resendCooldown -= 1);
+      if (_resendCooldown <= 0) timer.cancel();
+    });
+  }
+
+  Future<void> _resendConfirmation() async {
+    final email = _pendingConfirmationEmail;
+    if (email == null) return;
+    try {
+      await ref
+          .read(authControllerProvider.notifier)
+          .resendConfirmationEmail(email);
+      if (!mounted) return;
+      setState(
+        () => _confirmationMessage =
+            'Te reenviamos el correo. Revisá tu bandeja y el correo no deseado.',
+      );
+      _startResendCooldown();
+    } catch (_) {}
+  }
 
   Future<void> _login(String email, String password) async {
     try {
@@ -53,10 +94,12 @@ class _AuthPageState extends ConsumerState<AuthPage> {
           );
       if (!mounted) return;
       if (result.requiresEmailConfirmation) {
-        setState(
-          () => _confirmationMessage =
-              'Te enviamos un correo de confirmación. Abrilo y luego iniciá sesión.',
-        );
+        setState(() {
+          _confirmationMessage =
+              'Te enviamos un correo de confirmación. Abrilo y luego iniciá sesión.';
+          _pendingConfirmationEmail = input.email;
+        });
+        _startResendCooldown();
       } else {
         context.go(RoutePaths.profile);
       }
@@ -67,6 +110,9 @@ class _AuthPageState extends ConsumerState<AuthPage> {
   Widget build(BuildContext context) {
     final state = ref.watch(authControllerProvider);
     final error = state.error;
+    final googleStatus = ref.watch(googleSignInStatusProvider);
+    final isAwaitingGoogle =
+        googleStatus == GoogleSignInStatus.awaitingCallback;
 
     return BackFallbackScope(
       fallbackLocation: RoutePaths.landing,
@@ -98,6 +144,7 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                       onChanged: (value) => setState(() {
                         _isRegistering = value;
                         _confirmationMessage = null;
+                        _pendingConfirmationEmail = null;
                       }),
                     ),
                     const SizedBox(height: 20),
@@ -113,11 +160,13 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                             LoginForm(
                               isLoading: state.isLoading,
                               onSubmit: _login,
+                              onForgotPassword: () =>
+                                  context.push(RoutePaths.forgotPassword),
                             ),
                         ],
                       ),
                     ),
-                    if (defaultTargetPlatform == TargetPlatform.android) ...[
+                    ...[
                       const SizedBox(height: 20),
                       Row(
                         children: [
@@ -138,7 +187,7 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                         label: 'Continuar con Google',
                         icon: Icons.login,
                         variant: WoofyButtonVariant.secondary,
-                        isLoading: state.isLoading,
+                        isLoading: state.isLoading || isAwaitingGoogle,
                         isExpanded: true,
                         onPressed: _loginWithGoogle,
                       ),
@@ -148,6 +197,26 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                       _StatusMessage(
                         icon: Icons.mark_email_read_outlined,
                         message: _confirmationMessage!,
+                      ),
+                      if (_pendingConfirmationEmail != null)
+                        TextButton(
+                          key: const ValueKey('resend-confirmation'),
+                          onPressed: _resendCooldown > 0
+                              ? null
+                              : _resendConfirmation,
+                          child: Text(
+                            _resendCooldown > 0
+                                ? 'Reenviar en ${_resendCooldown}s'
+                                : 'Reenviar correo',
+                          ),
+                        ),
+                    ],
+                    if (googleStatus == GoogleSignInStatus.cancelled) ...[
+                      const SizedBox(height: 16),
+                      const _StatusMessage(
+                        icon: Icons.info_outline_rounded,
+                        message:
+                            'Cancelaste el ingreso con Google. Probá de nuevo.',
                       ),
                     ],
                     if (error != null) ...[

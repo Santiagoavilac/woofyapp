@@ -79,3 +79,17 @@ class RegistrationResult {
   final AppUser user;
   final bool requiresEmailConfirmation;
 }
+
+/// Eventos del ciclo de vida de la sesión, sin exponer tipos de Supabase.
+///
+/// [passwordRecovery] es el que llega cuando el usuario abre el enlace de
+/// recuperación del correo: Supabase crea una sesión válida, así que sin
+/// distinguirlo de un login normal el usuario terminaría en el perfil en vez
+/// de en la pantalla de contraseña nueva.
+enum AuthLifecycleEvent {
+  signedIn,
+  signedOut,
+  userUpdated,
+  passwordRecovery,
+  other,
+}

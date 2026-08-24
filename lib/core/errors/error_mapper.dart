@@ -23,6 +23,12 @@ abstract final class ErrorMapper {
         'email_address_invalid' => 'Ingresá un correo válido.',
         'weak_password' =>
           'La contraseña no cumple los requisitos de seguridad.',
+        'over_email_send_rate_limit' ||
+        'over_request_rate_limit' =>
+          'Esperá un momento antes de pedir otro correo.',
+        'same_password' => 'Elegí una contraseña distinta a la anterior.',
+        'otp_expired' ||
+        'flow_state_expired' => 'El enlace expiró. Pedí uno nuevo.',
         _ => 'No pudimos completar la autenticación.',
       };
       return AppException(

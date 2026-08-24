@@ -53,6 +53,18 @@ void main() {
 }
 
 class _FakeAuthRepository implements AuthRepository {
+
+  @override
+  Stream<AuthLifecycleEvent> get authEvents => const Stream.empty();
+
+  @override
+  Future<void> sendPasswordResetEmail({required String email}) async {}
+
+  @override
+  Future<void> updatePassword({required String newPassword}) async {}
+
+  @override
+  Future<void> resendConfirmationEmail({required String email}) async {}
   _FakeAuthRepository(this.user);
 
   final AppUser? user;

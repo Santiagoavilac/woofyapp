@@ -4,10 +4,16 @@ import 'package:woofy/shared/widgets/woofy_button.dart';
 import 'package:woofy/shared/widgets/woofy_text_field.dart';
 
 class LoginForm extends StatefulWidget {
-  const LoginForm({required this.isLoading, required this.onSubmit, super.key});
+  const LoginForm({
+    required this.isLoading,
+    required this.onSubmit,
+    required this.onForgotPassword,
+    super.key,
+  });
 
   final bool isLoading;
   final Future<void> Function(String email, String password) onSubmit;
+  final VoidCallback onForgotPassword;
 
   @override
   State<LoginForm> createState() => _LoginFormState();
@@ -77,6 +83,11 @@ class _LoginFormState extends State<LoginForm> {
             onPressed: _submit,
             isLoading: widget.isLoading,
             isExpanded: true,
+          ),
+          TextButton(
+            key: const ValueKey('forgot-password-link'),
+            onPressed: widget.isLoading ? null : widget.onForgotPassword,
+            child: const Text('¿Olvidaste tu contraseña?'),
           ),
         ],
       ),

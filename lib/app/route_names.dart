@@ -15,6 +15,8 @@ abstract final class RouteNames {
   static const shelterEditProfile = 'shelter-edit-profile';
   static const adopterEditProfile = 'adopter-edit-profile';
   static const deleteAccount = 'delete-account';
+  static const forgotPassword = 'forgot-password';
+  static const newPassword = 'new-password';
 }
 
 abstract final class RoutePaths {
@@ -34,6 +36,9 @@ abstract final class RoutePaths {
   static const shelterEditProfile = '/perfil/refugio/editar';
   static const adopterEditProfile = '/perfil/adoptante/editar';
   static const deleteAccount = '/perfil/eliminar-cuenta';
+  // Sin acentos ni ñ: estas rutas viajan en deep links y logs.
+  static const forgotPassword = '/auth/recuperar';
+  static const newPassword = '/auth/nueva-contrasena';
 
   static String dogDetail(String slug) =>
       '/perros/${Uri.encodeComponent(slug)}';

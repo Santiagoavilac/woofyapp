@@ -33,6 +33,51 @@ final currentProfileProvider = FutureProvider<UserProfile?>((ref) async {
   return ref.watch(profileRepositoryProvider).fetchCurrentProfile(user);
 });
 
+final authEventsProvider = StreamProvider<AuthLifecycleEvent>(
+  (ref) => ref.watch(authRepositoryProvider).authEvents,
+);
+
+/// Verdadero desde que llega el evento de recuperación hasta que el usuario
+/// guarda la contraseña nueva. El router lo usa para retenerlo en esa
+/// pantalla: al abrir el enlace del correo ya hay sesión válida, y sin esta
+/// bandera el redirect lo mandaría directo al perfil.
+final passwordRecoveryPendingProvider =
+    NotifierProvider<PasswordRecoveryNotifier, bool>(
+      PasswordRecoveryNotifier.new,
+    );
+
+class PasswordRecoveryNotifier extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  void start() => state = true;
+
+  void complete() => state = false;
+}
+
+enum GoogleSignInStatus { idle, launching, awaitingCallback, cancelled }
+
+/// Estado del login con Google, separado del [AuthController] porque su ciclo
+/// de vida no termina cuando retorna el método: sigue abierto mientras el
+/// navegador externo está en primer plano.
+final googleSignInStatusProvider =
+    NotifierProvider<GoogleSignInStatusNotifier, GoogleSignInStatus>(
+      GoogleSignInStatusNotifier.new,
+    );
+
+class GoogleSignInStatusNotifier extends Notifier<GoogleSignInStatus> {
+  @override
+  GoogleSignInStatus build() => GoogleSignInStatus.idle;
+
+  void markLaunching() => state = GoogleSignInStatus.launching;
+
+  void markAwaitingCallback() => state = GoogleSignInStatus.awaitingCallback;
+
+  void markCancelled() => state = GoogleSignInStatus.cancelled;
+
+  void reset() => state = GoogleSignInStatus.idle;
+}
+
 final authControllerProvider = AsyncNotifierProvider<AuthController, void>(
   AuthController.new,
 );
@@ -48,19 +93,7 @@ class AuthController extends AsyncNotifier<void> {
   Future<void> signIn({required String email, required String password}) async {
     state = const AsyncLoading();
     try {
-      String resolvedEmail = email.trim();
-      if (!resolvedEmail.contains('@')) {
-        final found = await ref
-            .read(profileRepositoryProvider)
-            .fetchEmailByFullName(resolvedEmail);
-        if (found == null || found.isEmpty) {
-          throw const AppException(
-            code: 'user_not_found',
-            message: 'No encontramos un usuario con ese nombre.',
-          );
-        }
-        resolvedEmail = found;
-      }
+      final resolvedEmail = await _resolveEmail(email);
       final user = await ref
           .read(authRepositoryProvider)
           .signInWithEmailAndPassword(email: resolvedEmail, password: password);
@@ -100,8 +133,71 @@ class AuthController extends AsyncNotifier<void> {
 
   Future<void> signInWithGoogle() async {
     state = const AsyncLoading();
+    final status = ref.read(googleSignInStatusProvider.notifier);
+    status.markLaunching();
     try {
       await ref.read(authRepositoryProvider).signInWithGoogle();
+      // signInWithOAuth vuelve apenas se abrió el navegador: el login real
+      // se cierra por deep link, así que a partir de acá hay que esperarlo.
+      status.markAwaitingCallback();
+      state = const AsyncData(null);
+    } catch (error, stackTrace) {
+      status.reset();
+      state = AsyncError(ErrorMapper.map(error, stackTrace), stackTrace);
+      rethrow;
+    }
+  }
+
+  /// Acepta email o nombre de usuario, igual que el formulario de ingreso.
+  Future<String> _resolveEmail(String input) async {
+    final value = input.trim();
+    if (value.contains('@')) return value;
+    final found = await ref
+        .read(profileRepositoryProvider)
+        .fetchEmailByFullName(value);
+    if (found == null || found.isEmpty) {
+      throw const AppException(
+        code: 'user_not_found',
+        message: 'No encontramos un usuario con ese nombre.',
+      );
+    }
+    return found;
+  }
+
+  Future<void> sendPasswordResetEmail(String emailOrUsername) async {
+    state = const AsyncLoading();
+    try {
+      final resolvedEmail = await _resolveEmail(emailOrUsername);
+      await ref
+          .read(authRepositoryProvider)
+          .sendPasswordResetEmail(email: resolvedEmail);
+      state = const AsyncData(null);
+    } catch (error, stackTrace) {
+      state = AsyncError(ErrorMapper.map(error, stackTrace), stackTrace);
+      rethrow;
+    }
+  }
+
+  Future<void> updatePassword(String newPassword) async {
+    state = const AsyncLoading();
+    try {
+      await ref
+          .read(authRepositoryProvider)
+          .updatePassword(newPassword: newPassword);
+      ref.read(passwordRecoveryPendingProvider.notifier).complete();
+      state = const AsyncData(null);
+    } catch (error, stackTrace) {
+      state = AsyncError(ErrorMapper.map(error, stackTrace), stackTrace);
+      rethrow;
+    }
+  }
+
+  Future<void> resendConfirmationEmail(String email) async {
+    state = const AsyncLoading();
+    try {
+      await ref
+          .read(authRepositoryProvider)
+          .resendConfirmationEmail(email: email);
       state = const AsyncData(null);
     } catch (error, stackTrace) {
       state = AsyncError(ErrorMapper.map(error, stackTrace), stackTrace);

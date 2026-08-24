@@ -29,6 +29,30 @@ class _WoofyAppState extends ConsumerState<WoofyApp>
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState lifecycleState) {
+    if (lifecycleState != AppLifecycleState.resumed) return;
+    if (ref.read(googleSignInStatusProvider) !=
+        GoogleSignInStatus.awaitingCallback) {
+      return;
+    }
+    // El deep link puede resolver unos instantes después del resume, así que
+    // damos margen antes de asumir que el usuario cerró el navegador.
+    Timer(const Duration(milliseconds: 2000), () {
+      if (!mounted) return;
+      final notifier = ref.read(googleSignInStatusProvider.notifier);
+      if (ref.read(googleSignInStatusProvider) !=
+          GoogleSignInStatus.awaitingCallback) {
+        return;
+      }
+      if (ref.read(currentUserProvider) != null) {
+        notifier.reset();
+      } else {
+        notifier.markCancelled();
+      }
+    });
+  }
+
+  @override
   Future<bool> didPopRoute() async {
     final router = ref.read(routerProvider);
     if (await router.routerDelegate.popRoute()) {
@@ -49,6 +73,7 @@ class _WoofyAppState extends ConsumerState<WoofyApp>
     ref.listen(authStateProvider, (_, next) {
       next.whenData((user) {
         if (user == null) return;
+        ref.read(googleSignInStatusProvider.notifier).reset();
         unawaited(
           ref
               .read(authControllerProvider.notifier)

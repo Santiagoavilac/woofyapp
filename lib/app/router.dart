@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:woofy/app/route_names.dart';
+import 'package:woofy/features/auth/data/auth_models.dart';
 import 'package:woofy/features/auth/presentation/auth_page.dart';
+import 'package:woofy/features/auth/presentation/forgot_password_page.dart';
+import 'package:woofy/features/auth/presentation/new_password_page.dart';
 import 'package:woofy/features/auth/presentation/profile_page.dart';
 import 'package:woofy/features/auth/providers/auth_providers.dart';
 import 'package:woofy/features/applications/presentation/application_form_page.dart';
@@ -77,6 +80,16 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const AuthPage(),
       ),
       GoRoute(
+        name: RouteNames.forgotPassword,
+        path: RoutePaths.forgotPassword,
+        builder: (context, state) => const ForgotPasswordPage(),
+      ),
+      GoRoute(
+        name: RouteNames.newPassword,
+        path: RoutePaths.newPassword,
+        builder: (context, state) => const NewPasswordPage(),
+      ),
+      GoRoute(
         name: RouteNames.favorites,
         path: RoutePaths.favorites,
         builder: (context, state) => const FavoritesPage(),
@@ -133,6 +146,15 @@ final routerProvider = Provider<GoRouter>((ref) {
       final hasSession = ref.read(authRepositoryProvider).currentUser != null;
       final hasShelter = ref.read(shelterPortalSessionProvider).value != null;
       final location = state.matchedLocation;
+
+      // Va primero: el enlace de recuperación crea una sesión válida, así que
+      // cualquier regla posterior (sobre todo /auth -> /perfil) se llevaría al
+      // usuario puertas afuera de la pantalla de contraseña nueva.
+      if (ref.read(passwordRecoveryPendingProvider) &&
+          location != RoutePaths.newPassword) {
+        return RoutePaths.newPassword;
+      }
+
       final protected =
           location == RoutePaths.favorites ||
           location == RoutePaths.messages ||
@@ -175,6 +197,13 @@ final routerProvider = Provider<GoRouter>((ref) {
 
   ref.listen(authStateProvider, (_, next) => router.refresh());
   ref.listen(shelterPortalSessionProvider, (_, _) => router.refresh());
+  ref.listen(authEventsProvider, (_, next) {
+    if (next.value == AuthLifecycleEvent.passwordRecovery) {
+      ref.read(passwordRecoveryPendingProvider.notifier).start();
+    }
+    router.refresh();
+  });
+  ref.listen(passwordRecoveryPendingProvider, (_, _) => router.refresh());
 
   ref.onDispose(router.dispose);
   return router;

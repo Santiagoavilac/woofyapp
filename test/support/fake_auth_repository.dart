@@ -9,10 +9,19 @@ class FakeAuthRepository implements AuthRepository {
   AppUser? user;
   RegistrationResult? registrationResult;
   final authChanges = StreamController<AppUser?>.broadcast();
+  final authEventChanges = StreamController<AuthLifecycleEvent>.broadcast();
   int signOutCalls = 0;
   int googleSignInCalls = 0;
+  int resetEmailCalls = 0;
+  int resendCalls = 0;
+  String? lastResetEmail;
+  String? lastResendEmail;
+  String? lastUpdatedPassword;
   Object? googleSignInError;
   Object? registrationError;
+  Object? resetEmailError;
+  Object? resendError;
+  Object? updatePasswordError;
 
   @override
   AppUser? get currentUser => user;
@@ -24,6 +33,29 @@ class FakeAuthRepository implements AuthRepository {
 
   @override
   Stream<AppUser?> get authStateChanges => authChanges.stream;
+
+  @override
+  Stream<AuthLifecycleEvent> get authEvents => authEventChanges.stream;
+
+  @override
+  Future<void> sendPasswordResetEmail({required String email}) async {
+    resetEmailCalls += 1;
+    lastResetEmail = email;
+    if (resetEmailError case final error?) throw error;
+  }
+
+  @override
+  Future<void> updatePassword({required String newPassword}) async {
+    lastUpdatedPassword = newPassword;
+    if (updatePasswordError case final error?) throw error;
+  }
+
+  @override
+  Future<void> resendConfirmationEmail({required String email}) async {
+    resendCalls += 1;
+    lastResendEmail = email;
+    if (resendError case final error?) throw error;
+  }
 
   @override
   Future<void> signInWithGoogle() async {
@@ -67,5 +99,8 @@ class FakeAuthRepository implements AuthRepository {
     setUser(null);
   }
 
-  Future<void> dispose() => authChanges.close();
+  Future<void> dispose() async {
+    await authChanges.close();
+    await authEventChanges.close();
+  }
 }

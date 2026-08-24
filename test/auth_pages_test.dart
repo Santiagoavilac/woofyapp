@@ -66,26 +66,35 @@ void main() {
 
       await tester.ensureVisible(googleButton);
       await tester.tap(googleButton);
-      await tester.pumpAndSettle();
+      // pump y no pumpAndSettle: tras delegar, el botón queda girando a la
+      // espera del deep link, así que el árbol nunca se estabiliza.
+      await tester.pump();
+      await tester.pump();
       expect(auth.googleSignInCalls, 1);
     } finally {
       debugDefaultTargetPlatformOverride = null;
     }
   });
 
-  testWidgets('Google login is hidden on iOS', (tester) async {
+  testWidgets('Google login is shown and delegates to auth on iOS', (
+    tester,
+  ) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
     final auth = FakeAuthRepository();
     addTearDown(auth.dispose);
     try {
       await _pumpRoute(tester, auth, _FakeProfileRepository(), RoutePaths.auth);
 
-      expect(find.text('Continuar con Google'), findsNothing);
+      final googleButton = find.text('Continuar con Google');
+      expect(googleButton, findsOneWidget);
 
-      await tester.tap(find.text('Crear cuenta'));
-      await tester.pumpAndSettle();
-      expect(find.text('Continuar con Google'), findsNothing);
-      expect(auth.googleSignInCalls, 0);
+      await tester.ensureVisible(googleButton);
+      await tester.tap(googleButton);
+      // pump y no pumpAndSettle: tras delegar, el botón queda girando a la
+      // espera del deep link, así que el árbol nunca se estabiliza.
+      await tester.pump();
+      await tester.pump();
+      expect(auth.googleSignInCalls, 1);
     } finally {
       debugDefaultTargetPlatformOverride = null;
     }
@@ -216,6 +225,56 @@ void main() {
       expect(find.text('Ingresar a Woofy'), findsOneWidget);
     });
   }
+
+  testWidgets('resending the confirmation waits out its cooldown', (
+    tester,
+  ) async {
+    final auth = FakeAuthRepository();
+    addTearDown(auth.dispose);
+    await _pumpRoute(tester, auth, _FakeProfileRepository(), RoutePaths.auth);
+
+    await tester.tap(find.text('Crear cuenta'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const ValueKey('register-name')), 'Ana');
+    await tester.enterText(
+      find.byKey(const ValueKey('register-email')),
+      'ana@example.com',
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey('register-password')),
+      'secreto1',
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey('register-confirm-password')),
+      'secreto1',
+    );
+    final submit = find.widgetWithText(FilledButton, 'Crear cuenta');
+    await tester.ensureVisible(submit);
+    await tester.tap(submit);
+    await tester.pump();
+
+    // El primer correo ya salió con el registro, así que arranca en espera.
+    final resend = find.byKey(const ValueKey('resend-confirmation'));
+    await tester.ensureVisible(resend);
+    expect(tester.widget<TextButton>(resend).onPressed, isNull);
+    expect(find.text('Reenviar en 60s'), findsOneWidget);
+
+    await tester.pump(const Duration(seconds: 60));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Reenviar correo'), findsOneWidget);
+    await tester.ensureVisible(resend);
+    await tester.tap(resend);
+    await tester.pump();
+
+    expect(auth.resendCalls, 1);
+    expect(auth.lastResendEmail, 'ana@example.com');
+    expect(
+      find.textContaining('Te reenviamos el correo'),
+      findsOneWidget,
+    );
+  });
+
 }
 
 Future<void> _pumpRoute(

@@ -322,6 +322,60 @@ void main() {
       expect(find.text('Conversación'), findsOneWidget);
     },
   );
+
+  testWidgets('a pending password recovery pins the user to the new password '
+      'screen', (tester) async {
+    final auth = FakeAuthRepository(
+      user: const AppUser(id: 'user-1', email: 'ana@example.com'),
+    );
+    addTearDown(auth.dispose);
+    final container = _container(auth);
+    addTearDown(container.dispose);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(container: container, child: const WoofyApp()),
+    );
+    await tester.pumpAndSettle();
+
+    final router = container.read(routerProvider);
+    container.read(passwordRecoveryPendingProvider.notifier).start();
+    await tester.pumpAndSettle();
+
+    // Aunque hay sesión válida, el perfil no debe ganarle a la recuperación.
+    router.go(RoutePaths.profile);
+    await tester.pumpAndSettle();
+    expect(
+      router.routeInformationProvider.value.uri.path,
+      RoutePaths.newPassword,
+    );
+    expect(find.text('Elegí tu contraseña nueva'), findsOneWidget);
+
+    container.read(passwordRecoveryPendingProvider.notifier).complete();
+    await tester.pumpAndSettle();
+    router.go(RoutePaths.profile);
+    await tester.pumpAndSettle();
+    expect(router.routeInformationProvider.value.uri.path, RoutePaths.profile);
+  });
+
+  testWidgets('a password recovery event raises the pending flag', (
+    tester,
+  ) async {
+    final auth = FakeAuthRepository();
+    addTearDown(auth.dispose);
+    final container = _container(auth);
+    addTearDown(container.dispose);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(container: container, child: const WoofyApp()),
+    );
+    await tester.pumpAndSettle();
+
+    expect(container.read(passwordRecoveryPendingProvider), isFalse);
+
+    auth.authEventChanges.add(AuthLifecycleEvent.passwordRecovery);
+    await tester.pumpAndSettle();
+
+    expect(container.read(passwordRecoveryPendingProvider), isTrue);
+  });
+
 }
 
 ProviderContainer _container(

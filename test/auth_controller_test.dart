@@ -144,6 +144,98 @@ void main() {
       expect(profiles.ensuredUsers, [user]);
     },
   );
+
+  test('password reset with an email sends it unchanged', () async {
+    final auth = _FakeAuthRepository(user: user);
+    final profiles = _FakeProfileRepository();
+    final container = _container(auth, profiles);
+    addTearDown(container.dispose);
+
+    await container
+        .read(authControllerProvider.notifier)
+        .sendPasswordResetEmail('  ana@example.com ');
+
+    expect(auth.lastResetEmail, 'ana@example.com');
+    expect(profiles.lookedUpNames, isEmpty);
+  });
+
+  test('password reset with a username resolves the email first', () async {
+    final auth = _FakeAuthRepository(user: user);
+    final profiles = _FakeProfileRepository()..emailByName = user.email;
+    final container = _container(auth, profiles);
+    addTearDown(container.dispose);
+
+    await container
+        .read(authControllerProvider.notifier)
+        .sendPasswordResetEmail('anaperez');
+
+    expect(profiles.lookedUpNames, ['anaperez']);
+    expect(auth.lastResetEmail, user.email);
+  });
+
+  test('password reset with an unknown username fails', () async {
+    final auth = _FakeAuthRepository(user: user);
+    final profiles = _FakeProfileRepository();
+    final container = _container(auth, profiles);
+    addTearDown(container.dispose);
+
+    await expectLater(
+      container
+          .read(authControllerProvider.notifier)
+          .sendPasswordResetEmail('fantasma'),
+      throwsA(
+        isA<AppException>().having((e) => e.code, 'code', 'user_not_found'),
+      ),
+    );
+    expect(auth.lastResetEmail, isNull);
+  });
+
+  test('updating the password clears the recovery flag', () async {
+    final auth = _FakeAuthRepository(user: user);
+    final profiles = _FakeProfileRepository();
+    final container = _container(auth, profiles);
+    addTearDown(container.dispose);
+
+    container.read(passwordRecoveryPendingProvider.notifier).start();
+    expect(container.read(passwordRecoveryPendingProvider), isTrue);
+
+    await container
+        .read(authControllerProvider.notifier)
+        .updatePassword('nuevaclave');
+
+    expect(auth.lastUpdatedPassword, 'nuevaclave');
+    expect(container.read(passwordRecoveryPendingProvider), isFalse);
+  });
+
+  test('resending the confirmation delegates to the repository', () async {
+    final auth = _FakeAuthRepository(user: user);
+    final profiles = _FakeProfileRepository();
+    final container = _container(auth, profiles);
+    addTearDown(container.dispose);
+
+    await container
+        .read(authControllerProvider.notifier)
+        .resendConfirmationEmail(user.email);
+
+    expect(auth.lastResendEmail, user.email);
+  });
+
+  test('google sign-in leaves the status awaiting the deep link', () async {
+    final auth = _FakeAuthRepository(user: user);
+    final profiles = _FakeProfileRepository();
+    final container = _container(auth, profiles);
+    addTearDown(container.dispose);
+
+    expect(container.read(googleSignInStatusProvider), GoogleSignInStatus.idle);
+
+    await container.read(authControllerProvider.notifier).signInWithGoogle();
+
+    expect(
+      container.read(googleSignInStatusProvider),
+      GoogleSignInStatus.awaitingCallback,
+    );
+  });
+
 }
 
 ProviderContainer _container(AuthRepository auth, ProfileRepository profiles) {
@@ -156,6 +248,28 @@ ProviderContainer _container(AuthRepository auth, ProfileRepository profiles) {
 }
 
 class _FakeAuthRepository implements AuthRepository {
+
+  String? lastResetEmail;
+  String? lastUpdatedPassword;
+  String? lastResendEmail;
+
+  @override
+  Stream<AuthLifecycleEvent> get authEvents => const Stream.empty();
+
+  @override
+  Future<void> sendPasswordResetEmail({required String email}) async {
+    lastResetEmail = email;
+  }
+
+  @override
+  Future<void> updatePassword({required String newPassword}) async {
+    lastUpdatedPassword = newPassword;
+  }
+
+  @override
+  Future<void> resendConfirmationEmail({required String email}) async {
+    lastResendEmail = email;
+  }
   _FakeAuthRepository({
     required this.user,
     this.registrationResult,
@@ -212,8 +326,14 @@ class _FakeProfileRepository implements ProfileRepository {
   @override
   Future<UserProfile?> fetchCurrentProfile(AppUser user) async => null;
 
+  String? emailByName;
+  final List<String> lookedUpNames = [];
+
   @override
-  Future<String?> fetchEmailByFullName(String name) async => null;
+  Future<String?> fetchEmailByFullName(String name) async {
+    lookedUpNames.add(name);
+    return emailByName;
+  }
 
   @override
   Future<UserProfile> updateProfile({
