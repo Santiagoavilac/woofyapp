@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mi_app/features/auth/data/auth_models.dart';
+import 'package:woofy/features/auth/data/auth_models.dart';
 
 void main() {
   test('AppUser uses Google name when full_name is absent', () {

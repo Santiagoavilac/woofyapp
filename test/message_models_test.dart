@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mi_app/features/messages/data/message_models.dart';
+import 'package:woofy/features/messages/data/message_models.dart';
 
 void main() {
   test('ConversationThread parses real columns and optional relations', () {

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mi_app/shared/widgets/woofy_button.dart';
+import 'package:woofy/shared/widgets/woofy_button.dart';
 
 class WoofyEmptyState extends StatelessWidget {
   const WoofyEmptyState({

@@ -4,12 +4,12 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:mi_app/core/errors/app_exception.dart';
-import 'package:mi_app/core/services/supabase_service.dart';
-import 'package:mi_app/features/auth/providers/auth_providers.dart';
-import 'package:mi_app/features/dogs/data/dog_models.dart';
-import 'package:mi_app/features/publisher/data/publisher_models.dart';
-import 'package:mi_app/features/publisher/data/publisher_repository.dart';
+import 'package:woofy/core/errors/app_exception.dart';
+import 'package:woofy/core/services/supabase_service.dart';
+import 'package:woofy/features/auth/providers/auth_providers.dart';
+import 'package:woofy/features/dogs/data/dog_models.dart';
+import 'package:woofy/features/publisher/data/publisher_models.dart';
+import 'package:woofy/features/publisher/data/publisher_repository.dart';
 
 // ── Legacy adopter publisher (still used for shelter-member detection) ──────
 

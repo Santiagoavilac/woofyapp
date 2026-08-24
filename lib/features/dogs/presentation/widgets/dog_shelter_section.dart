@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:mi_app/features/dogs/data/dog_models.dart';
-import 'package:mi_app/shared/widgets/woofy_card.dart';
+import 'package:woofy/features/dogs/data/dog_models.dart';
+import 'package:woofy/shared/widgets/woofy_card.dart';
 
 class DogShelterSection extends StatelessWidget {
   const DogShelterSection({required this.shelter, super.key});

@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mi_app/core/services/supabase_service.dart';
-import 'package:mi_app/features/auth/providers/auth_providers.dart';
-import 'package:mi_app/features/messages/data/message_models.dart';
-import 'package:mi_app/features/messages/data/messages_repository.dart';
+import 'package:woofy/core/services/supabase_service.dart';
+import 'package:woofy/features/auth/providers/auth_providers.dart';
+import 'package:woofy/features/messages/data/message_models.dart';
+import 'package:woofy/features/messages/data/messages_repository.dart';
 
 final messagesRepositoryProvider = Provider<MessagesRepository>(
   (ref) => SupabaseMessagesRepository(ref.watch(supabaseClientProvider)),

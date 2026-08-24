@@ -1,9 +1,9 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:mi_app/core/theme/woofy_spacing.dart';
-import 'package:mi_app/features/dogs/data/dog_models.dart';
-import 'package:mi_app/features/dogs/presentation/widgets/dog_info_chip.dart';
-import 'package:mi_app/shared/widgets/woofy_card.dart';
+import 'package:woofy/core/theme/woofy_spacing.dart';
+import 'package:woofy/features/dogs/data/dog_models.dart';
+import 'package:woofy/features/dogs/presentation/widgets/dog_info_chip.dart';
+import 'package:woofy/shared/widgets/woofy_card.dart';
 
 /// Editorial adoption card: a large photo takes the lead, an info panel below
 /// keeps name, location and quick facts scannable in a couple of seconds.

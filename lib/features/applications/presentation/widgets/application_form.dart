@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:mi_app/features/applications/data/application_models.dart';
-import 'package:mi_app/shared/widgets/woofy_button.dart';
-import 'package:mi_app/shared/widgets/woofy_text_field.dart';
+import 'package:woofy/features/applications/data/application_models.dart';
+import 'package:woofy/shared/widgets/woofy_button.dart';
+import 'package:woofy/shared/widgets/woofy_text_field.dart';
 
 class ApplicationForm extends StatefulWidget {
   const ApplicationForm({

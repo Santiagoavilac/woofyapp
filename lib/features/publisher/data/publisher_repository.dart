@@ -2,11 +2,11 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
-import 'package:mi_app/core/config/env.dart';
-import 'package:mi_app/core/errors/app_exception.dart';
-import 'package:mi_app/core/errors/error_mapper.dart';
-import 'package:mi_app/features/dogs/data/dog_models.dart';
-import 'package:mi_app/features/publisher/data/publisher_models.dart';
+import 'package:woofy/core/config/env.dart';
+import 'package:woofy/core/errors/app_exception.dart';
+import 'package:woofy/core/errors/error_mapper.dart';
+import 'package:woofy/features/dogs/data/dog_models.dart';
+import 'package:woofy/features/publisher/data/publisher_models.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 abstract interface class PublisherRepository {

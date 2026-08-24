@@ -3,11 +3,11 @@ import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mi_app/core/errors/app_exception.dart';
-import 'package:mi_app/features/dogs/data/dog_models.dart';
-import 'package:mi_app/features/publisher/data/publisher_models.dart';
-import 'package:mi_app/features/publisher/data/publisher_providers.dart';
-import 'package:mi_app/features/publisher/data/publisher_repository.dart';
+import 'package:woofy/core/errors/app_exception.dart';
+import 'package:woofy/features/dogs/data/dog_models.dart';
+import 'package:woofy/features/publisher/data/publisher_models.dart';
+import 'package:woofy/features/publisher/data/publisher_providers.dart';
+import 'package:woofy/features/publisher/data/publisher_repository.dart';
 
 const _kSecureChannel = MethodChannel(
   'plugins.it_nomads.com/flutter_secure_storage',

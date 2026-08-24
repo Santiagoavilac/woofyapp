@@ -3,18 +3,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:mi_app/app/route_names.dart';
-import 'package:mi_app/core/theme/woofy_spacing.dart';
-import 'package:mi_app/features/dogs/data/dog_models.dart';
-import 'package:mi_app/features/dogs/data/dog_repository_provider.dart';
-import 'package:mi_app/features/dogs/presentation/widgets/dog_card.dart';
-import 'package:mi_app/shared/widgets/woofy_app_bar.dart';
-import 'package:mi_app/shared/widgets/woofy_empty_state.dart';
-import 'package:mi_app/shared/widgets/woofy_error.dart';
-import 'package:mi_app/shared/widgets/woofy_filter_chips.dart';
-import 'package:mi_app/shared/widgets/woofy_loading.dart';
-import 'package:mi_app/shared/widgets/woofy_search_field.dart';
-import 'package:mi_app/features/favorites/presentation/widgets/favorite_toggle_button.dart';
+import 'package:woofy/app/route_names.dart';
+import 'package:woofy/core/theme/woofy_spacing.dart';
+import 'package:woofy/features/dogs/data/dog_models.dart';
+import 'package:woofy/features/dogs/data/dog_repository_provider.dart';
+import 'package:woofy/features/dogs/presentation/widgets/dog_card.dart';
+import 'package:woofy/shared/widgets/woofy_app_bar.dart';
+import 'package:woofy/shared/widgets/woofy_empty_state.dart';
+import 'package:woofy/shared/widgets/woofy_error.dart';
+import 'package:woofy/shared/widgets/woofy_filter_chips.dart';
+import 'package:woofy/shared/widgets/woofy_loading.dart';
+import 'package:woofy/shared/widgets/woofy_search_field.dart';
+import 'package:woofy/features/favorites/presentation/widgets/favorite_toggle_button.dart';
 
 /// The adoption catalog: browse every published animal with a live text
 /// search and client-side filters (size / sex) over data already loaded.

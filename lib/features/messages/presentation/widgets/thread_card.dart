@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:mi_app/features/messages/data/message_models.dart';
-import 'package:mi_app/shared/widgets/woofy_card.dart';
+import 'package:woofy/features/messages/data/message_models.dart';
+import 'package:woofy/shared/widgets/woofy_card.dart';
 
 class ThreadCard extends StatelessWidget {
   const ThreadCard({required this.thread, required this.onTap, super.key});

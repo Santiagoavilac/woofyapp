@@ -1,5 +1,5 @@
-import 'package:mi_app/core/errors/error_mapper.dart';
-import 'package:mi_app/features/auth/data/auth_models.dart';
+import 'package:woofy/core/errors/error_mapper.dart';
+import 'package:woofy/features/auth/data/auth_models.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 abstract interface class AccountDeletionRepository {

@@ -1,15 +1,15 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mi_app/app/app.dart';
-import 'package:mi_app/app/route_names.dart';
-import 'package:mi_app/app/router.dart';
-import 'package:mi_app/features/auth/data/auth_models.dart';
-import 'package:mi_app/features/auth/data/profile_repository.dart';
-import 'package:mi_app/features/auth/providers/auth_providers.dart';
-import 'package:mi_app/features/dogs/data/dog_models.dart';
-import 'package:mi_app/features/publisher/data/publisher_models.dart';
-import 'package:mi_app/features/publisher/data/publisher_providers.dart';
-import 'package:mi_app/features/publisher/data/publisher_repository.dart';
+import 'package:woofy/app/app.dart';
+import 'package:woofy/app/route_names.dart';
+import 'package:woofy/app/router.dart';
+import 'package:woofy/features/auth/data/auth_models.dart';
+import 'package:woofy/features/auth/data/profile_repository.dart';
+import 'package:woofy/features/auth/providers/auth_providers.dart';
+import 'package:woofy/features/dogs/data/dog_models.dart';
+import 'package:woofy/features/publisher/data/publisher_models.dart';
+import 'package:woofy/features/publisher/data/publisher_providers.dart';
+import 'package:woofy/features/publisher/data/publisher_repository.dart';
 
 import 'support/fake_auth_repository.dart';
 

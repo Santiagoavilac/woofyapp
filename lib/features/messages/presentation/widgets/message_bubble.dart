@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mi_app/features/messages/data/message_models.dart';
+import 'package:woofy/features/messages/data/message_models.dart';
 
 class MessageBubble extends StatelessWidget {
   const MessageBubble({required this.message, required this.isMine, super.key});

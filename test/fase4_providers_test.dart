@@ -2,14 +2,14 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mi_app/features/applications/data/application_models.dart';
-import 'package:mi_app/features/applications/data/applications_providers.dart';
-import 'package:mi_app/features/applications/data/applications_repository.dart';
-import 'package:mi_app/features/auth/data/auth_models.dart';
-import 'package:mi_app/features/auth/providers/auth_providers.dart';
-import 'package:mi_app/features/dogs/data/dog_models.dart';
-import 'package:mi_app/features/favorites/data/favorites_providers.dart';
-import 'package:mi_app/features/favorites/data/favorites_repository.dart';
+import 'package:woofy/features/applications/data/application_models.dart';
+import 'package:woofy/features/applications/data/applications_providers.dart';
+import 'package:woofy/features/applications/data/applications_repository.dart';
+import 'package:woofy/features/auth/data/auth_models.dart';
+import 'package:woofy/features/auth/providers/auth_providers.dart';
+import 'package:woofy/features/dogs/data/dog_models.dart';
+import 'package:woofy/features/favorites/data/favorites_providers.dart';
+import 'package:woofy/features/favorites/data/favorites_repository.dart';
 
 void main() {
   const user = AppUser(id: 'user-1', email: 'adopter@example.com');

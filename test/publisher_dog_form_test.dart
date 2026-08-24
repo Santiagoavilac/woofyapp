@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mi_app/features/publisher/data/publisher_models.dart';
+import 'package:woofy/features/publisher/data/publisher_models.dart';
 
 void main() {
   group('DogFormData.toPortalJson', () {

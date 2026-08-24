@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mi_app/core/services/supabase_service.dart';
-import 'package:mi_app/features/auth/providers/auth_providers.dart';
-import 'package:mi_app/features/dogs/data/dog_models.dart';
-import 'package:mi_app/features/favorites/data/favorites_repository.dart';
+import 'package:woofy/core/services/supabase_service.dart';
+import 'package:woofy/features/auth/providers/auth_providers.dart';
+import 'package:woofy/features/dogs/data/dog_models.dart';
+import 'package:woofy/features/favorites/data/favorites_repository.dart';
 
 final favoritesRepositoryProvider = Provider<FavoritesRepository>(
   (ref) => SupabaseFavoritesRepository(ref.watch(supabaseClientProvider)),

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:mi_app/core/errors/app_exception.dart';
-import 'package:mi_app/features/messages/data/messages_repository.dart';
-import 'package:mi_app/shared/widgets/woofy_button.dart';
-import 'package:mi_app/shared/widgets/woofy_text_field.dart';
+import 'package:woofy/core/errors/app_exception.dart';
+import 'package:woofy/features/messages/data/messages_repository.dart';
+import 'package:woofy/shared/widgets/woofy_button.dart';
+import 'package:woofy/shared/widgets/woofy_text_field.dart';
 
 class MessageInput extends StatefulWidget {
   const MessageInput({

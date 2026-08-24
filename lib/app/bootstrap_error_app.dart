@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:mi_app/core/errors/app_exception.dart';
-import 'package:mi_app/core/theme/woofy_theme.dart';
-import 'package:mi_app/shared/widgets/woofy_error.dart';
+import 'package:woofy/core/errors/app_exception.dart';
+import 'package:woofy/core/theme/woofy_theme.dart';
+import 'package:woofy/shared/widgets/woofy_error.dart';
 
 class BootstrapErrorApp extends StatelessWidget {
   const BootstrapErrorApp({required this.exception, super.key});

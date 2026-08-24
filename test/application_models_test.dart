@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mi_app/features/applications/data/application_models.dart';
+import 'package:woofy/features/applications/data/application_models.dart';
 
 void main() {
   test('application parses every real status', () {

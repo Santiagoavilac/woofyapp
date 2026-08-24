@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:mi_app/app/route_names.dart';
-import 'package:mi_app/core/errors/app_exception.dart';
-import 'package:mi_app/features/auth/providers/auth_providers.dart';
-import 'package:mi_app/features/favorites/data/favorites_providers.dart';
+import 'package:woofy/app/route_names.dart';
+import 'package:woofy/core/errors/app_exception.dart';
+import 'package:woofy/features/auth/providers/auth_providers.dart';
+import 'package:woofy/features/favorites/data/favorites_providers.dart';
 
 class FavoriteToggleButton extends ConsumerWidget {
   const FavoriteToggleButton({required this.dogId, super.key});

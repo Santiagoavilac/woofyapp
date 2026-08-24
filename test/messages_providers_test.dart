@@ -1,11 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mi_app/features/auth/data/auth_models.dart';
-import 'package:mi_app/features/auth/data/auth_repository.dart';
-import 'package:mi_app/features/auth/providers/auth_providers.dart';
-import 'package:mi_app/features/messages/data/message_models.dart';
-import 'package:mi_app/features/messages/data/messages_providers.dart';
-import 'package:mi_app/features/messages/data/messages_repository.dart';
+import 'package:woofy/features/auth/data/auth_models.dart';
+import 'package:woofy/features/auth/data/auth_repository.dart';
+import 'package:woofy/features/auth/providers/auth_providers.dart';
+import 'package:woofy/features/messages/data/message_models.dart';
+import 'package:woofy/features/messages/data/messages_providers.dart';
+import 'package:woofy/features/messages/data/messages_repository.dart';
 
 void main() {
   const user = AppUser(id: 'user-1', email: 'ana@example.com');

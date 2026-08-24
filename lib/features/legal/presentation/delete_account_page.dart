@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mi_app/app/back_fallback_scope.dart';
-import 'package:mi_app/app/route_names.dart';
-import 'package:mi_app/core/errors/app_exception.dart';
-import 'package:mi_app/features/auth/providers/auth_providers.dart';
-import 'package:mi_app/features/legal/data/legal_links.dart';
-import 'package:mi_app/features/legal/providers/legal_providers.dart';
-import 'package:mi_app/shared/widgets/woofy_app_bar.dart';
-import 'package:mi_app/shared/widgets/woofy_button.dart';
-import 'package:mi_app/shared/widgets/woofy_card.dart';
+import 'package:woofy/app/back_fallback_scope.dart';
+import 'package:woofy/app/route_names.dart';
+import 'package:woofy/core/errors/app_exception.dart';
+import 'package:woofy/features/auth/providers/auth_providers.dart';
+import 'package:woofy/features/legal/data/legal_links.dart';
+import 'package:woofy/features/legal/providers/legal_providers.dart';
+import 'package:woofy/shared/widgets/woofy_app_bar.dart';
+import 'package:woofy/shared/widgets/woofy_button.dart';
+import 'package:woofy/shared/widgets/woofy_card.dart';
 
 class DeleteAccountPage extends ConsumerStatefulWidget {
   const DeleteAccountPage({super.key});

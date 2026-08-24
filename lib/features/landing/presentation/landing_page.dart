@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:mi_app/app/route_names.dart';
-import 'package:mi_app/core/theme/woofy_colors.dart';
-import 'package:mi_app/core/theme/woofy_radius.dart';
-import 'package:mi_app/core/theme/woofy_spacing.dart';
-import 'package:mi_app/features/auth/providers/auth_providers.dart';
-import 'package:mi_app/features/dogs/data/dog_models.dart';
-import 'package:mi_app/features/dogs/data/dog_repository_provider.dart';
-import 'package:mi_app/features/landing/presentation/widgets/landing_shelter_card.dart';
-import 'package:mi_app/features/landing/presentation/widgets/recent_dog_preview_card.dart';
-import 'package:mi_app/features/publisher/data/publisher_providers.dart';
-import 'package:mi_app/shared/widgets/woofy_button.dart';
-import 'package:mi_app/shared/widgets/woofy_search_field.dart';
-import 'package:mi_app/shared/widgets/woofy_section_header.dart';
+import 'package:woofy/app/route_names.dart';
+import 'package:woofy/core/theme/woofy_colors.dart';
+import 'package:woofy/core/theme/woofy_radius.dart';
+import 'package:woofy/core/theme/woofy_spacing.dart';
+import 'package:woofy/features/auth/providers/auth_providers.dart';
+import 'package:woofy/features/dogs/data/dog_models.dart';
+import 'package:woofy/features/dogs/data/dog_repository_provider.dart';
+import 'package:woofy/features/landing/presentation/widgets/landing_shelter_card.dart';
+import 'package:woofy/features/landing/presentation/widgets/recent_dog_preview_card.dart';
+import 'package:woofy/features/publisher/data/publisher_providers.dart';
+import 'package:woofy/shared/widgets/woofy_button.dart';
+import 'package:woofy/shared/widgets/woofy_search_field.dart';
+import 'package:woofy/shared/widgets/woofy_section_header.dart';
 
 class LandingPage extends ConsumerStatefulWidget {
   const LandingPage({super.key});

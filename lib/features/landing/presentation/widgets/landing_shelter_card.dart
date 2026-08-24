@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:mi_app/core/theme/woofy_colors.dart';
-import 'package:mi_app/core/theme/woofy_radius.dart';
-import 'package:mi_app/core/theme/woofy_spacing.dart';
+import 'package:woofy/core/theme/woofy_colors.dart';
+import 'package:woofy/core/theme/woofy_radius.dart';
+import 'package:woofy/core/theme/woofy_spacing.dart';
 
 class LandingShelterCard extends StatelessWidget {
   const LandingShelterCard({

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mi_app/features/favorites/data/favorite_models.dart';
+import 'package:woofy/features/favorites/data/favorite_models.dart';
 
 void main() {
   test('Favorite.fromJson parses the real favorites columns', () {

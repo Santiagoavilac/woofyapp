@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mi_app/core/errors/app_exception.dart';
-import 'package:mi_app/features/applications/data/application_models.dart';
-import 'package:mi_app/features/applications/data/applications_repository.dart';
-import 'package:mi_app/features/dogs/data/dog_models.dart';
+import 'package:woofy/core/errors/app_exception.dart';
+import 'package:woofy/features/applications/data/application_models.dart';
+import 'package:woofy/features/applications/data/applications_repository.dart';
+import 'package:woofy/features/dogs/data/dog_models.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() {

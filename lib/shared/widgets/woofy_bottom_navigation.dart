@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:mi_app/core/theme/woofy_colors.dart';
-import 'package:mi_app/core/theme/woofy_radius.dart';
-import 'package:mi_app/core/theme/woofy_shadows.dart';
+import 'package:woofy/core/theme/woofy_colors.dart';
+import 'package:woofy/core/theme/woofy_radius.dart';
+import 'package:woofy/core/theme/woofy_shadows.dart';
 
 /// The three primary destinations. Order matches the shell branch order.
 enum WoofyTab { home, explore, profile }

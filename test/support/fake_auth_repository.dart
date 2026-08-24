@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:mi_app/features/auth/data/auth_models.dart';
-import 'package:mi_app/features/auth/data/auth_repository.dart';
+import 'package:woofy/features/auth/data/auth_models.dart';
+import 'package:woofy/features/auth/data/auth_repository.dart';
 
 class FakeAuthRepository implements AuthRepository {
   FakeAuthRepository({this.user});

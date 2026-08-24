@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:mi_app/app/back_fallback_scope.dart';
-import 'package:mi_app/app/route_names.dart';
-import 'package:mi_app/core/errors/app_exception.dart';
-import 'package:mi_app/features/applications/data/application_models.dart';
-import 'package:mi_app/features/applications/data/applications_providers.dart';
-import 'package:mi_app/features/applications/presentation/widgets/application_form.dart';
-import 'package:mi_app/features/applications/presentation/widgets/application_status_card.dart';
-import 'package:mi_app/features/auth/providers/auth_providers.dart';
-import 'package:mi_app/features/dogs/data/dog_models.dart';
-import 'package:mi_app/features/dogs/data/dog_repository_provider.dart';
-import 'package:mi_app/shared/widgets/woofy_app_bar.dart';
-import 'package:mi_app/shared/widgets/woofy_button.dart';
-import 'package:mi_app/shared/widgets/woofy_empty_state.dart';
-import 'package:mi_app/shared/widgets/woofy_error.dart';
-import 'package:mi_app/shared/widgets/woofy_loading.dart';
+import 'package:woofy/app/back_fallback_scope.dart';
+import 'package:woofy/app/route_names.dart';
+import 'package:woofy/core/errors/app_exception.dart';
+import 'package:woofy/features/applications/data/application_models.dart';
+import 'package:woofy/features/applications/data/applications_providers.dart';
+import 'package:woofy/features/applications/presentation/widgets/application_form.dart';
+import 'package:woofy/features/applications/presentation/widgets/application_status_card.dart';
+import 'package:woofy/features/auth/providers/auth_providers.dart';
+import 'package:woofy/features/dogs/data/dog_models.dart';
+import 'package:woofy/features/dogs/data/dog_repository_provider.dart';
+import 'package:woofy/shared/widgets/woofy_app_bar.dart';
+import 'package:woofy/shared/widgets/woofy_button.dart';
+import 'package:woofy/shared/widgets/woofy_empty_state.dart';
+import 'package:woofy/shared/widgets/woofy_error.dart';
+import 'package:woofy/shared/widgets/woofy_loading.dart';
 
 class ApplicationFormPage extends ConsumerWidget {
   const ApplicationFormPage({required this.slug, super.key});

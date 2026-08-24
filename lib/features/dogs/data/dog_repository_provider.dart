@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mi_app/core/services/supabase_service.dart';
-import 'package:mi_app/features/dogs/data/dog_models.dart';
-import 'package:mi_app/features/dogs/data/dog_repository.dart';
+import 'package:woofy/core/services/supabase_service.dart';
+import 'package:woofy/features/dogs/data/dog_models.dart';
+import 'package:woofy/features/dogs/data/dog_repository.dart';
 
 final dogRepositoryProvider = Provider<DogRepository>(
   (ref) => SupabaseDogRepository(ref.watch(supabaseClientProvider)),

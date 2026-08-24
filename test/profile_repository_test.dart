@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mi_app/features/auth/data/auth_models.dart';
-import 'package:mi_app/features/auth/data/profile_repository.dart';
+import 'package:woofy/features/auth/data/auth_models.dart';
+import 'package:woofy/features/auth/data/profile_repository.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() {

@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mi_app/features/auth/data/auth_models.dart';
-import 'package:mi_app/features/legal/data/account_deletion_repository.dart';
+import 'package:woofy/features/auth/data/auth_models.dart';
+import 'package:woofy/features/legal/data/account_deletion_repository.dart';
 
 void main() {
   const user = AppUser(id: 'user-1', email: 'ana@example.com');

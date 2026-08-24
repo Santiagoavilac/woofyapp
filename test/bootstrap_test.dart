@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mi_app/app/bootstrap_error_app.dart';
-import 'package:mi_app/core/config/env.dart';
-import 'package:mi_app/core/errors/error_mapper.dart';
+import 'package:woofy/app/bootstrap_error_app.dart';
+import 'package:woofy/core/config/env.dart';
+import 'package:woofy/core/errors/error_mapper.dart';
 
 void main() {
   group('Env', () {

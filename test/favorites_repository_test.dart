@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mi_app/core/errors/app_exception.dart';
-import 'package:mi_app/features/favorites/data/favorites_repository.dart';
+import 'package:woofy/core/errors/app_exception.dart';
+import 'package:woofy/features/favorites/data/favorites_repository.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() {

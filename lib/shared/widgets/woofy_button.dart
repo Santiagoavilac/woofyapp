@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mi_app/core/theme/woofy_colors.dart';
+import 'package:woofy/core/theme/woofy_colors.dart';
 
 enum WoofyButtonVariant { primary, secondary }
 

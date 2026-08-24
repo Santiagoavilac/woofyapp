@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:mi_app/core/theme/woofy_radius.dart';
-import 'package:mi_app/core/theme/woofy_spacing.dart';
+import 'package:woofy/core/theme/woofy_radius.dart';
+import 'package:woofy/core/theme/woofy_spacing.dart';
 
 /// A soft pulsing placeholder box used while content loads.
 class WoofySkeleton extends StatefulWidget {

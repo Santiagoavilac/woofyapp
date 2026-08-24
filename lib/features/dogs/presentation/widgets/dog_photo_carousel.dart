@@ -1,7 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:mi_app/features/dogs/data/dog_models.dart';
-import 'package:mi_app/features/dogs/presentation/widgets/dog_card.dart';
+import 'package:woofy/features/dogs/data/dog_models.dart';
+import 'package:woofy/features/dogs/presentation/widgets/dog_card.dart';
 
 class DogPhotoCarousel extends StatelessWidget {
   const DogPhotoCarousel({required this.photos, super.key});

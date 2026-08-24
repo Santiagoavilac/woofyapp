@@ -1,12 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mi_app/core/errors/app_exception.dart';
-import 'package:mi_app/core/errors/error_mapper.dart';
-import 'package:mi_app/core/services/supabase_service.dart';
-import 'package:mi_app/features/auth/data/auth_models.dart';
-import 'package:mi_app/features/auth/data/auth_repository.dart';
-import 'package:mi_app/features/auth/data/profile_repository.dart';
+import 'package:woofy/core/errors/app_exception.dart';
+import 'package:woofy/core/errors/error_mapper.dart';
+import 'package:woofy/core/services/supabase_service.dart';
+import 'package:woofy/features/auth/data/auth_models.dart';
+import 'package:woofy/features/auth/data/auth_repository.dart';
+import 'package:woofy/features/auth/data/profile_repository.dart';
 
 final authRepositoryProvider = Provider<AuthRepository>(
   (ref) => SupabaseAuthRepository(ref.watch(supabaseClientProvider)),

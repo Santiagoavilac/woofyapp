@@ -1,9 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mi_app/core/services/supabase_service.dart';
-import 'package:mi_app/features/applications/data/application_models.dart';
-import 'package:mi_app/features/applications/data/applications_repository.dart';
-import 'package:mi_app/features/auth/providers/auth_providers.dart';
-import 'package:mi_app/features/dogs/data/dog_models.dart';
+import 'package:woofy/core/services/supabase_service.dart';
+import 'package:woofy/features/applications/data/application_models.dart';
+import 'package:woofy/features/applications/data/applications_repository.dart';
+import 'package:woofy/features/auth/providers/auth_providers.dart';
+import 'package:woofy/features/dogs/data/dog_models.dart';
 
 final applicationsRepositoryProvider = Provider<ApplicationsRepository>(
   (ref) => SupabaseApplicationsRepository(ref.watch(supabaseClientProvider)),

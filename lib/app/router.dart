@@ -1,26 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:mi_app/app/route_names.dart';
-import 'package:mi_app/features/auth/presentation/auth_page.dart';
-import 'package:mi_app/features/auth/presentation/profile_page.dart';
-import 'package:mi_app/features/auth/providers/auth_providers.dart';
-import 'package:mi_app/features/applications/presentation/application_form_page.dart';
-import 'package:mi_app/features/dogs/presentation/dog_detail_page.dart';
-import 'package:mi_app/features/dogs/presentation/dogs_page.dart';
-import 'package:mi_app/features/landing/presentation/landing_page.dart';
-import 'package:mi_app/features/favorites/presentation/favorites_page.dart';
-import 'package:mi_app/features/messages/presentation/conversation_page.dart';
-import 'package:mi_app/features/messages/presentation/messages_page.dart';
-import 'package:mi_app/features/publisher/data/publisher_providers.dart';
-import 'package:mi_app/features/auth/presentation/adopter_edit_profile_page.dart';
-import 'package:mi_app/features/legal/presentation/delete_account_page.dart';
-import 'package:mi_app/features/publisher/presentation/publisher_dog_form_page.dart';
-import 'package:mi_app/features/publisher/presentation/publisher_page.dart';
-import 'package:mi_app/features/publisher/presentation/shelter_edit_profile_page.dart';
-import 'package:mi_app/features/publisher/presentation/shelter_login_page.dart';
-import 'package:mi_app/shared/widgets/woofy_bottom_navigation.dart';
-import 'package:mi_app/shared/widgets/woofy_error.dart';
+import 'package:woofy/app/route_names.dart';
+import 'package:woofy/features/auth/presentation/auth_page.dart';
+import 'package:woofy/features/auth/presentation/profile_page.dart';
+import 'package:woofy/features/auth/providers/auth_providers.dart';
+import 'package:woofy/features/applications/presentation/application_form_page.dart';
+import 'package:woofy/features/dogs/presentation/dog_detail_page.dart';
+import 'package:woofy/features/dogs/presentation/dogs_page.dart';
+import 'package:woofy/features/landing/presentation/landing_page.dart';
+import 'package:woofy/features/favorites/presentation/favorites_page.dart';
+import 'package:woofy/features/messages/presentation/conversation_page.dart';
+import 'package:woofy/features/messages/presentation/messages_page.dart';
+import 'package:woofy/features/publisher/data/publisher_providers.dart';
+import 'package:woofy/features/auth/presentation/adopter_edit_profile_page.dart';
+import 'package:woofy/features/legal/presentation/delete_account_page.dart';
+import 'package:woofy/features/publisher/presentation/publisher_dog_form_page.dart';
+import 'package:woofy/features/publisher/presentation/publisher_page.dart';
+import 'package:woofy/features/publisher/presentation/shelter_edit_profile_page.dart';
+import 'package:woofy/features/publisher/presentation/shelter_login_page.dart';
+import 'package:woofy/shared/widgets/woofy_bottom_navigation.dart';
+import 'package:woofy/shared/widgets/woofy_error.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final router = GoRouter(

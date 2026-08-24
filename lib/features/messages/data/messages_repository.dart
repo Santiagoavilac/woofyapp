@@ -1,5 +1,5 @@
-import 'package:mi_app/core/errors/app_exception.dart';
-import 'package:mi_app/features/messages/data/message_models.dart';
+import 'package:woofy/core/errors/app_exception.dart';
+import 'package:woofy/features/messages/data/message_models.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 abstract interface class MessagesRepository {

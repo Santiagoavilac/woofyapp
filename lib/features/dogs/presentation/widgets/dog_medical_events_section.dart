@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:mi_app/core/utils/date_formatters.dart';
-import 'package:mi_app/features/dogs/data/dog_models.dart';
-import 'package:mi_app/shared/widgets/woofy_card.dart';
+import 'package:woofy/core/utils/date_formatters.dart';
+import 'package:woofy/features/dogs/data/dog_models.dart';
+import 'package:woofy/shared/widgets/woofy_card.dart';
 
 class DogMedicalEventsSection extends StatelessWidget {
   const DogMedicalEventsSection({required this.events, super.key});

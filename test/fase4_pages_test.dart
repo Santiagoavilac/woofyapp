@@ -3,11 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mi_app/features/applications/data/application_models.dart';
-import 'package:mi_app/features/applications/presentation/widgets/application_form.dart';
-import 'package:mi_app/features/dogs/data/dog_models.dart';
-import 'package:mi_app/features/favorites/data/favorites_providers.dart';
-import 'package:mi_app/features/favorites/presentation/favorites_page.dart';
+import 'package:woofy/features/applications/data/application_models.dart';
+import 'package:woofy/features/applications/presentation/widgets/application_form.dart';
+import 'package:woofy/features/dogs/data/dog_models.dart';
+import 'package:woofy/features/favorites/data/favorites_providers.dart';
+import 'package:woofy/features/favorites/presentation/favorites_page.dart';
 
 void main() {
   testWidgets('favorites page shows empty state', (tester) async {});

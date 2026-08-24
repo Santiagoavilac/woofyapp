@@ -2,10 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mi_app/app/route_names.dart';
-import 'package:mi_app/app/router.dart';
-import 'package:mi_app/core/theme/woofy_theme.dart';
-import 'package:mi_app/features/auth/providers/auth_providers.dart';
+import 'package:woofy/app/route_names.dart';
+import 'package:woofy/app/router.dart';
+import 'package:woofy/core/theme/woofy_theme.dart';
+import 'package:woofy/features/auth/providers/auth_providers.dart';
 
 class WoofyApp extends ConsumerStatefulWidget {
   const WoofyApp({super.key});

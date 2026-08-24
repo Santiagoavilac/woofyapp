@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:mi_app/features/auth/data/auth_models.dart';
-import 'package:mi_app/shared/widgets/woofy_card.dart';
+import 'package:woofy/features/auth/data/auth_models.dart';
+import 'package:woofy/shared/widgets/woofy_card.dart';
 
 class ProfileInfoCard extends StatelessWidget {
   const ProfileInfoCard({required this.profile, super.key});

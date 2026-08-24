@@ -1,4 +1,4 @@
-import 'package:mi_app/core/errors/app_exception.dart';
+import 'package:woofy/core/errors/app_exception.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 abstract final class ErrorMapper {

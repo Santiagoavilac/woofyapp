@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mi_app/core/theme/woofy_spacing.dart';
+import 'package:woofy/core/theme/woofy_spacing.dart';
 
 class WoofyFilterOption {
   const WoofyFilterOption({required this.value, required this.label});

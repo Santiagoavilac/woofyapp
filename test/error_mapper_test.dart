@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mi_app/core/errors/error_mapper.dart';
+import 'package:woofy/core/errors/error_mapper.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() {

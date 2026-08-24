@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:mi_app/core/utils/date_formatters.dart';
-import 'package:mi_app/core/utils/validators.dart';
+import 'package:woofy/core/utils/date_formatters.dart';
+import 'package:woofy/core/utils/validators.dart';
 
 void main() {
   group('Validators', () {

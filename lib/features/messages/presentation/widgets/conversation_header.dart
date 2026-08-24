@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mi_app/features/messages/data/message_models.dart';
+import 'package:woofy/features/messages/data/message_models.dart';
 
 class ConversationHeader extends StatelessWidget {
   const ConversationHeader({required this.thread, super.key});

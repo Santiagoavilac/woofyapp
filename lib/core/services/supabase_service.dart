@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mi_app/core/config/env.dart';
+import 'package:woofy/core/config/env.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 abstract final class SupabaseService {
