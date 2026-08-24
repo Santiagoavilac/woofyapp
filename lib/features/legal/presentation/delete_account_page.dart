@@ -134,9 +134,17 @@ class _DeleteAccountPageState extends ConsumerState<DeleteAccountPage> {
                             'cumplimiento legal.',
                           ),
                           const SizedBox(height: 8),
-                          const Text(
-                            'Si tenés dudas, escribinos a hola@woofy.bo antes '
-                            'de continuar.',
+                          const Text('Si tenés dudas, escribinos antes de '
+                              'continuar.'),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: TextButton(
+                              key: const ValueKey('delete-account-support'),
+                              onPressed: () => openSupportEmail(
+                                subject: 'Consulta sobre eliminar mi cuenta',
+                              ),
+                              child: const Text(LegalLinks.soporteEmail),
+                            ),
                           ),
                         ],
                       ),
