@@ -30,7 +30,8 @@ class PartnerReservationPage extends ConsumerStatefulWidget {
   final String? serviceId;
 
   @override
-  ConsumerState<PartnerReservationPage> createState() => _VetReservationPageState();
+  ConsumerState<PartnerReservationPage> createState() =>
+      _VetReservationPageState();
 }
 
 class _VetReservationPageState extends ConsumerState<PartnerReservationPage> {
@@ -79,7 +80,8 @@ class _VetReservationPageState extends ConsumerState<PartnerReservationPage> {
                 title: 'Sin servicios disponibles',
                 message: 'Esta veterinaria todavía no cargó servicios.',
                 actionLabel: 'Volver',
-                onAction: () => context.go(RoutePaths.partnerDetail(widget.slug)),
+                onAction: () =>
+                    context.go(RoutePaths.partnerDetail(widget.slug)),
               );
             }
             return _buildForm(data);

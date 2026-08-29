@@ -3,14 +3,19 @@ import 'package:woofy/core/errors/app_exception.dart';
 import 'package:woofy/features/legal/data/account_deletion_repository.dart';
 
 void main() {
-  test('deletion without an Apple account sends no authorization code', () async {
-    final source = _FakeAccountDeletionDataSource();
-    final repository = SupabaseAccountDeletionRepository.withDataSource(source);
+  test(
+    'deletion without an Apple account sends no authorization code',
+    () async {
+      final source = _FakeAccountDeletionDataSource();
+      final repository = SupabaseAccountDeletionRepository.withDataSource(
+        source,
+      );
 
-    await repository.deleteAccount();
+      await repository.deleteAccount();
 
-    expect(source.calls.single, isEmpty);
-  });
+      expect(source.calls.single, isEmpty);
+    },
+  );
 
   test('an Apple account forwards its authorization code', () async {
     final source = _FakeAccountDeletionDataSource();

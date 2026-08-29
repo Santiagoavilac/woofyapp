@@ -176,7 +176,6 @@ void main() {
     await container.read(shelterPortalSessionProvider.notifier).logout();
     expect(fakeStorage.values.containsKey(_kSessionKey), isFalse);
   });
-
 }
 
 class _FakeRepo implements ShelterPortalRepository {

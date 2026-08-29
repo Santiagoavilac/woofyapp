@@ -21,7 +21,9 @@ class FakePartnerRepository implements PartnerRepository {
   final Object? error;
   final Future<List<Partner>>? partnersFuture;
 
-  final List<({String partnerId, List<({String productId, int quantity})> items})>
+  final List<
+    ({String partnerId, List<({String productId, int quantity})> items})
+  >
   createdOrders = [];
 
   @override

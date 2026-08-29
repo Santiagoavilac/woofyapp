@@ -182,7 +182,10 @@ class _CartGroupCard extends ConsumerWidget {
           Row(
             children: [
               Expanded(
-                child: Text(group.partnerName, style: theme.textTheme.titleMedium),
+                child: Text(
+                  group.partnerName,
+                  style: theme.textTheme.titleMedium,
+                ),
               ),
               TextButton(
                 onPressed: () =>
@@ -233,14 +236,16 @@ class _CartGroupCard extends ConsumerWidget {
                 IconButton(
                   key: ValueKey('cart-decrement-${line.productId}'),
                   tooltip: 'Quitar uno',
-                  onPressed: () => cart.decrement(group.partnerId, line.productId),
+                  onPressed: () =>
+                      cart.decrement(group.partnerId, line.productId),
                   icon: const Icon(Icons.remove_circle_outline),
                 ),
                 Text('${line.quantity}', style: theme.textTheme.titleSmall),
                 IconButton(
                   key: ValueKey('cart-increment-${line.productId}'),
                   tooltip: 'Agregar uno',
-                  onPressed: () => cart.increment(group.partnerId, line.productId),
+                  onPressed: () =>
+                      cart.increment(group.partnerId, line.productId),
                   icon: const Icon(Icons.add_circle_outline),
                 ),
               ],

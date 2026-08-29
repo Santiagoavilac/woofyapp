@@ -281,10 +281,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(container.read(cartProvider)['vet-1']!.lines.single.quantity, 2);
-    expect(
-      _currentPath(container),
-      RoutePaths.cart,
-    );
+    expect(_currentPath(container), RoutePaths.cart);
     container.dispose();
   });
 
@@ -432,7 +429,9 @@ void main() {
   });
 
   for (final size in <Size>[const Size(320, 568), const Size(412, 915)]) {
-    testWidgets('vets catalog has no overflow at ${size.width}', (tester) async {
+    testWidgets('vets catalog has no overflow at ${size.width}', (
+      tester,
+    ) async {
       tester.view.physicalSize = size;
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
@@ -457,8 +456,10 @@ void main() {
 /// agrega un match encima pero copia el `uri` original. Con navegación
 /// imperativa hay que leer el último match para saber dónde estamos parados.
 String _currentPath(ProviderContainer container) {
-  final matches =
-      container.read(routerProvider).routerDelegate.currentConfiguration;
+  final matches = container
+      .read(routerProvider)
+      .routerDelegate
+      .currentConfiguration;
   final last = matches.last;
   return last is ImperativeRouteMatch
       ? last.matches.uri.path

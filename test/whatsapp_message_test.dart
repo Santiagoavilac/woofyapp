@@ -52,10 +52,7 @@ void main() {
     });
 
     test('returns null when the phone is unusable', () {
-      expect(
-        WhatsappMessage.buildUri(phone: null, message: 'Hola'),
-        isNull,
-      );
+      expect(WhatsappMessage.buildUri(phone: null, message: 'Hola'), isNull);
     });
   });
 
@@ -107,8 +104,10 @@ void main() {
       );
 
       final uri = WhatsappMessage.mapsUri(vet);
-      expect(uri.queryParameters['query'],
-          'Partner Santa Cruz, Av. Siempre Viva 123, Santa Cruz');
+      expect(
+        uri.queryParameters['query'],
+        'Partner Santa Cruz, Av. Siempre Viva 123, Santa Cruz',
+      );
     });
   });
 

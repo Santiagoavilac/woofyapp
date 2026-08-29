@@ -147,10 +147,7 @@ void main() {
       tester,
       FakePartnerRepository(
         services: const [_paseo],
-        detail: const PartnerDetail(
-          partner: _guauPaseos,
-          services: [_paseo],
-        ),
+        detail: const PartnerDetail(partner: _guauPaseos, services: [_paseo]),
       ),
     );
     await tester.pumpAndSettle();
@@ -230,8 +227,10 @@ void main() {
 
 /// Ubicación actual del router: con `push` hay que leer el último match.
 String _currentPath(ProviderContainer container) {
-  final matches =
-      container.read(routerProvider).routerDelegate.currentConfiguration;
+  final matches = container
+      .read(routerProvider)
+      .routerDelegate
+      .currentConfiguration;
   final last = matches.last;
   return last is ImperativeRouteMatch
       ? last.matches.uri.path

@@ -283,13 +283,14 @@ class PartnerOrderItem {
     required this.lineTotalCents,
   });
 
-  factory PartnerOrderItem.fromJson(Map<String, dynamic> json) => PartnerOrderItem(
-    id: _string(json['id']),
-    nameSnapshot: _string(json['name_snapshot']),
-    unitPriceCents: _int(json['unit_price_cents']) ?? 0,
-    quantity: _int(json['quantity']) ?? 0,
-    lineTotalCents: _int(json['line_total_cents']) ?? 0,
-  );
+  factory PartnerOrderItem.fromJson(Map<String, dynamic> json) =>
+      PartnerOrderItem(
+        id: _string(json['id']),
+        nameSnapshot: _string(json['name_snapshot']),
+        unitPriceCents: _int(json['unit_price_cents']) ?? 0,
+        quantity: _int(json['quantity']) ?? 0,
+        lineTotalCents: _int(json['line_total_cents']) ?? 0,
+      );
 
   final String id;
   final String nameSnapshot;
@@ -348,18 +349,19 @@ class PartnerReservation {
     this.partnerName,
   });
 
-  factory PartnerReservation.fromJson(Map<String, dynamic> json) => PartnerReservation(
-    id: _string(json['id']),
-    partnerId: _string(json['partner_id']),
-    status: _string(json['status']),
-    serviceNameSnapshot: _string(json['service_name_snapshot']),
-    priceCentsSnapshot: _int(json['price_cents_snapshot']) ?? 0,
-    scheduledFor: _date(json['scheduled_for']),
-    petName: _nullableString(json['pet_name']),
-    notes: _nullableString(json['notes']),
-    contactPhone: _nullableString(json['contact_phone']),
-    partnerName: _nullableString(_singleMap(json['partners'])?['name']),
-  );
+  factory PartnerReservation.fromJson(Map<String, dynamic> json) =>
+      PartnerReservation(
+        id: _string(json['id']),
+        partnerId: _string(json['partner_id']),
+        status: _string(json['status']),
+        serviceNameSnapshot: _string(json['service_name_snapshot']),
+        priceCentsSnapshot: _int(json['price_cents_snapshot']) ?? 0,
+        scheduledFor: _date(json['scheduled_for']),
+        petName: _nullableString(json['pet_name']),
+        notes: _nullableString(json['notes']),
+        contactPhone: _nullableString(json['contact_phone']),
+        partnerName: _nullableString(_singleMap(json['partners'])?['name']),
+      );
 
   final String id;
   final String partnerId;

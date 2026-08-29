@@ -35,9 +35,8 @@ final myPartnerReservationsProvider = FutureProvider<List<PartnerReservation>>(
 ///
 /// Separado de `selectedCityProvider` (adopción) a propósito: filtrar
 /// veterinarias no debería mover el catálogo de perros ni al revés.
-final selectedPartnerCityProvider = NotifierProvider<SelectedPartnerCity, String?>(
-  SelectedPartnerCity.new,
-);
+final selectedPartnerCityProvider =
+    NotifierProvider<SelectedPartnerCity, String?>(SelectedPartnerCity.new);
 
 class SelectedPartnerCity extends Notifier<String?> {
   @override
@@ -76,7 +75,8 @@ class SelectedServiceKind extends Notifier<PartnerCategory?> {
 /// Se calcula sobre lo que hay y no sobre el enum entero: una fila de diez
 /// chips donde ocho no devuelven nada es peor que no tener filtros.
 final availableServiceKindsProvider = Provider<List<PartnerCategory>>((ref) {
-  final services = ref.watch(servicesProvider).value ?? const <PartnerService>[];
+  final services =
+      ref.watch(servicesProvider).value ?? const <PartnerService>[];
   final kinds = <PartnerCategory>{};
   for (final service in services) {
     kinds.addAll(service.kinds);

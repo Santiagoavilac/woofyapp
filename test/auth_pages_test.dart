@@ -272,12 +272,8 @@ void main() {
 
     expect(auth.resendCalls, 1);
     expect(auth.lastResendEmail, 'ana@example.com');
-    expect(
-      find.textContaining('Te reenviamos el correo'),
-      findsOneWidget,
-    );
+    expect(find.textContaining('Te reenviamos el correo'), findsOneWidget);
   });
-
 
   testWidgets('Apple sign-in is offered on iOS', (tester) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
@@ -315,7 +311,6 @@ void main() {
       debugDefaultTargetPlatformOverride = null;
     }
   });
-
 
   testWidgets('registration is blocked until the terms are accepted', (
     tester,
@@ -364,7 +359,6 @@ void main() {
       findsOneWidget,
     );
   });
-
 }
 
 /// El registro exige aceptar los términos, como pide App Review para apps con

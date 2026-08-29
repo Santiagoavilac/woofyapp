@@ -126,7 +126,10 @@ class _PartnerDetailBodyState extends ConsumerState<_PartnerDetailBody>
               Row(
                 children: [
                   Expanded(
-                    child: Text(partner.name, style: theme.textTheme.headlineSmall),
+                    child: Text(
+                      partner.name,
+                      style: theme.textTheme.headlineSmall,
+                    ),
                   ),
                   if (partner.verified)
                     const Icon(
@@ -135,10 +138,16 @@ class _PartnerDetailBodyState extends ConsumerState<_PartnerDetailBody>
                     ),
                 ],
               ),
-              if ([partner.address, partner.city].whereType<String>().isNotEmpty) ...[
+              if ([
+                partner.address,
+                partner.city,
+              ].whereType<String>().isNotEmpty) ...[
                 const SizedBox(height: WoofySpacing.xs),
                 Text(
-                  [partner.address, partner.city].whereType<String>().join(' · '),
+                  [
+                    partner.address,
+                    partner.city,
+                  ].whereType<String>().join(' · '),
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),

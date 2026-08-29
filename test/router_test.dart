@@ -477,7 +477,9 @@ ProviderContainer _container(
       dogRepositoryProvider.overrideWithValue(
         dogRepository ?? _EmptyDogRepository(),
       ),
-      partnerRepositoryProvider.overrideWithValue(const _EmptyPartnerRepository()),
+      partnerRepositoryProvider.overrideWithValue(
+        const _EmptyPartnerRepository(),
+      ),
       if (applications != null)
         applicationsRepositoryProvider.overrideWithValue(applications),
       if (messages != null)
@@ -498,8 +500,9 @@ class _EmptyPartnerRepository implements PartnerRepository {
   const _EmptyPartnerRepository();
 
   @override
-  Future<List<Partner>> fetchActivePartners({PartnerCategory? category}) async =>
-      const [];
+  Future<List<Partner>> fetchActivePartners({
+    PartnerCategory? category,
+  }) async => const [];
 
   @override
   Future<List<PartnerService>> fetchServices() async => const [];

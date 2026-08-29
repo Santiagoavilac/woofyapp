@@ -117,7 +117,9 @@ class WoofyButton extends StatelessWidget {
                 side: foregroundColor == null
                     ? null
                     : WidgetStatePropertyAll(
-                        BorderSide(color: foregroundColor!.withValues(alpha: .2)),
+                        BorderSide(
+                          color: foregroundColor!.withValues(alpha: .2),
+                        ),
                       ),
               ),
         child: content,

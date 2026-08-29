@@ -53,7 +53,6 @@ void main() {
 }
 
 class _FakeAuthRepository implements AuthRepository {
-
   @override
   bool get hasAppleIdentity => false;
 

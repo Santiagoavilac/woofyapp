@@ -235,7 +235,6 @@ void main() {
       GoogleSignInStatus.awaitingCallback,
     );
   });
-
 }
 
 ProviderContainer _container(AuthRepository auth, ProfileRepository profiles) {
@@ -248,7 +247,6 @@ ProviderContainer _container(AuthRepository auth, ProfileRepository profiles) {
 }
 
 class _FakeAuthRepository implements AuthRepository {
-
   @override
   bool get hasAppleIdentity => false;
 
@@ -280,6 +278,7 @@ class _FakeAuthRepository implements AuthRepository {
   Future<void> resendConfirmationEmail({required String email}) async {
     lastResendEmail = email;
   }
+
   _FakeAuthRepository({
     required this.user,
     this.registrationResult,
