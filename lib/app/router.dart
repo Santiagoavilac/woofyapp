@@ -23,6 +23,11 @@ import 'package:woofy/features/publisher/presentation/publisher_dog_form_page.da
 import 'package:woofy/features/publisher/presentation/publisher_page.dart';
 import 'package:woofy/features/publisher/presentation/shelter_edit_profile_page.dart';
 import 'package:woofy/features/publisher/presentation/shelter_login_page.dart';
+import 'package:woofy/features/vets/presentation/cart_page.dart';
+import 'package:woofy/features/vets/presentation/vet_detail_page.dart';
+import 'package:woofy/features/vets/presentation/vet_product_page.dart';
+import 'package:woofy/features/vets/presentation/vet_reservation_page.dart';
+import 'package:woofy/features/vets/presentation/vets_page.dart';
 import 'package:woofy/shared/widgets/woofy_bottom_navigation.dart';
 import 'package:woofy/shared/widgets/woofy_error.dart';
 
@@ -55,6 +60,15 @@ final routerProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(
             routes: [
               GoRoute(
+                name: RouteNames.vets,
+                path: RoutePaths.vets,
+                builder: (context, state) => const VetsPage(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
                 name: RouteNames.profile,
                 path: RoutePaths.profile,
                 builder: (context, state) => const ProfilePage(),
@@ -62,6 +76,35 @@ final routerProvider = Provider<GoRouter>((ref) {
             ],
           ),
         ],
+      ),
+      // Antes que el patrón `/veterinarias/:slug`: `carrito` también encajaría
+      // en `:slug` y go_router se queda con la primera coincidencia.
+      GoRoute(
+        name: RouteNames.vetCart,
+        path: RoutePaths.vetCart,
+        builder: (context, state) => const CartPage(),
+      ),
+      GoRoute(
+        name: RouteNames.vetReservation,
+        path: RoutePaths.vetReservationPattern,
+        builder: (context, state) => VetReservationPage(
+          slug: state.pathParameters['slug'] ?? '',
+          serviceId: state.extra as String?,
+        ),
+      ),
+      GoRoute(
+        name: RouteNames.vetProduct,
+        path: RoutePaths.vetProductPattern,
+        builder: (context, state) => VetProductPage(
+          slug: state.pathParameters['slug'] ?? '',
+          productId: state.pathParameters['productId'] ?? '',
+        ),
+      ),
+      GoRoute(
+        name: RouteNames.vetDetail,
+        path: RoutePaths.vetDetailPattern,
+        builder: (context, state) =>
+            VetDetailPage(slug: state.pathParameters['slug'] ?? ''),
       ),
       GoRoute(
         name: RouteNames.dogDetail,
@@ -161,11 +204,16 @@ final routerProvider = Provider<GoRouter>((ref) {
         return RoutePaths.newPassword;
       }
 
+      // Reservar guarda una fila con `user_id`, así que exige sesión igual que
+      // favoritos y mensajes. El carrito queda afuera a propósito: se puede
+      // armar sin cuenta y el login se pide recién al mandar el pedido, que es
+      // lo único que escribe en la base.
       final protected =
           location == RoutePaths.favorites ||
           location == RoutePaths.messages ||
           location.startsWith('/mensajes/') ||
-          location.endsWith('/postular');
+          location.endsWith('/postular') ||
+          location.endsWith('/reservar');
       if (!hasSession && protected) {
         return RoutePaths.auth;
       }
@@ -218,10 +266,81 @@ final routerProvider = Provider<GoRouter>((ref) {
   return router;
 });
 
-class _ShellScaffold extends StatelessWidget {
+class _ShellScaffold extends StatefulWidget {
   const _ShellScaffold({required this.navigationShell});
 
   final StatefulNavigationShell navigationShell;
+
+  @override
+  State<_ShellScaffold> createState() => _ShellScaffoldState();
+}
+
+class _ShellScaffoldState extends State<_ShellScaffold>
+    with SingleTickerProviderStateMixin {
+  static final _lastIndex = (WoofyTab.values.length - 1).toDouble();
+
+  /// Posición de la pastilla del nav, en unidades de slot. Es un controller y
+  /// no un `int` porque el arrastre la mueve en fracciones: sin esto el
+  /// selector solo podría saltar de un ítem a otro al soltar.
+  late final AnimationController _indicator = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 260),
+    lowerBound: 0,
+    upperBound: _lastIndex,
+    value: widget.navigationShell.currentIndex.toDouble(),
+  );
+
+  bool _dragging = false;
+
+  StatefulNavigationShell get navigationShell => widget.navigationShell;
+
+  @override
+  void didUpdateWidget(covariant _ShellScaffold oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // El índice también cambia desde afuera (tocar un ítem, un `go` de otra
+    // pantalla), así que la pastilla se sincroniza acá y no en el gesto.
+    final index = navigationShell.currentIndex.toDouble();
+    if (!_dragging && _indicator.value != index) {
+      _indicator.animateTo(index, curve: Curves.easeOutCubic);
+    }
+  }
+
+  @override
+  void dispose() {
+    _indicator.dispose();
+    super.dispose();
+  }
+
+  void _onDragStart(DragStartDetails details) => _dragging = true;
+
+  void _onDragUpdate(DragUpdateDetails details) {
+    final width = MediaQuery.sizeOf(context).width;
+    if (width == 0) return;
+    // Arrastrar un ancho de pantalla equivale a moverse una pestaña, igual que
+    // el paginado de Instagram.
+    _indicator.value = (_indicator.value - details.primaryDelta! / width).clamp(
+      0.0,
+      _lastIndex,
+    );
+  }
+
+  void _onDragEnd(DragEndDetails details) {
+    _dragging = false;
+    final current = navigationShell.currentIndex;
+    final velocity = details.primaryVelocity ?? 0;
+    // Un flick corto también cambia de pestaña aunque no se haya cruzado la
+    // mitad del recorrido.
+    final target = velocity.abs() > 400
+        ? (velocity < 0 ? current + 1 : current - 1)
+        : _indicator.value.round();
+    final clamped = target.clamp(0, _lastIndex.toInt());
+
+    if (clamped == current) {
+      _indicator.animateTo(current.toDouble(), curve: Curves.easeOutCubic);
+      return;
+    }
+    navigationShell.goBranch(clamped);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -245,12 +364,24 @@ class _ShellScaffold extends StatelessWidget {
       },
       child: Scaffold(
         extendBody: true,
-        body: navigationShell,
-        bottomNavigationBar: WoofyBottomNavigation(
-          currentIndex: navigationShell.currentIndex,
-          onDestinationSelected: (index) => navigationShell.goBranch(
-            index,
-            initialLocation: index == navigationShell.currentIndex,
+        // El gesto va afuera de las páginas: un scroll horizontal de adentro
+        // (un carrusel) gana la arena por ser más profundo, así que no le
+        // robamos el arrastre a nadie.
+        body: GestureDetector(
+          onHorizontalDragStart: _onDragStart,
+          onHorizontalDragUpdate: _onDragUpdate,
+          onHorizontalDragEnd: _onDragEnd,
+          child: navigationShell,
+        ),
+        bottomNavigationBar: AnimatedBuilder(
+          animation: _indicator,
+          builder: (context, child) => WoofyBottomNavigation(
+            currentIndex: navigationShell.currentIndex,
+            indicatorPosition: _indicator.value,
+            onDestinationSelected: (index) => navigationShell.goBranch(
+              index,
+              initialLocation: index == navigationShell.currentIndex,
+            ),
           ),
         ),
       ),

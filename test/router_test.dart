@@ -16,6 +16,9 @@ import 'package:woofy/features/dogs/data/dog_repository_provider.dart';
 import 'package:woofy/features/messages/data/message_models.dart';
 import 'package:woofy/features/messages/data/messages_providers.dart';
 import 'package:woofy/features/messages/data/messages_repository.dart';
+import 'package:woofy/features/vets/data/vet_models.dart';
+import 'package:woofy/features/vets/data/vet_repository.dart';
+import 'package:woofy/features/vets/data/vet_repository_provider.dart';
 
 import 'support/fake_auth_repository.dart';
 
@@ -277,7 +280,10 @@ void main() {
 
     router.go(RoutePaths.dogDetail(dog.slug));
     await tester.pumpAndSettle();
+    // The detail page is a CustomScrollView now, so the scroll triggered by
+    // ensureVisible needs a frame before the button can be tapped.
     await tester.ensureVisible(find.text('Escribir al refugio'));
+    await tester.pumpAndSettle();
 
     expect(find.text('Tu postulación'), findsOneWidget);
     expect(find.text('Escribir al refugio'), findsOneWidget);
@@ -313,7 +319,10 @@ void main() {
 
       router.go(RoutePaths.dogDetail(dog.slug));
       await tester.pumpAndSettle();
+      // The detail page is a CustomScrollView now, so the scroll triggered by
+      // ensureVisible needs a frame before the button can be tapped.
       await tester.ensureVisible(find.text('Escribir al refugio'));
+      await tester.pumpAndSettle();
 
       await tester.tap(find.text('Escribir al refugio'));
       await tester.pumpAndSettle();
@@ -376,6 +385,80 @@ void main() {
     expect(container.read(passwordRecoveryPendingProvider), isTrue);
   });
 
+  testWidgets('the vets catalog and profiles stay open without a session', (
+    tester,
+  ) async {
+    final auth = FakeAuthRepository();
+    addTearDown(auth.dispose);
+    final container = _container(auth);
+    addTearDown(container.dispose);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(container: container, child: const WoofyApp()),
+    );
+    final router = container.read(routerProvider);
+
+    router.go(RoutePaths.vets);
+    await tester.pumpAndSettle();
+    expect(router.routeInformationProvider.value.uri.path, RoutePaths.vets);
+    expect(find.text('Todavía no hay veterinarias'), findsOneWidget);
+
+    router.go(RoutePaths.vetDetail('vet-santa-cruz'));
+    await tester.pumpAndSettle();
+    expect(
+      router.routeInformationProvider.value.uri.path,
+      RoutePaths.vetDetail('vet-santa-cruz'),
+    );
+    expect(find.text('Veterinaria no disponible'), findsOneWidget);
+  });
+
+  testWidgets('booking requires a session but the cart does not', (
+    tester,
+  ) async {
+    final auth = FakeAuthRepository();
+    addTearDown(auth.dispose);
+    final container = _container(auth);
+    addTearDown(container.dispose);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(container: container, child: const WoofyApp()),
+    );
+    final router = container.read(routerProvider);
+
+    // El carrito se arma sin cuenta: el login se pide recién al mandar el
+    // pedido, que es lo único que escribe una fila con `user_id`.
+    router.go(RoutePaths.vetCart);
+    await tester.pumpAndSettle();
+    expect(router.routeInformationProvider.value.uri.path, RoutePaths.vetCart);
+
+    // Reservar sí guarda desde el formulario, así que sin sesión no tiene
+    // sentido dejar llenarlo.
+    router.go(RoutePaths.vetReservation('vet-santa-cruz'));
+    await tester.pumpAndSettle();
+    expect(router.routeInformationProvider.value.uri.path, RoutePaths.auth);
+  });
+
+  testWidgets('the cart route wins over the vet slug pattern', (tester) async {
+    const user = AppUser(id: 'user-1', email: 'ana@example.com');
+    final auth = FakeAuthRepository(user: user);
+    addTearDown(auth.dispose);
+    final container = _container(auth);
+    addTearDown(container.dispose);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(container: container, child: const WoofyApp()),
+    );
+    final router = container.read(routerProvider);
+
+    router.go(RoutePaths.vetCart);
+    await tester.pumpAndSettle();
+
+    // `carrito` también encaja en `/veterinarias/:slug`: si el orden de las
+    // rutas se invierte, acá saldría "Veterinaria no disponible".
+    expect(router.routeInformationProvider.value.uri.path, RoutePaths.vetCart);
+    expect(find.text('Tu carrito está vacío'), findsOneWidget);
+
+    router.go(RoutePaths.vetReservation('vet-santa-cruz'));
+    await tester.pumpAndSettle();
+    expect(find.text('Sin servicios disponibles'), findsOneWidget);
+  });
 }
 
 ProviderContainer _container(
@@ -394,6 +477,7 @@ ProviderContainer _container(
       dogRepositoryProvider.overrideWithValue(
         dogRepository ?? _EmptyDogRepository(),
       ),
+      vetRepositoryProvider.overrideWithValue(const _EmptyVetRepository()),
       if (applications != null)
         applicationsRepositoryProvider.overrideWithValue(applications),
       if (messages != null)
@@ -408,6 +492,40 @@ class _EmptyDogRepository implements DogRepository {
 
   @override
   Future<DogDetail?> fetchPublishedDogBySlug(String slug) async => null;
+}
+
+class _EmptyVetRepository implements VetRepository {
+  const _EmptyVetRepository();
+
+  @override
+  Future<List<Vet>> fetchActiveVets() async => const [];
+
+  @override
+  Future<VetDetail?> fetchVetBySlug(String slug) async => null;
+
+  @override
+  Future<VetOrder> createOrder({
+    required String vetId,
+    required List<({String productId, int quantity})> items,
+    String? contactPhone,
+    String? notes,
+  }) => throw UnimplementedError('No se usa en esta prueba.');
+
+  @override
+  Future<VetReservation> createReservation({
+    required String vetId,
+    required String serviceId,
+    required DateTime scheduledFor,
+    String? petName,
+    String? contactPhone,
+    String? notes,
+  }) => throw UnimplementedError('No se usa en esta prueba.');
+
+  @override
+  Future<List<VetOrder>> fetchMyOrders() async => const [];
+
+  @override
+  Future<List<VetReservation>> fetchMyReservations() async => const [];
 }
 
 class _EmptyProfileRepository implements ProfileRepository {

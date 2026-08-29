@@ -18,6 +18,11 @@ abstract final class RouteNames {
   static const forgotPassword = 'forgot-password';
   static const newPassword = 'new-password';
   static const blockedAccounts = 'blocked-accounts';
+  static const vets = 'vets';
+  static const vetDetail = 'vet-detail';
+  static const vetCart = 'vet-cart';
+  static const vetProduct = 'vet-product';
+  static const vetReservation = 'vet-reservation';
 }
 
 abstract final class RoutePaths {
@@ -41,6 +46,22 @@ abstract final class RoutePaths {
   static const forgotPassword = '/auth/recuperar';
   static const newPassword = '/auth/nueva-contrasena';
   static const blockedAccounts = '/perfil/bloqueados';
+
+  static const vets = '/veterinarias';
+  // Va declarada antes que `vetDetailPattern` en el router: `carrito` también
+  // encajaría en `:slug` y go_router se queda con la primera coincidencia.
+  static const vetCart = '/veterinarias/carrito';
+  static const vetDetailPattern = '/veterinarias/:slug';
+  static const vetReservationPattern = '/veterinarias/:slug/reservar';
+  static const vetProductPattern = '/veterinarias/:slug/producto/:productId';
+
+  static String vetDetail(String slug) =>
+      '/veterinarias/${Uri.encodeComponent(slug)}';
+
+  static String vetReservation(String slug) => '${vetDetail(slug)}/reservar';
+
+  static String vetProduct(String slug, String productId) =>
+      '${vetDetail(slug)}/producto/${Uri.encodeComponent(productId)}';
 
   static String dogDetail(String slug) =>
       '/perros/${Uri.encodeComponent(slug)}';
