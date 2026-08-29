@@ -11,7 +11,10 @@ import 'package:woofy/features/dogs/data/dog_repository_provider.dart';
 import 'package:woofy/features/landing/presentation/widgets/landing_shelter_card.dart';
 import 'package:woofy/features/landing/presentation/widgets/recent_dog_preview_card.dart';
 import 'package:woofy/features/publisher/data/publisher_providers.dart';
+import 'package:woofy/shared/widgets/woofy_bottom_navigation.dart';
 import 'package:woofy/shared/widgets/woofy_button.dart';
+import 'package:woofy/shared/widgets/woofy_circle_icon_button.dart';
+import 'package:woofy/shared/widgets/woofy_promo_banner.dart';
 import 'package:woofy/shared/widgets/woofy_search_field.dart';
 import 'package:woofy/shared/widgets/woofy_section_header.dart';
 
@@ -63,10 +66,16 @@ class _LandingPageState extends ConsumerState<LandingPage> {
                   WoofySpacing.lg,
                   WoofySpacing.xl,
                   WoofySpacing.lg,
-                  WoofySpacing.xxl + MediaQuery.paddingOf(context).bottom,
+                  WoofySpacing.xxl +
+                      WoofyBottomNavigation.reservedHeight +
+                      MediaQuery.paddingOf(context).bottom,
                 ),
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
+                    WoofyPromoBanner(
+                      onTap: () => context.go(RoutePaths.dogs),
+                    ),
+                    const SizedBox(height: WoofySpacing.xl),
                     _LandingQuickActions(
                       onExplore: () => context.go(RoutePaths.dogs),
                       onFavorites: () => context.push(RoutePaths.favorites),
@@ -179,10 +188,10 @@ class _HeaderBar extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Hola 👋', style: theme.textTheme.titleLarge),
+              const _CitySelector(),
               const SizedBox(height: WoofySpacing.xs),
               Text(
-                'Encontrá a tu próximo compañero',
+                'Hola 👋',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.bodyMedium?.copyWith(
@@ -193,13 +202,13 @@ class _HeaderBar extends StatelessWidget {
           ),
         ),
         const SizedBox(width: WoofySpacing.sm),
-        _CircleIconButton(
+        WoofyCircleIconButton(
           icon: Icons.notifications_none_rounded,
           tooltip: 'Notificaciones',
           onPressed: onNotificationsPressed,
         ),
         const SizedBox(width: WoofySpacing.sm),
-        _CircleIconButton(
+        WoofyCircleIconButton(
           icon: Icons.person_outline_rounded,
           tooltip: 'Mi cuenta',
           onPressed: onAccountPressed,
@@ -209,27 +218,79 @@ class _HeaderBar extends StatelessWidget {
   }
 }
 
-class _CircleIconButton extends StatelessWidget {
-  const _CircleIconButton({
-    required this.icon,
-    required this.tooltip,
-    required this.onPressed,
-  });
+/// City scope for the whole catalog. Reads the cities that actually have
+/// published animals, so it never offers an empty result.
+class _CitySelector extends ConsumerWidget {
+  const _CitySelector();
 
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback onPressed;
+  static const _allLabel = 'Todas las ciudades';
 
   @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: WoofyColors.white,
-      shape: const CircleBorder(),
-      child: IconButton(
-        tooltip: tooltip,
-        onPressed: onPressed,
-        color: WoofyColors.textPrimary,
-        icon: Icon(icon),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final cities = ref.watch(availableCitiesProvider);
+    final selected = ref.watch(selectedCityProvider);
+
+    return InkWell(
+      key: const ValueKey('city-selector'),
+      onTap: cities.isEmpty ? null : () => _openSheet(context, ref, cities),
+      borderRadius: BorderRadius.circular(WoofyRadius.pill),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: WoofySpacing.xs),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.place_outlined,
+              size: 20,
+              color: WoofyColors.textPrimary,
+            ),
+            const SizedBox(width: WoofySpacing.xs),
+            Flexible(
+              child: Text(
+                selected ?? _allLabel,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.titleLarge,
+              ),
+            ),
+            if (cities.isNotEmpty)
+              const Icon(
+                Icons.keyboard_arrow_down_rounded,
+                color: WoofyColors.textPrimary,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openSheet(
+    BuildContext context,
+    WidgetRef ref,
+    List<String> cities,
+  ) {
+    final selected = ref.read(selectedCityProvider);
+    return showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            for (final city in <String?>[null, ...cities])
+              ListTile(
+                title: Text(city ?? _allLabel),
+                trailing: city == selected
+                    ? const Icon(Icons.check_rounded)
+                    : null,
+                onTap: () {
+                  ref.read(selectedCityProvider.notifier).select(city);
+                  Navigator.pop(sheetContext);
+                },
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -242,54 +303,14 @@ class _HeroBand extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        // Right column for the tightly-cropped cut-out (no transparent
-        // margins), sized as a fraction of the band and clamped so it never
-        // dominates on wide screens nor vanishes on small ones. `contain`
-        // keeps the whole family in frame and `bottomRight` rests it on the
-        // block's base, bleeding to the right edge.
-        final imageWidth = (constraints.maxWidth * 0.52).clamp(190.0, 320.0);
-        return ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 200),
-          child: Stack(
-            children: [
-              Positioned(
-                top: 0,
-                right: 0,
-                bottom: 0,
-                width: imageWidth,
-                child: Image.asset(
-                  'assets/images/happycouple.png',
-                  fit: BoxFit.contain,
-                  alignment: Alignment.bottomRight,
-                  semanticLabel: 'Familia junto a su perro y su gato',
-                  errorBuilder: (context, error, stackTrace) => const Align(
-                    alignment: Alignment.bottomRight,
-                    child: Padding(
-                      padding: EdgeInsets.all(WoofySpacing.lg),
-                      child: Icon(
-                        Icons.pets_rounded,
-                        size: 48,
-                        color: WoofyColors.primary,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              Padding(
-                padding: EdgeInsets.only(
-                  left: WoofySpacing.xl,
-                  right: imageWidth + WoofySpacing.md,
-                  top: WoofySpacing.xs,
-                  bottom: WoofySpacing.xxl,
-                ),
-                child: _HeroText(onExplorePressed: onExplorePressed),
-              ),
-            ],
-          ),
-        );
-      },
+    return Padding(
+      padding: const EdgeInsets.only(
+        left: WoofySpacing.xl,
+        right: WoofySpacing.xl,
+        top: WoofySpacing.xs,
+        bottom: WoofySpacing.xxl,
+      ),
+      child: _HeroText(onExplorePressed: onExplorePressed),
     );
   }
 }

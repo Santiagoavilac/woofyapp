@@ -149,11 +149,11 @@ void main() {
 
       expect(tester.takeException(), isNull);
       expect(find.text('Ver animales'), findsOneWidget);
+      // Home is the selected tab, so only its pill renders a label; the other
+      // two destinations are icon-only and are matched by key.
       expect(find.text('Inicio'), findsOneWidget);
-      // 'Explorar' and 'Perfil' appear both in the bottom nav and as quick
-      // actions on the home, so more than one occurrence is expected.
-      expect(find.text('Explorar'), findsWidgets);
-      expect(find.text('Perfil'), findsWidgets);
+      expect(find.byKey(const ValueKey('nav-item-explorar')), findsOneWidget);
+      expect(find.byKey(const ValueKey('nav-item-perfil')), findsOneWidget);
     });
   }
 }

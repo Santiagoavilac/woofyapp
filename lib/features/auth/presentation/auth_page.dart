@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:woofy/app/back_fallback_scope.dart';
 import 'package:woofy/app/route_names.dart';
 import 'package:woofy/core/errors/app_exception.dart';
+import 'package:woofy/core/theme/woofy_colors.dart';
 import 'package:woofy/features/legal/data/legal_links.dart';
 import 'package:woofy/features/auth/presentation/widgets/auth_toggle_header.dart';
 import 'package:woofy/features/auth/presentation/widgets/login_form.dart';
@@ -128,7 +129,10 @@ class _AuthPageState extends ConsumerState<AuthPage> {
     return BackFallbackScope(
       fallbackLocation: RoutePaths.landing,
       child: Scaffold(
-        appBar: const WoofyAppBar(title: 'Cuenta Woofy'),
+        appBar: WoofyAppBar(
+          title: 'Cuenta Woofy',
+          backFallbackLocation: RoutePaths.landing,
+        ),
         body: SafeArea(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(20),
@@ -210,8 +214,11 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                       WoofyButton(
                         key: const ValueKey('google-signin'),
                         label: 'Continuar con Google',
-                        icon: Icons.login,
+                        leading: const _GoogleMark(),
                         variant: WoofyButtonVariant.secondary,
+                        // The official mark ships on an opaque white tile, and
+                        // Google's guidelines ask for a white button anyway.
+                        backgroundColor: WoofyColors.white,
                         isLoading: state.isLoading || isAwaitingGoogle,
                         isExpanded: true,
                         onPressed: _loginWithGoogle,
@@ -303,6 +310,24 @@ class _StatusMessage extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Official Google "G", as Google's branding guidelines require: the mark
+/// cannot be redrawn or replaced by a generic icon.
+class _GoogleMark extends StatelessWidget {
+  const _GoogleMark();
+
+  @override
+  Widget build(BuildContext context) {
+    return Image.asset(
+      'assets/images/google_g_logo.png',
+      width: 20,
+      height: 20,
+      filterQuality: FilterQuality.medium,
+      errorBuilder: (context, error, stackTrace) =>
+          const Icon(Icons.account_circle_outlined, size: 20),
     );
   }
 }

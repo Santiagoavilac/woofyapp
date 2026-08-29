@@ -23,9 +23,15 @@ import 'package:woofy/features/applications/presentation/widgets/application_sta
 import 'package:woofy/features/auth/providers/auth_providers.dart';
 import 'package:woofy/features/favorites/presentation/widgets/favorite_toggle_button.dart';
 import 'package:woofy/features/messages/data/messages_providers.dart';
+import 'package:woofy/core/theme/woofy_colors.dart';
+import 'package:woofy/core/theme/woofy_radius.dart';
+import 'package:woofy/core/theme/woofy_spacing.dart';
+import 'package:woofy/shared/widgets/woofy_circle_icon_button.dart';
 
 class DogDetailPage extends ConsumerWidget {
   const DogDetailPage({required this.slug, super.key});
+
+  static const _title = 'Perfil del perrito';
 
   final String slug;
 
@@ -34,56 +40,45 @@ class DogDetailPage extends ConsumerWidget {
     final detail = ref.watch(dogDetailProvider(slug));
     return BackFallbackScope(
       fallbackLocation: RoutePaths.dogs,
-      child: Scaffold(
-        appBar: WoofyAppBar(
-          title: 'Perfil del perrito',
-          actions: [
-            if (detail.value case final value?)
-              PopupMenuButton<String>(
-                key: const ValueKey('dog-detail-menu'),
-                onSelected: (choice) => showReportSheet(
-                  context,
-                  targetType: choice == 'dog'
-                      ? ReportTargetType.dog
-                      : ReportTargetType.shelter,
-                  targetId: choice == 'dog'
-                      ? value.dog.id
-                      : value.dog.shelterId,
-                  title: choice == 'dog'
-                      ? 'Denunciar publicación'
-                      : 'Denunciar refugio',
-                ),
-                itemBuilder: (context) => const [
-                  PopupMenuItem(
-                    value: 'dog',
-                    child: Text('Denunciar publicación'),
-                  ),
-                  PopupMenuItem(
-                    value: 'shelter',
-                    child: Text('Denunciar refugio'),
-                  ),
-                ],
-              ),
-          ],
+      child: detail.when(
+        loading: () => const _PlainDetailScaffold(
+          title: _title,
+          child: WoofyLoading(message: 'Cargando información del perrito…'),
         ),
-        body: SafeArea(
-          child: detail.when(
-            loading: () => const WoofyLoading(
-              message: 'Cargando información del perrito…',
-            ),
-            error: (error, stackTrace) => WoofyError(
-              message: 'No pudimos cargar este perrito.',
-              onRetry: () => ref.invalidate(dogDetailProvider(slug)),
-            ),
-            data: (value) => value == null
-                ? const WoofyEmptyState(
-                    title: 'Perrito no disponible',
-                    message: 'Este perrito no está disponible.',
-                  )
-                : _DogDetailContent(detail: value),
+        error: (error, stackTrace) => _PlainDetailScaffold(
+          title: _title,
+          child: WoofyError(
+            message: 'No pudimos cargar este perrito.',
+            onRetry: () => ref.invalidate(dogDetailProvider(slug)),
           ),
         ),
+        data: (value) => value == null
+            ? const _PlainDetailScaffold(
+                title: _title,
+                child: WoofyEmptyState(
+                  title: 'Perrito no disponible',
+                  message: 'Este perrito no está disponible.',
+                ),
+              )
+            : _DogDetailContent(detail: value),
       ),
+    );
+  }
+}
+
+/// Loading / error / missing states keep the ordinary app bar: there is no
+/// photo yet to build the immersive hero on.
+class _PlainDetailScaffold extends StatelessWidget {
+  const _PlainDetailScaffold({required this.title, required this.child});
+
+  final String title;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: WoofyAppBar(title: title),
+      body: SafeArea(child: child),
     );
   }
 }
@@ -91,60 +86,269 @@ class DogDetailPage extends ConsumerWidget {
 class _DogDetailContent extends ConsumerWidget {
   const _DogDetailContent({required this.detail});
 
+  /// Radius of the curve where the hero photo meets the content panel.
+  static const _panelOverlap = 28.0;
+
   final DogDetail detail;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final dog = detail.dog;
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 820),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(24),
-                child: DogPhotoCarousel(photos: dog.photos),
+    final topInset = MediaQuery.paddingOf(context).top;
+
+    return Scaffold(
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            pinned: true,
+            centerTitle: true,
+            expandedHeight: 380 + topInset,
+            backgroundColor: WoofyColors.primarySoft,
+            surfaceTintColor: Colors.transparent,
+            elevation: 0,
+            title: Text(DogDetailPage._title),
+            leadingWidth: 56 + WoofySpacing.sm,
+            leading: Padding(
+              padding: const EdgeInsets.only(left: WoofySpacing.sm),
+              child: Center(
+                child: WoofyCircleIconButton(
+                  icon: Icons.arrow_back_rounded,
+                  tooltip: 'Volver',
+                  onPressed: () => Navigator.canPop(context)
+                      ? Navigator.pop(context)
+                      : context.go(RoutePaths.dogs),
+                ),
               ),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      dog.name,
-                      style: Theme.of(context).textTheme.displaySmall,
+            ),
+            actions: [
+              Padding(
+                padding: const EdgeInsets.only(right: WoofySpacing.sm),
+                child: Center(
+                  child: Material(
+                    color: WoofyColors.white,
+                    shape: const CircleBorder(),
+                    clipBehavior: Clip.antiAlias,
+                    child: PopupMenuButton<String>(
+                      key: const ValueKey('dog-detail-menu'),
+                      tooltip: 'Más opciones',
+                      icon: const Icon(
+                        Icons.more_horiz_rounded,
+                        color: WoofyColors.textPrimary,
+                      ),
+                      onSelected: (choice) => showReportSheet(
+                        context,
+                        targetType: choice == 'dog'
+                            ? ReportTargetType.dog
+                            : ReportTargetType.shelter,
+                        targetId: choice == 'dog' ? dog.id : dog.shelterId,
+                        title: choice == 'dog'
+                            ? 'Denunciar publicación'
+                            : 'Denunciar refugio',
+                      ),
+                      itemBuilder: (context) => const [
+                        PopupMenuItem(
+                          value: 'dog',
+                          child: Text('Denunciar publicación'),
+                        ),
+                        PopupMenuItem(
+                          value: 'shelter',
+                          child: Text('Denunciar refugio'),
+                        ),
+                      ],
                     ),
                   ),
-                  FavoriteToggleButton(dogId: dog.id),
-                ],
+                ),
               ),
-              const SizedBox(height: 12),
-              _DogChips(dog: dog, breed: detail.breed),
-              if (dog.story.isNotEmpty) ...[
-                const SizedBox(height: 24),
-                _TextSection(title: 'Su historia', body: dog.story),
-              ],
-              if (_compatibilityItems(dog).isNotEmpty) ...[
-                const SizedBox(height: 16),
-                _CompatibilityCard(items: _compatibilityItems(dog)),
-              ],
-              if (_detailItems(detail).isNotEmpty) ...[
-                const SizedBox(height: 16),
-                _DetailsCard(items: _detailItems(detail)),
-              ],
-              if (dog.shelter case final shelter?) ...[
-                const SizedBox(height: 16),
-                DogShelterSection(shelter: shelter),
-              ],
-              if (detail.medicalEvents.isNotEmpty) ...[
-                const SizedBox(height: 16),
-                DogMedicalEventsSection(events: detail.medicalEvents),
-              ],
-              const SizedBox(height: 24),
+            ],
+            flexibleSpace: FlexibleSpaceBar(
+              // No parallax: the photo must stay below the toolbar band, or
+              // it slides under the title and swallows it while collapsing.
+              collapseMode: CollapseMode.none,
+              background: _DogHero(dog: dog, topInset: topInset),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: ColoredBox(
+              color: WoofyColors.background,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  WoofySpacing.lg,
+                  WoofySpacing.xxl,
+                  WoofySpacing.lg,
+                  WoofySpacing.xxl,
+                ),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 820),
+                    child: _DogDetailBody(detail: detail),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+      bottomNavigationBar: _DetailActionBar(dog: dog),
+    );
+  }
+}
+
+/// Hero band: the photo sits below the floating controls so the title and the
+/// circular buttons always land on flat colour, never on the picture.
+class _DogHero extends StatelessWidget {
+  const _DogHero({required this.dog, required this.topInset});
+
+  final Dog dog;
+  final double topInset;
+
+  @override
+  Widget build(BuildContext context) {
+    return ColoredBox(
+      color: WoofyColors.primarySoft,
+      child: Padding(
+        padding: EdgeInsets.only(top: topInset + kToolbarHeight),
+        // Panel colour behind the photo, so its rounded bottom reads as the
+        // content panel rising over the hero.
+        child: ColoredBox(
+          color: WoofyColors.background,
+          child: ClipRRect(
+            borderRadius: const BorderRadius.vertical(
+              bottom: Radius.circular(_DogDetailContent._panelOverlap),
+            ),
+            child: DogPhotoCarousel(photos: dog.photos),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DogDetailBody extends ConsumerWidget {
+  const _DogDetailBody({required this.detail});
+
+  final DogDetail detail;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final dog = detail.dog;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                dog.name,
+                style: Theme.of(context).textTheme.displaySmall,
+              ),
+            ),
+            FavoriteToggleButton(dogId: dog.id),
+          ],
+        ),
+        const SizedBox(height: WoofySpacing.lg),
+        _AttributesCard(dog: dog, breed: detail.breed),
+        if (dog.story.isNotEmpty) ...[
+          const SizedBox(height: WoofySpacing.lg),
+          _TextSection(title: 'Su historia', body: dog.story),
+        ],
+        if (_compatibilityItems(dog).isNotEmpty) ...[
+          const SizedBox(height: WoofySpacing.lg),
+          _CompatibilityCard(items: _compatibilityItems(dog)),
+        ],
+        if (_detailItems(detail).isNotEmpty) ...[
+          const SizedBox(height: WoofySpacing.lg),
+          _DetailsCard(items: _detailItems(detail)),
+        ],
+        if (dog.shelter case final shelter?) ...[
+          const SizedBox(height: WoofySpacing.lg),
+          DogShelterSection(shelter: shelter),
+        ],
+        if (detail.medicalEvents.isNotEmpty) ...[
+          const SizedBox(height: WoofySpacing.lg),
+          DogMedicalEventsSection(events: detail.medicalEvents),
+        ],
+        // The adoption CTA lives in the pinned bottom bar, but an existing
+        // application shows a full status card that is far too tall to pin.
+        if (ref.watch(currentUserProvider) != null)
+          ref
+              .watch(currentDogApplicationProvider(dog.id))
+              .maybeWhen(
+                data: (application) => application == null
+                    ? const SizedBox.shrink()
+                    : Padding(
+                        padding: const EdgeInsets.only(top: WoofySpacing.lg),
+                        child: ApplicationStatusCard(
+                          application: application,
+                          action: _WriteToShelterButton(dogId: dog.id),
+                        ),
+                      ),
+                orElse: () => const SizedBox.shrink(),
+              ),
+      ],
+    );
+  }
+}
+
+/// Quick facts, grouped in one muted panel instead of loose chips.
+class _AttributesCard extends StatelessWidget {
+  const _AttributesCard({required this.dog, required this.breed});
+
+  final Dog dog;
+  final String? breed;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        color: WoofyColors.surfaceMuted,
+        borderRadius: WoofyRadius.cardAll,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(WoofySpacing.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Características',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: WoofySpacing.md),
+            _DogChips(dog: dog, breed: breed),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Pinned adoption actions. Sits on its own surface so it stays readable over
+/// whatever scrolls behind it.
+class _DetailActionBar extends StatelessWidget {
+  const _DetailActionBar({required this.dog});
+
+  final Dog dog;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        color: WoofyColors.surface,
+        border: Border(top: BorderSide(color: WoofyColors.border)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            WoofySpacing.lg,
+            WoofySpacing.md,
+            WoofySpacing.lg,
+            WoofySpacing.md,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
               _ApplicationAction(dog: dog),
-              const SizedBox(height: 12),
+              const SizedBox(height: WoofySpacing.sm),
               _InquiryButton(dog: dog),
             ],
           ),
@@ -185,6 +389,8 @@ class _ApplicationAction extends ConsumerWidget {
             variant: WoofyButtonVariant.secondary,
             isExpanded: true,
           ),
+          // Already applied: the status card renders inline in the scroll
+          // body, so the pinned bar has nothing to show here.
           data: (application) => application == null
               ? WoofyButton(
                   label: 'Postular a ${dog.name}',
@@ -193,10 +399,7 @@ class _ApplicationAction extends ConsumerWidget {
                   icon: Icons.favorite_outline,
                   isExpanded: true,
                 )
-              : ApplicationStatusCard(
-                  application: application,
-                  action: _WriteToShelterButton(dogId: dog.id),
-                ),
+              : const SizedBox.shrink(),
         );
   }
 }

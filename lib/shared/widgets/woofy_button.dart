@@ -8,16 +8,23 @@ class WoofyButton extends StatelessWidget {
     required this.label,
     required this.onPressed,
     this.icon,
+    this.leading,
     this.isLoading = false,
     this.isExpanded = false,
     this.variant = WoofyButtonVariant.primary,
     this.onPrimary = false,
+    this.backgroundColor,
     super.key,
   });
 
   final String label;
   final VoidCallback? onPressed;
   final IconData? icon;
+
+  /// Leading widget shown instead of [icon]. For brand marks that must keep
+  /// their own artwork, such as the Google "G".
+  final Widget? leading;
+
   final bool isLoading;
   final bool isExpanded;
   final WoofyButtonVariant variant;
@@ -26,6 +33,10 @@ class WoofyButton extends StatelessWidget {
   /// inverts the palette so the button stays legible: filled becomes white
   /// with primary-colored text; outlined becomes white text and border.
   final bool onPrimary;
+
+  /// Overrides the surface the button paints on. Needed for brand buttons
+  /// whose mark ships on an opaque white tile.
+  final Color? backgroundColor;
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +59,10 @@ class WoofyButton extends StatelessWidget {
         : Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (icon != null) ...[
+              if (leading case final mark?) ...[
+                mark,
+                const SizedBox(width: 8),
+              ] else if (icon != null) ...[
                 Icon(icon, size: 20),
                 const SizedBox(width: 8),
               ],
@@ -81,8 +95,15 @@ class WoofyButton extends StatelessWidget {
                 side: const WidgetStatePropertyAll(
                   BorderSide(color: WoofyColors.white),
                 ),
+                backgroundColor: backgroundColor == null
+                    ? null
+                    : WidgetStatePropertyAll(backgroundColor),
               )
-            : null,
+            : backgroundColor == null
+            ? null
+            : (theme.outlinedButtonTheme.style ?? const ButtonStyle()).copyWith(
+                backgroundColor: WidgetStatePropertyAll(backgroundColor),
+              ),
         child: content,
       ),
     };

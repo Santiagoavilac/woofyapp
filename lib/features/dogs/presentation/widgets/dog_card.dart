@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:woofy/core/theme/woofy_colors.dart';
 import 'package:woofy/core/theme/woofy_spacing.dart';
 import 'package:woofy/features/dogs/data/dog_models.dart';
 import 'package:woofy/features/dogs/presentation/widgets/dog_info_chip.dart';
@@ -12,12 +13,31 @@ class DogCard extends StatelessWidget {
     required this.dog,
     required this.onTap,
     this.overlay,
+    this.aspectRatio = 16 / 11,
+    this.compact = false,
     super.key,
   });
+
+  /// Photo shape. The catalog alternates it to build the staggered grid.
+  final double aspectRatio;
+
+  /// Tighter typography and two facts instead of three, for narrow columns.
+  final bool compact;
 
   final Dog dog;
   final VoidCallback onTap;
   final Widget? overlay;
+
+  /// Warm panel behind the photo, stable per animal so a dog always shows up
+  /// with the same colour.
+  static const _photoBackgrounds = [
+    WoofyColors.primarySoft,
+    WoofyColors.secondarySoft,
+    WoofyColors.accentSoft,
+  ];
+
+  static Color _backgroundFor(Dog dog) =>
+      _photoBackgrounds[dog.slug.hashCode.abs() % _photoBackgrounds.length];
 
   @override
   Widget build(BuildContext context) {
@@ -38,8 +58,11 @@ class DogCard extends StatelessWidget {
           Stack(
             children: [
               AspectRatio(
-                aspectRatio: 16 / 11,
-                child: _DogCardPhoto(dog: dog),
+                aspectRatio: aspectRatio,
+                child: ColoredBox(
+                  color: _backgroundFor(dog),
+                  child: _DogCardPhoto(dog: dog),
+                ),
               ),
               if (overlay != null)
                 Positioned(
@@ -50,13 +73,17 @@ class DogCard extends StatelessWidget {
             ],
           ),
           Padding(
-            padding: const EdgeInsets.all(WoofySpacing.lg),
+            padding: EdgeInsets.all(
+              compact ? WoofySpacing.md : WoofySpacing.lg,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   dog.name,
-                  style: theme.textTheme.titleLarge,
+                  style: compact
+                      ? theme.textTheme.titleMedium
+                      : theme.textTheme.titleLarge,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -93,7 +120,7 @@ class DogCard extends StatelessWidget {
                     children: [
                       if (dog.ageLabel case final age?)
                         DogInfoChip(label: age, icon: Icons.cake_outlined),
-                      if (dog.size case final size?)
+                      if (dog.size case final size? when !compact)
                         DogInfoChip(label: size, icon: Icons.straighten),
                       if (dog.sex case final sex?)
                         DogInfoChip(label: sex, icon: Icons.pets_outlined),

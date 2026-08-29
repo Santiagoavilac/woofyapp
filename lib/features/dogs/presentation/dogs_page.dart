@@ -9,6 +9,7 @@ import 'package:woofy/features/dogs/data/dog_models.dart';
 import 'package:woofy/features/dogs/data/dog_repository_provider.dart';
 import 'package:woofy/features/dogs/presentation/widgets/dog_card.dart';
 import 'package:woofy/shared/widgets/woofy_app_bar.dart';
+import 'package:woofy/shared/widgets/woofy_bottom_navigation.dart';
 import 'package:woofy/shared/widgets/woofy_empty_state.dart';
 import 'package:woofy/shared/widgets/woofy_error.dart';
 import 'package:woofy/shared/widgets/woofy_filter_chips.dart';
@@ -72,7 +73,9 @@ class _DogsPageState extends ConsumerState<DogsPage> {
 
   List<Dog> _applyFilters(List<Dog> dogs) {
     final query = _query.trim().toLowerCase();
+    final city = ref.watch(selectedCityProvider);
     return dogs.where((dog) {
+      if (city != null && dog.shelter?.city != city) return false;
       if (query.isNotEmpty) {
         final haystack = [
           dog.name,
@@ -141,7 +144,7 @@ class _DogsPageState extends ConsumerState<DogsPage> {
 
               return LayoutBuilder(
                 builder: (context, constraints) {
-                  final columns = constraints.maxWidth >= 600 ? 2 : 1;
+                  final columns = constraints.maxWidth >= 900 ? 3 : 2;
                   final horizontal = constraints.maxWidth >= 600
                       ? WoofySpacing.xxxl
                       : WoofySpacing.lg;
@@ -198,6 +201,23 @@ class _DogsPageState extends ConsumerState<DogsPage> {
                               ),
                             ),
                           ),
+                          if (sizes.isNotEmpty)
+                            SliverToBoxAdapter(
+                              child: Padding(
+                                padding: const EdgeInsets.only(
+                                  bottom: WoofySpacing.lg,
+                                ),
+                                child: WoofyFilterChips(
+                                  options: sizes,
+                                  selected: _size,
+                                  onSelected: (value) =>
+                                      setState(() => _size = value),
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: horizontal,
+                                  ),
+                                ),
+                              ),
+                            ),
                           if (results.isEmpty)
                             SliverFillRemaining(
                               hasScrollBody: false,
@@ -217,31 +237,15 @@ class _DogsPageState extends ConsumerState<DogsPage> {
                                 horizontal,
                                 0,
                                 horizontal,
-                                WoofySpacing.xxl,
+                                WoofySpacing.xxl +
+                                    WoofyBottomNavigation.reservedHeight +
+                                    MediaQuery.paddingOf(context).bottom,
                               ),
-                              sliver: SliverGrid(
-                                gridDelegate:
-                                    SliverGridDelegateWithFixedCrossAxisCount(
-                                      crossAxisCount: columns,
-                                      mainAxisSpacing: WoofySpacing.lg,
-                                      crossAxisSpacing: WoofySpacing.lg,
-                                      mainAxisExtent: 480,
-                                    ),
-                                delegate: SliverChildBuilderDelegate((
-                                  context,
-                                  index,
-                                ) {
-                                  final dog = results[index];
-                                  return DogCard(
-                                    dog: dog,
-                                    overlay: FavoriteToggleButton(
-                                      dogId: dog.id,
-                                    ),
-                                    onTap: () => context.push(
-                                      RoutePaths.dogDetail(dog.slug),
-                                    ),
-                                  );
-                                }, childCount: results.length),
+                              sliver: SliverToBoxAdapter(
+                                child: _DogsMasonry(
+                                  dogs: results,
+                                  columns: columns,
+                                ),
                               ),
                             ),
                         ],
@@ -258,6 +262,7 @@ class _DogsPageState extends ConsumerState<DogsPage> {
   }
 
   void _clearFilters() {
+    ref.read(selectedCityProvider.notifier).select(null);
     setState(() {
       _searchController.clear();
       _query = '';
@@ -346,6 +351,57 @@ class _DogsPageState extends ConsumerState<DogsPage> {
     }
     if (options.isEmpty) return const [];
     return [const WoofyFilterOption(value: _all, label: 'Todos'), ...options];
+  }
+}
+
+/// Staggered catalog grid: cards are dealt round-robin into [columns] columns
+/// and photos alternate shape, so neighbouring cards never line up.
+///
+/// Not a sliver: it builds every card at once. That is fine here because
+/// `publishedDogsProvider` already holds the whole catalog in memory and
+/// `_applyFilters` runs client-side. Revisit with a staggered sliver package
+/// if the catalog ever grows past a few hundred animals.
+class _DogsMasonry extends StatelessWidget {
+  const _DogsMasonry({required this.dogs, required this.columns});
+
+  static const _aspects = [16 / 11, 1.0, 16 / 11, 4 / 5];
+
+  final List<Dog> dogs;
+  final int columns;
+
+  @override
+  Widget build(BuildContext context) {
+    final buckets = List.generate(columns, (_) => <Widget>[]);
+    for (final (index, dog) in dogs.indexed) {
+      final column = buckets[index % columns];
+      if (column.isNotEmpty) {
+        column.add(const SizedBox(height: WoofySpacing.lg));
+      }
+      column.add(
+        DogCard(
+          dog: dog,
+          compact: true,
+          aspectRatio: _aspects[index % _aspects.length],
+          overlay: FavoriteToggleButton(dogId: dog.id),
+          onTap: () => context.push(RoutePaths.dogDetail(dog.slug)),
+        ),
+      );
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final (index, column) in buckets.indexed) ...[
+          if (index > 0) const SizedBox(width: WoofySpacing.lg),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: column,
+            ),
+          ),
+        ],
+      ],
+    );
   }
 }
 

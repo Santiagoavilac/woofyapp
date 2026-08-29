@@ -11,6 +11,7 @@ import 'package:woofy/features/dogs/data/dog_models.dart';
 import 'package:woofy/features/dogs/data/dog_repository.dart';
 import 'package:woofy/features/dogs/data/dog_repository_provider.dart';
 import 'package:woofy/features/dogs/presentation/dogs_page.dart';
+import 'package:woofy/shared/widgets/woofy_bottom_navigation.dart';
 
 import 'support/fake_auth_repository.dart';
 
@@ -83,6 +84,10 @@ void main() {
     expect(find.text('Milo'), findsOneWidget);
     expect(find.byKey(const ValueKey('dog-photo-placeholder')), findsOneWidget);
 
+    // The shell nav floats over the catalog (`extendBody: true`), so scroll
+    // the card clear of it before tapping.
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, -200));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('dog-card-milo-demo-tap')));
     await tester.pumpAndSettle();
 
@@ -159,26 +164,58 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final nav = find.byType(NavigationBar);
+    // Only the selected destination renders its label, so the other two are
+    // located by their stable keys.
+    final nav = find.byType(WoofyBottomNavigation);
     expect(
       find.descendant(of: nav, matching: find.text('Inicio')),
       findsOneWidget,
     );
+    final explore = find.byKey(const ValueKey('nav-item-explorar'));
+    expect(find.descendant(of: nav, matching: explore), findsOneWidget);
     expect(
-      find.descendant(of: nav, matching: find.text('Explorar')),
-      findsOneWidget,
-    );
-    expect(
-      find.descendant(of: nav, matching: find.text('Perfil')),
+      find.descendant(
+        of: nav,
+        matching: find.byKey(const ValueKey('nav-item-perfil')),
+      ),
       findsOneWidget,
     );
 
-    await tester.tap(find.descendant(of: nav, matching: find.text('Explorar')));
+    await tester.tap(explore);
     await tester.pumpAndSettle();
 
     expect(
       container.read(routerProvider).routeInformationProvider.value.uri.path,
       RoutePaths.dogs,
+    );
+    container.dispose();
+  });
+
+  testWidgets('the profile tab offers a visible way back when signed out', (
+    tester,
+  ) async {
+    final container = await _pumpRoute(
+      tester,
+      FakeDogRepository(dogs: const []),
+      RoutePaths.profile,
+    );
+    await tester.pumpAndSettle();
+
+    // Signed out, the profile tab redirects to a top-level auth route: no
+    // bottom nav and nothing to pop, so the app bar must draw its own way out.
+    expect(
+      container.read(routerProvider).routeInformationProvider.value.uri.path,
+      RoutePaths.auth,
+    );
+    final back = find.widgetWithIcon(IconButton, Icons.arrow_back_rounded);
+    expect(back, findsOneWidget);
+
+    await tester.tap(back);
+    await tester.pumpAndSettle();
+
+    expect(
+      container.read(routerProvider).routeInformationProvider.value.uri.path,
+      RoutePaths.landing,
     );
     container.dispose();
   });

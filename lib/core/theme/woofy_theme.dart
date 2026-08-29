@@ -132,31 +132,6 @@ abstract final class WoofyTheme {
         thickness: 1,
         space: 1,
       ),
-      navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: WoofyColors.surface,
-        indicatorColor: WoofyColors.primarySoft,
-        elevation: 0,
-        height: 68,
-        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-        iconTheme: WidgetStateProperty.resolveWith(
-          (states) => IconThemeData(
-            color: states.contains(WidgetState.selected)
-                ? WoofyColors.primary
-                : WoofyColors.textSecondary,
-          ),
-        ),
-        labelTextStyle: WidgetStateProperty.resolveWith(
-          (states) => TextStyle(
-            fontSize: 12,
-            fontWeight: states.contains(WidgetState.selected)
-                ? FontWeight.w600
-                : FontWeight.w500,
-            color: states.contains(WidgetState.selected)
-                ? WoofyColors.primary
-                : WoofyColors.textSecondary,
-          ),
-        ),
-      ),
     );
   }
 }

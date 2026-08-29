@@ -64,7 +64,10 @@ class _ShelterLoginPageState extends ConsumerState<ShelterLoginPage> {
     return BackFallbackScope(
       fallbackLocation: RoutePaths.landing,
       child: Scaffold(
-        appBar: const WoofyAppBar(title: 'Acceso refugios'),
+        appBar: WoofyAppBar(
+          title: 'Acceso refugios',
+          backFallbackLocation: RoutePaths.landing,
+        ),
         body: SafeArea(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(20),
