@@ -112,9 +112,14 @@ class _DogsPageState extends ConsumerState<DogsPage> with WoofyRefreshMixin {
               }
               final sizes = _distinct(items.map((d) => d.size));
               final sexes = _distinct(items.map((d) => d.sex));
+              final cities = _distinct(items.map((d) => d.shelter?.city));
               final results = _applyFilters(items);
-              final filterActive = _size != _all || _sex != _all;
-              final hasFilters = sizes.isNotEmpty || sexes.isNotEmpty;
+              final filterActive =
+                  _size != _all ||
+                  _sex != _all ||
+                  ref.watch(selectedCityProvider) != null;
+              final hasFilters =
+                  sizes.isNotEmpty || sexes.isNotEmpty || cities.isNotEmpty;
 
               return LayoutBuilder(
                 builder: (context, constraints) {
@@ -163,7 +168,11 @@ class _DogsPageState extends ConsumerState<DogsPage> with WoofyRefreshMixin {
                                     onChanged: (value) =>
                                         setState(() => _query = value),
                                     onFilterTap: hasFilters
-                                        ? () => _openFilterSheet(sizes, sexes)
+                                        ? () => _openFilterSheet(
+                                            sizes,
+                                            sexes,
+                                            cities,
+                                          )
                                         : null,
                                     filterActive: filterActive,
                                   ),
@@ -244,6 +253,7 @@ class _DogsPageState extends ConsumerState<DogsPage> with WoofyRefreshMixin {
   Future<void> _openFilterSheet(
     List<WoofyFilterOption> sizes,
     List<WoofyFilterOption> sexes,
+    List<WoofyFilterOption> cities,
   ) {
     return showModalBottomSheet<void>(
       context: context,
@@ -280,12 +290,30 @@ class _DogsPageState extends ConsumerState<DogsPage> with WoofyRefreshMixin {
                           onPressed: () => select(() {
                             _size = _all;
                             _sex = _all;
+                            ref
+                                .read(selectedCityProvider.notifier)
+                                .select(null);
                           }),
                           child: const Text('Limpiar'),
                         ),
                       ],
                     ),
                     const SizedBox(height: WoofySpacing.sm),
+                    // La ciudad vivía en el header de Home. Se mudó acá, junto
+                    // al resto de los filtros del catálogo, que es donde se
+                    // aplica.
+                    if (cities.isNotEmpty)
+                      _FilterRow(
+                        key: const ValueKey('city-filter'),
+                        label: 'Ciudad',
+                        options: cities,
+                        selected: ref.read(selectedCityProvider) ?? _all,
+                        onSelected: (value) => select(
+                          () => ref
+                              .read(selectedCityProvider.notifier)
+                              .select(value == _all ? null : value),
+                        ),
+                      ),
                     if (sizes.isNotEmpty)
                       _FilterRow(
                         label: 'Tamaño',
@@ -381,6 +409,7 @@ class _FilterRow extends StatelessWidget {
     required this.options,
     required this.selected,
     required this.onSelected,
+    super.key,
   });
 
   final String label;

@@ -12,10 +12,16 @@ import 'package:woofy/features/auth/providers/auth_providers.dart';
 import 'package:woofy/features/dogs/data/dog_models.dart';
 import 'package:woofy/features/dogs/data/dog_repository.dart';
 import 'package:woofy/features/dogs/data/dog_repository_provider.dart';
+import 'package:woofy/features/banners/data/banner_models.dart';
+import 'package:woofy/features/banners/data/banner_repository_provider.dart';
+import 'package:woofy/features/partners/data/partner_models.dart';
+import 'package:woofy/features/partners/data/partner_repository.dart';
+import 'package:woofy/features/partners/data/partner_repository_provider.dart';
 import 'package:woofy/features/publisher/data/publisher_models.dart';
 import 'package:woofy/features/publisher/data/publisher_providers.dart';
 
 import 'support/fake_auth_repository.dart';
+import 'support/fake_partner_repository.dart';
 
 void main() {
   testWidgets('landing presents a compact mobile home for visitors', (
@@ -37,6 +43,60 @@ void main() {
     expect(find.text('Mora'), findsOneWidget);
     expect(find.text('Ir al panel'), findsNothing);
     expect(find.text('Ingresar refugio'), findsNothing);
+  });
+
+  testWidgets('header shows the Woofy mark instead of the city picker', (
+    tester,
+  ) async {
+    await _pumpApp(tester, dogs: _sampleDogs);
+
+    expect(find.byKey(const ValueKey('landing-logo')), findsOneWidget);
+    // La ciudad ahora se elige en el catálogo, no en el header de Inicio.
+    expect(find.byKey(const ValueKey('city-selector')), findsNothing);
+    expect(find.text('Todas las ubicaciones'), findsNothing);
+  });
+
+  testWidgets('home lists vets and services as carousels', (tester) async {
+    await _pumpApp(
+      tester,
+      dogs: _sampleDogs,
+      partners: FakePartnerRepository(
+        partners: const [_samplePartner],
+        services: const [_sampleService],
+      ),
+      // Alta para que los carruseles de abajo se monten sin scrollear.
+      viewSize: const Size(420, 4000),
+    );
+
+    expect(find.text('Veterinarias cerca tuyo'), findsOneWidget);
+    expect(find.text('Clínica Patitas'), findsWidgets);
+    expect(find.text('Servicios para tu mascota'), findsOneWidget);
+    expect(find.text('Baño para perro'), findsOneWidget);
+
+    // Tres secciones tienen "Ver todos"; la de servicios es la última.
+    await tester.tap(find.text('Ver todos').last);
+    await tester.pumpAndSettle();
+    expect(find.text('Todo lo que tu perro necesita'), findsOneWidget);
+  });
+
+  testWidgets('home shows the promo banners loaded by the admin', (
+    tester,
+  ) async {
+    await _pumpApp(
+      tester,
+      dogs: _sampleDogs,
+      banners: const [
+        PromoBanner(
+          id: 'banner-1',
+          title: 'Semana de adopción',
+          subtitle: 'Vení a conocerlos',
+          imageUrl: 'https://example.test/banner.png',
+        ),
+      ],
+    );
+
+    expect(find.byKey(const ValueKey('banner-carousel-home')), findsOneWidget);
+    expect(find.text('Semana de adopción'), findsOneWidget);
   });
 
   testWidgets('primary action and preview action open the expected routes', (
@@ -204,10 +264,30 @@ const _sampleDogs = [
   ),
 ];
 
+const _samplePartner = Partner(
+  id: 'vet-1',
+  name: 'Clínica Patitas',
+  slug: 'clinica-patitas',
+  city: 'Santa Cruz',
+  description: 'Consultas, vacunas y peluquería.',
+  categories: [PartnerCategory.vet],
+);
+
+const _sampleService = PartnerService(
+  id: 'service-1',
+  partnerId: 'vet-1',
+  name: 'Baño para perro',
+  priceCents: 7000,
+  partnerName: 'Clínica Patitas',
+  partnerSlug: 'clinica-patitas',
+);
+
 Future<ProviderContainer> _pumpApp(
   WidgetTester tester, {
   List<Dog> dogs = const [],
   DogRepository? repository,
+  PartnerRepository? partners,
+  List<PromoBanner>? banners,
   ShelterPortalSession? shelterSession,
   bool dogsShouldError = false,
   bool settle = true,
@@ -229,6 +309,10 @@ Future<ProviderContainer> _pumpApp(
         publishedDogsProvider.overrideWith(
           (ref) => Future<List<Dog>>.error(StateError('offline')),
         ),
+      if (partners != null)
+        partnerRepositoryProvider.overrideWithValue(partners),
+      if (banners != null)
+        bannersProvider(BannerSlot.home).overrideWith((ref) => banners),
       authRepositoryProvider.overrideWithValue(auth),
       profileRepositoryProvider.overrideWithValue(_FakeProfileRepository()),
       if (shelterSession != null)

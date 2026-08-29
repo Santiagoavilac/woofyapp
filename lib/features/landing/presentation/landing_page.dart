@@ -6,8 +6,15 @@ import 'package:woofy/core/theme/woofy_colors.dart';
 import 'package:woofy/core/theme/woofy_radius.dart';
 import 'package:woofy/core/theme/woofy_spacing.dart';
 import 'package:woofy/features/auth/providers/auth_providers.dart';
+import 'package:woofy/features/banners/data/banner_models.dart';
+import 'package:woofy/features/banners/data/banner_repository_provider.dart';
+import 'package:woofy/features/banners/presentation/widgets/banner_carousel.dart';
 import 'package:woofy/features/dogs/data/dog_models.dart';
 import 'package:woofy/features/dogs/data/dog_repository_provider.dart';
+import 'package:woofy/features/partners/data/partner_models.dart';
+import 'package:woofy/features/partners/data/partner_repository_provider.dart';
+import 'package:woofy/features/partners/presentation/widgets/partner_card.dart';
+import 'package:woofy/features/partners/presentation/widgets/service_card.dart';
 import 'package:woofy/features/landing/presentation/widgets/landing_shelter_card.dart';
 import 'package:woofy/features/landing/presentation/widgets/recent_dog_preview_card.dart';
 import 'package:woofy/features/publisher/data/publisher_providers.dart';
@@ -40,7 +47,14 @@ class _LandingPageState extends ConsumerState<LandingPage>
 
   @override
   Future<void> onWoofyRefresh() async {
-    ref.invalidate(publishedDogsProvider);
+    ref
+      ..invalidate(publishedDogsProvider)
+      ..invalidate(activePartnersProvider)
+      ..invalidate(servicesProvider)
+      ..invalidate(bannersProvider(BannerSlot.home));
+    // Solo se espera el catálogo de animales: es lo que ocupa la pantalla y lo
+    // que justifica el gesto. Las demás secciones se van llenando solas y
+    // colgar el indicador de refresco de la más lenta lo haría sentir pesado.
     await ref.read(publishedDogsProvider.future);
   }
 
@@ -82,7 +96,14 @@ class _LandingPageState extends ConsumerState<LandingPage>
                 ),
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
-                    WoofyPromoBanner(onTap: () => context.go(RoutePaths.dogs)),
+                    // El banner de adopción queda como respaldo: si el admin
+                    // todavía no cargó publicidad, Inicio no se queda mudo.
+                    BannerCarousel(
+                      slot: BannerSlot.home,
+                      fallback: WoofyPromoBanner(
+                        onTap: () => context.go(RoutePaths.dogs),
+                      ),
+                    ),
                     const SizedBox(height: WoofySpacing.xl),
                     _LandingQuickActions(
                       onExplore: () => context.go(RoutePaths.dogs),
@@ -112,6 +133,12 @@ class _LandingPageState extends ConsumerState<LandingPage>
                       onExplorePressed: () => context.go(RoutePaths.dogs),
                       onRetry: () => ref.invalidate(publishedDogsProvider),
                     ),
+                    // Veterinarias y servicios en carrusel, debajo de los
+                    // animales: la adopción sigue siendo lo primero que se ve.
+                    // Cada sección desaparece entera si no hay nada que
+                    // mostrar, para no dejar filas vacías en Inicio.
+                    const _LandingVetsPreview(),
+                    const _LandingServicesPreview(),
                   ]),
                 ),
               ),
@@ -142,9 +169,34 @@ class _ImmersiveHeader extends StatelessWidget {
   final VoidCallback onExplorePressed;
   final VoidCallback onServicesPressed;
 
+  /// Cuánto celeste se pinta por encima del header para cubrir el rebote del
+  /// scroll. 600 alcanza de sobra para el tirón más largo posible.
+  static const _overscrollBleed = 600.0;
+
   @override
   Widget build(BuildContext context) {
     final topInset = MediaQuery.paddingOf(context).top;
+    return Stack(
+      // El celeste se prolonga hacia arriba fuera de la caja del header. El
+      // viewport lo recorta, así que no se ve nunca... salvo al hacer
+      // pull-to-refresh, que es justo cuando antes aparecía el crema del
+      // Scaffold y cortaba el color. Se desplaza junto con el header, así
+      // que al scrollear hacia abajo desaparece con él.
+      clipBehavior: Clip.none,
+      children: [
+        const Positioned(
+          top: -_overscrollBleed,
+          left: 0,
+          right: 0,
+          height: _overscrollBleed,
+          child: ColoredBox(color: WoofyColors.primarySoft),
+        ),
+        _headerBlock(context, topInset),
+      ],
+    );
+  }
+
+  Widget _headerBlock(BuildContext context, double topInset) {
     return ClipRRect(
       borderRadius: const BorderRadius.vertical(bottom: Radius.circular(32)),
       child: ColoredBox(
@@ -201,7 +253,25 @@ class _HeaderBar extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const _CitySelector(),
+              // El wordmark es blanco sobre transparente, así que se tiñe con
+              // el azul de marca: sobre el celeste del header el blanco no se
+              // leería.
+              Image.asset(
+                'assets/images/woofy_wordmark.png',
+                key: const ValueKey('landing-logo'),
+                height: 26,
+                color: WoofyColors.primary,
+                alignment: Alignment.centerLeft,
+                fit: BoxFit.contain,
+                excludeFromSemantics: true,
+                errorBuilder: (context, error, stackTrace) => Text(
+                  'Woofy',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    color: WoofyColors.primary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
               const SizedBox(height: WoofySpacing.xs),
               Text(
                 'Hola 👋',
@@ -227,84 +297,6 @@ class _HeaderBar extends StatelessWidget {
           onPressed: onAccountPressed,
         ),
       ],
-    );
-  }
-}
-
-/// City scope for the whole catalog. Reads the cities that actually have
-/// published animals, so it never offers an empty result.
-class _CitySelector extends ConsumerWidget {
-  const _CitySelector();
-
-  static const _allLabel = 'Todas las ciudades';
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final cities = ref.watch(availableCitiesProvider);
-    final selected = ref.watch(selectedCityProvider);
-
-    return InkWell(
-      key: const ValueKey('city-selector'),
-      onTap: cities.isEmpty ? null : () => _openSheet(context, ref, cities),
-      borderRadius: BorderRadius.circular(WoofyRadius.pill),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: WoofySpacing.xs),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.place_outlined,
-              size: 20,
-              color: WoofyColors.textPrimary,
-            ),
-            const SizedBox(width: WoofySpacing.xs),
-            Flexible(
-              child: Text(
-                selected ?? _allLabel,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.titleLarge,
-              ),
-            ),
-            if (cities.isNotEmpty)
-              const Icon(
-                Icons.keyboard_arrow_down_rounded,
-                color: WoofyColors.textPrimary,
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<void> _openSheet(
-    BuildContext context,
-    WidgetRef ref,
-    List<String> cities,
-  ) {
-    final selected = ref.read(selectedCityProvider);
-    return showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      builder: (sheetContext) => SafeArea(
-        child: ListView(
-          shrinkWrap: true,
-          children: [
-            for (final city in <String?>[null, ...cities])
-              ListTile(
-                title: Text(city ?? _allLabel),
-                trailing: city == selected
-                    ? const Icon(Icons.check_rounded)
-                    : null,
-                onTap: () {
-                  ref.read(selectedCityProvider.notifier).select(city);
-                  Navigator.pop(sheetContext);
-                },
-              ),
-          ],
-        ),
-      ),
     );
   }
 }
@@ -561,6 +553,130 @@ class _RecentDogsPreview extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+/// Veterinarias aliadas en carrusel.
+///
+/// Solo se dibuja con datos ya cargados: en Inicio, una fila que aparece vacía
+/// y después se llena mueve todo lo de abajo mientras la persona está leyendo.
+class _LandingVetsPreview extends ConsumerWidget {
+  const _LandingVetsPreview();
+
+  static const _limit = 6;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final partners =
+        ref.watch(activePartnersProvider).value ?? const <Partner>[];
+    if (partners.isEmpty) return const SizedBox.shrink();
+
+    return _LandingCarouselSection(
+      title: 'Veterinarias cerca tuyo',
+      subtitle: 'Aliados que atienden a tu mascota.',
+      onSeeAll: () => context.go(RoutePaths.vets),
+      height: 240,
+      itemWidth: 244,
+      children: [
+        for (final partner in partners.take(_limit))
+          PartnerCard(
+            partner: partner,
+            compact: true,
+            onTap: () => context.push(RoutePaths.partnerDetail(partner.slug)),
+          ),
+      ],
+    );
+  }
+}
+
+/// Servicios sueltos de todos los rubros, en carrusel.
+class _LandingServicesPreview extends ConsumerWidget {
+  const _LandingServicesPreview();
+
+  static const _limit = 6;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final services =
+        ref.watch(servicesProvider).value ?? const <PartnerService>[];
+    if (services.isEmpty) return const SizedBox.shrink();
+
+    return _LandingCarouselSection(
+      title: 'Servicios para tu mascota',
+      subtitle: 'Baños, paseos, hoteles y más.',
+      onSeeAll: () => context.push(RoutePaths.services),
+      height: 136,
+      itemWidth: 300,
+      children: [
+        for (final service in services.take(_limit))
+          ServiceCard(
+            service: service,
+            onTap: service.partnerSlug == null
+                ? () {}
+                : () => context.push(
+                    RoutePaths.partnerReservation(service.partnerSlug!),
+                    extra: service.id,
+                  ),
+            onOpenPartner: service.partnerSlug == null
+                ? () {}
+                : () => context.push(
+                    RoutePaths.partnerDetail(service.partnerSlug!),
+                  ),
+          ),
+      ],
+    );
+  }
+}
+
+/// Encabezado con "Ver todos" y una fila horizontal de tarjetas de ancho fijo.
+class _LandingCarouselSection extends StatelessWidget {
+  const _LandingCarouselSection({
+    required this.title,
+    required this.subtitle,
+    required this.onSeeAll,
+    required this.height,
+    required this.itemWidth,
+    required this.children,
+  });
+
+  final String title;
+  final String subtitle;
+  final VoidCallback onSeeAll;
+  final double height;
+  final double itemWidth;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SizedBox(height: WoofySpacing.xxxl),
+        WoofySectionHeader(
+          title: title,
+          subtitle: subtitle,
+          trailing: TextButton(
+            onPressed: onSeeAll,
+            child: const Text('Ver todos'),
+          ),
+        ),
+        const SizedBox(height: WoofySpacing.md),
+        SizedBox(
+          height: height,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            // Las tarjetas tienen sombra: recortarlas al borde de la fila las
+            // deja con el contorno cortado.
+            clipBehavior: Clip.none,
+            itemCount: children.length,
+            separatorBuilder: (context, index) =>
+                const SizedBox(width: WoofySpacing.md),
+            itemBuilder: (context, index) =>
+                SizedBox(width: itemWidth, child: children[index]),
+          ),
+        ),
+      ],
     );
   }
 }

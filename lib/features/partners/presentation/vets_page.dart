@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:woofy/app/route_names.dart';
 import 'package:woofy/core/theme/woofy_colors.dart';
 import 'package:woofy/core/theme/woofy_spacing.dart';
+import 'package:woofy/features/banners/data/banner_models.dart';
+import 'package:woofy/features/banners/presentation/widgets/banner_carousel.dart';
 import 'package:woofy/features/partners/data/cart_provider.dart';
 import 'package:woofy/features/partners/data/partner_models.dart';
 import 'package:woofy/features/partners/data/partner_repository_provider.dart';
@@ -140,6 +142,14 @@ class _VetsPageState extends ConsumerState<VetsPage> with WoofyRefreshMixin {
                                     onChanged: (value) =>
                                         setState(() => _query = value),
                                   ),
+                                  // Sin `fallback`: si el admin no cargó
+                                  // publicidad, la fila no existe.
+                                  const BannerCarousel(
+                                    slot: BannerSlot.vets,
+                                    padding: EdgeInsets.only(
+                                      top: WoofySpacing.lg,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
@@ -164,7 +174,9 @@ class _VetsPageState extends ConsumerState<VetsPage> with WoofyRefreshMixin {
                                   ],
                                   selected: selectedCity ?? _all,
                                   onSelected: (value) => ref
-                                      .read(selectedPartnerCityProvider.notifier)
+                                      .read(
+                                        selectedPartnerCityProvider.notifier,
+                                      )
                                       .select(value == _all ? null : value),
                                   padding: EdgeInsets.symmetric(
                                     horizontal: horizontal,

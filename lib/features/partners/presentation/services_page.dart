@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:woofy/app/back_fallback_scope.dart';
 import 'package:woofy/app/route_names.dart';
 import 'package:woofy/core/theme/woofy_spacing.dart';
+import 'package:woofy/features/banners/data/banner_models.dart';
+import 'package:woofy/features/banners/presentation/widgets/banner_carousel.dart';
 import 'package:woofy/features/partners/data/partner_models.dart';
 import 'package:woofy/features/partners/data/partner_repository_provider.dart';
 import 'package:woofy/features/partners/presentation/widgets/service_card.dart';
@@ -145,6 +147,12 @@ class _ServicesPageState extends ConsumerState<ServicesPage>
                                     onChanged: (value) =>
                                         setState(() => _query = value),
                                   ),
+                                  const BannerCarousel(
+                                    slot: BannerSlot.services,
+                                    padding: EdgeInsets.only(
+                                      top: WoofySpacing.lg,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
@@ -169,7 +177,9 @@ class _ServicesPageState extends ConsumerState<ServicesPage>
                                   ],
                                   selected: selectedKind?.id ?? _all,
                                   onSelected: (value) => ref
-                                      .read(selectedServiceKindProvider.notifier)
+                                      .read(
+                                        selectedServiceKindProvider.notifier,
+                                      )
                                       .select(
                                         value == _all
                                             ? null

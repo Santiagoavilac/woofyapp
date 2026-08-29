@@ -151,6 +151,9 @@ void main() {
     expect(find.text('Filtros'), findsOneWidget);
     expect(find.text('Tamaño'), findsOneWidget);
     expect(find.text('Sexo'), findsOneWidget);
+    // La ciudad se mudó desde el header de Inicio: se filtra donde se aplica.
+    expect(find.byKey(const ValueKey('city-filter')), findsOneWidget);
+    expect(find.text('Ciudad'), findsOneWidget);
     container.dispose();
   });
 

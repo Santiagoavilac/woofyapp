@@ -8,10 +8,19 @@ import 'package:woofy/shared/widgets/woofy_card.dart';
 /// Tarjeta de veterinaria: portada arriba, nombre y ciudad abajo.
 /// Misma gramática visual que [DogCard], sin precios: el catálogo se ve dentro.
 class PartnerCard extends StatelessWidget {
-  const PartnerCard({required this.partner, required this.onTap, super.key});
+  const PartnerCard({
+    required this.partner,
+    required this.onTap,
+    this.compact = false,
+    super.key,
+  });
 
   final Partner partner;
   final VoidCallback onTap;
+
+  /// Oculta la descripción. La usan los carruseles horizontales, donde la
+  /// tarjeta tiene alto fijo y un texto de largo variable la desborda.
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +37,9 @@ class PartnerCard extends StatelessWidget {
             aspectRatio: 16 / 9,
             child: ColoredBox(
               color: WoofyColors.primarySoft,
-              child: PartnerImage(url: partner.coverImageUrl ?? partner.profileImageUrl),
+              child: PartnerImage(
+                url: partner.coverImageUrl ?? partner.profileImageUrl,
+              ),
             ),
           ),
           Padding(
@@ -77,7 +88,8 @@ class PartnerCard extends StatelessWidget {
                     ],
                   ),
                 ],
-                if (partner.description case final description?) ...[
+                if (partner.description case final description?
+                    when !compact) ...[
                   const SizedBox(height: WoofySpacing.sm),
                   Text(
                     description,
