@@ -68,6 +68,7 @@ class _LandingPageState extends ConsumerState<LandingPage>
                       context.push(RoutePaths.messages),
                   onAccountPressed: goToAccount,
                   onExplorePressed: () => context.go(RoutePaths.dogs),
+                  onServicesPressed: () => context.push(RoutePaths.services),
                 ),
               ),
               SliverPadding(
@@ -132,12 +133,14 @@ class _ImmersiveHeader extends StatelessWidget {
     required this.onNotificationsPressed,
     required this.onAccountPressed,
     required this.onExplorePressed,
+    required this.onServicesPressed,
   });
 
   final TextEditingController searchController;
   final VoidCallback onNotificationsPressed;
   final VoidCallback onAccountPressed;
   final VoidCallback onExplorePressed;
+  final VoidCallback onServicesPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -169,7 +172,10 @@ class _ImmersiveHeader extends StatelessWidget {
               ),
             ),
             const SizedBox(height: WoofySpacing.xl),
-            _HeroBand(onExplorePressed: onExplorePressed),
+            _HeroBand(
+              onExplorePressed: onExplorePressed,
+              onServicesPressed: onServicesPressed,
+            ),
           ],
         ),
       ),
@@ -304,9 +310,13 @@ class _CitySelector extends ConsumerWidget {
 }
 
 class _HeroBand extends StatelessWidget {
-  const _HeroBand({required this.onExplorePressed});
+  const _HeroBand({
+    required this.onExplorePressed,
+    required this.onServicesPressed,
+  });
 
   final VoidCallback onExplorePressed;
+  final VoidCallback onServicesPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -317,15 +327,22 @@ class _HeroBand extends StatelessWidget {
         top: WoofySpacing.xs,
         bottom: WoofySpacing.xxl,
       ),
-      child: _HeroText(onExplorePressed: onExplorePressed),
+      child: _HeroText(
+        onExplorePressed: onExplorePressed,
+        onServicesPressed: onServicesPressed,
+      ),
     );
   }
 }
 
 class _HeroText extends StatelessWidget {
-  const _HeroText({required this.onExplorePressed});
+  const _HeroText({
+    required this.onExplorePressed,
+    required this.onServicesPressed,
+  });
 
   final VoidCallback onExplorePressed;
+  final VoidCallback onServicesPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -349,10 +366,36 @@ class _HeroText extends StatelessWidget {
           ),
         ),
         const SizedBox(height: WoofySpacing.lg),
-        WoofyButton(
-          label: 'Ver animales',
-          icon: Icons.pets_rounded,
-          onPressed: onExplorePressed,
+        // Los dos en `Expanded` y no con ancho propio: "Ver animales" es la
+        // acción principal y no puede quedar apretada porque la otra etiqueta
+        // crezca. En pantallas de 320 px entran ajustados y por eso el texto
+        // del botón es `Flexible`.
+        Row(
+          children: [
+            Expanded(
+              child: WoofyButton(
+                label: 'Ver animales',
+                icon: Icons.pets_rounded,
+                isExpanded: true,
+                onPressed: onExplorePressed,
+              ),
+            ),
+            const SizedBox(width: WoofySpacing.sm),
+            Expanded(
+              child: WoofyButton(
+                key: const ValueKey('landing-services-button'),
+                label: 'Servicios',
+                icon: Icons.spa_outlined,
+                isExpanded: true,
+                variant: WoofyButtonVariant.secondary,
+                // Beige de la paleta: la adopción se queda con el azul de
+                // marca y los servicios no compiten con ella.
+                backgroundColor: WoofyColors.surfaceMuted,
+                foregroundColor: WoofyColors.textPrimary,
+                onPressed: onServicesPressed,
+              ),
+            ),
+          ],
         ),
       ],
     );

@@ -14,6 +14,7 @@ class WoofyButton extends StatelessWidget {
     this.variant = WoofyButtonVariant.primary,
     this.onPrimary = false,
     this.backgroundColor,
+    this.foregroundColor,
     super.key,
   });
 
@@ -37,6 +38,11 @@ class WoofyButton extends StatelessWidget {
   /// Overrides the surface the button paints on. Needed for brand buttons
   /// whose mark ships on an opaque white tile.
   final Color? backgroundColor;
+
+  /// Overrides the label and icon color. Goes with [backgroundColor]: the
+  /// default ink is the primary blue, which reads as a second brand color on
+  /// top of a custom surface instead of as text.
+  final Color? foregroundColor;
 
   @override
   Widget build(BuildContext context) {
@@ -99,10 +105,20 @@ class WoofyButton extends StatelessWidget {
                     ? null
                     : WidgetStatePropertyAll(backgroundColor),
               )
-            : backgroundColor == null
+            : backgroundColor == null && foregroundColor == null
             ? null
             : (theme.outlinedButtonTheme.style ?? const ButtonStyle()).copyWith(
-                backgroundColor: WidgetStatePropertyAll(backgroundColor),
+                backgroundColor: backgroundColor == null
+                    ? null
+                    : WidgetStatePropertyAll(backgroundColor),
+                foregroundColor: foregroundColor == null
+                    ? null
+                    : WidgetStatePropertyAll(foregroundColor),
+                side: foregroundColor == null
+                    ? null
+                    : WidgetStatePropertyAll(
+                        BorderSide(color: foregroundColor!.withValues(alpha: .2)),
+                      ),
               ),
         child: content,
       ),

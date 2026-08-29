@@ -27,6 +27,7 @@ import 'package:woofy/features/partners/presentation/cart_page.dart';
 import 'package:woofy/features/partners/presentation/partner_detail_page.dart';
 import 'package:woofy/features/partners/presentation/partner_product_page.dart';
 import 'package:woofy/features/partners/presentation/partner_reservation_page.dart';
+import 'package:woofy/features/partners/presentation/services_page.dart';
 import 'package:woofy/features/partners/presentation/vets_page.dart';
 import 'package:woofy/shared/widgets/woofy_bottom_navigation.dart';
 import 'package:woofy/shared/widgets/woofy_error.dart';
@@ -77,8 +78,13 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
         ],
       ),
-      // Antes que el patrón `/veterinarias/:slug`: `carrito` también encajaría
-      // en `:slug` y go_router se queda con la primera coincidencia.
+      // Fuera del shell: se entra desde Inicio y no tiene pestaña propia, así
+      // que tampoco lleva la barra de abajo.
+      GoRoute(
+        name: RouteNames.services,
+        path: RoutePaths.services,
+        builder: (context, state) => const ServicesPage(),
+      ),
       GoRoute(
         name: RouteNames.cart,
         path: RoutePaths.cart,
