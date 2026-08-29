@@ -30,8 +30,7 @@ class VetReservationPage extends ConsumerStatefulWidget {
   final String? serviceId;
 
   @override
-  ConsumerState<VetReservationPage> createState() =>
-      _VetReservationPageState();
+  ConsumerState<VetReservationPage> createState() => _VetReservationPageState();
 }
 
 class _VetReservationPageState extends ConsumerState<VetReservationPage> {
@@ -184,7 +183,7 @@ class _VetReservationPageState extends ConsumerState<VetReservationPage> {
         WoofyButton(
           key: const ValueKey('reservation-submit'),
           label: 'Confirmar reserva',
-          icon: Icons.chat_rounded,
+          icon: Icons.event_available_rounded,
           isExpanded: true,
           isLoading: _submitting,
           onPressed: selected == null || _scheduledFor == null

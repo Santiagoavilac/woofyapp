@@ -104,12 +104,11 @@ abstract final class WhatsappMessage {
   }
 
   /// Enlace a Google Maps sin sumar un paquete de mapas.
+  ///
+  /// Va por búsqueda de texto y no por coordenadas: ninguna veterinaria sabe
+  /// su latitud, pero todas saben su dirección, y Maps resuelve bien un nombre
+  /// con calle y ciudad.
   static Uri mapsUri(Vet vet) {
-    if (vet.lat != null && vet.lng != null) {
-      return Uri.parse(
-        'https://www.google.com/maps/search/?api=1&query=${vet.lat},${vet.lng}',
-      );
-    }
     final query = [
       vet.name,
       vet.address,

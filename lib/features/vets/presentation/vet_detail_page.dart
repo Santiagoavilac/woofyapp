@@ -15,10 +15,12 @@ import 'package:woofy/features/vets/presentation/widgets/vet_cart_summary_bar.da
 import 'package:woofy/features/vets/presentation/widgets/vet_product_card.dart';
 import 'package:woofy/features/vets/presentation/widgets/vet_service_tile.dart';
 import 'package:woofy/shared/widgets/woofy_app_bar.dart';
+import 'package:woofy/shared/widgets/woofy_brand_button.dart';
 import 'package:woofy/shared/widgets/woofy_button.dart';
 import 'package:woofy/shared/widgets/woofy_empty_state.dart';
 import 'package:woofy/shared/widgets/woofy_error.dart';
 import 'package:woofy/shared/widgets/woofy_loading.dart';
+import 'package:woofy/shared/widgets/woofy_refresh.dart';
 import 'package:woofy/shared/widgets/woofy_section_header.dart';
 
 /// Perfil de una veterinaria: portada, datos de contacto, productos y
@@ -71,145 +73,174 @@ class VetDetailPage extends ConsumerWidget {
   }
 }
 
-class _VetDetailBody extends ConsumerWidget {
+class _VetDetailBody extends ConsumerStatefulWidget {
   const _VetDetailBody({required this.detail});
 
   final VetDetail detail;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_VetDetailBody> createState() => _VetDetailBodyState();
+}
+
+class _VetDetailBodyState extends ConsumerState<_VetDetailBody>
+    with WoofyRefreshMixin {
+  @override
+  Future<void> onWoofyRefresh() async {
+    final slug = widget.detail.vet.slug;
+    ref.invalidate(vetDetailProvider(slug));
+    await ref.read(vetDetailProvider(slug).future);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final detail = widget.detail;
     final theme = Theme.of(context);
     final vet = detail.vet;
     final cartLines = ref.watch(cartProvider)[vet.id]?.lines ?? const [];
 
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(
-        WoofySpacing.lg,
-        WoofySpacing.lg,
-        WoofySpacing.lg,
-        WoofySpacing.huge,
-      ),
-      children: [
-        ClipRRect(
-          borderRadius: WoofyRadius.cardLargeAll,
-          child: AspectRatio(
-            aspectRatio: 16 / 9,
-            child: ColoredBox(
-              color: WoofyColors.primarySoft,
-              child: VetImage(url: vet.coverImageUrl ?? vet.profileImageUrl),
-            ),
+    return CustomScrollView(
+      slivers: [
+        WoofyRefreshControl(onRefresh: refreshData),
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(
+            WoofySpacing.lg,
+            WoofySpacing.lg,
+            WoofySpacing.lg,
+            WoofySpacing.huge,
           ),
-        ),
-        const SizedBox(height: WoofySpacing.lg),
-        Row(
-          children: [
-            Expanded(
-              child: Text(vet.name, style: theme.textTheme.headlineSmall),
-            ),
-            if (vet.verified)
-              const Icon(Icons.verified_rounded, color: WoofyColors.primary),
-          ],
-        ),
-        if ([vet.address, vet.city].whereType<String>().isNotEmpty) ...[
-          const SizedBox(height: WoofySpacing.xs),
-          Text(
-            [vet.address, vet.city].whereType<String>().join(' · '),
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ],
-        if (vet.locationNotes case final notes?) ...[
-          const SizedBox(height: WoofySpacing.xs),
-          Text(notes, style: theme.textTheme.bodySmall),
-        ],
-        if (vet.description case final description?) ...[
-          const SizedBox(height: WoofySpacing.md),
-          Text(description, style: theme.textTheme.bodyLarge),
-        ],
-        const SizedBox(height: WoofySpacing.lg),
-        Row(
-          children: [
-            if (vet.whatsappPhone != null)
-              Expanded(
-                child: WoofyButton(
-                  label: 'WhatsApp',
-                  icon: Icons.chat_rounded,
-                  onPressed: () => _openWhatsapp(context, vet),
+          sliver: SliverList.list(
+            children: [
+              ClipRRect(
+                borderRadius: WoofyRadius.cardLargeAll,
+                child: AspectRatio(
+                  aspectRatio: 16 / 9,
+                  child: ColoredBox(
+                    color: WoofyColors.primarySoft,
+                    child: VetImage(
+                      url: vet.coverImageUrl ?? vet.profileImageUrl,
+                    ),
+                  ),
                 ),
               ),
-            if (vet.whatsappPhone != null)
-              const SizedBox(width: WoofySpacing.sm),
-            Expanded(
-              child: WoofyButton(
-                label: 'Cómo llegar',
-                icon: Icons.map_outlined,
-                variant: WoofyButtonVariant.secondary,
-                onPressed: () => _open(context, WhatsappMessage.mapsUri(vet)),
+              const SizedBox(height: WoofySpacing.lg),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(vet.name, style: theme.textTheme.headlineSmall),
+                  ),
+                  if (vet.verified)
+                    const Icon(
+                      Icons.verified_rounded,
+                      color: WoofyColors.primary,
+                    ),
+                ],
               ),
-            ),
-          ],
-        ),
-        if (detail.products.isNotEmpty) ...[
-          const SizedBox(height: WoofySpacing.xxl),
-          const WoofySectionHeader(
-            title: 'Productos',
-            subtitle: 'Agregá al carrito y coordinás la entrega por WhatsApp.',
-          ),
-          const SizedBox(height: WoofySpacing.md),
-          for (final product in detail.products) ...[
-            VetProductCard(
-              product: product,
-              inCart: cartLines
-                  .where((line) => line.productId == product.id)
-                  .fold(0, (total, line) => total + line.quantity),
-              onOpen: () =>
-                  context.push(RoutePaths.vetProduct(vet.slug, product.id)),
-              onAdd: () {
-                ref.read(cartProvider.notifier).add(vet, product);
-                ScaffoldMessenger.of(context)
-                  ..clearSnackBars()
-                  ..showSnackBar(
-                    SnackBar(
-                      content: Text('${product.name} va al carrito'),
-                      action: SnackBarAction(
-                        label: 'Ver carrito',
-                        onPressed: () => context.push(RoutePaths.vetCart),
+              if ([vet.address, vet.city].whereType<String>().isNotEmpty) ...[
+                const SizedBox(height: WoofySpacing.xs),
+                Text(
+                  [vet.address, vet.city].whereType<String>().join(' · '),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+              if (vet.locationNotes case final notes?) ...[
+                const SizedBox(height: WoofySpacing.xs),
+                Text(notes, style: theme.textTheme.bodySmall),
+              ],
+              if (vet.description case final description?) ...[
+                const SizedBox(height: WoofySpacing.md),
+                Text(description, style: theme.textTheme.bodyLarge),
+              ],
+              const SizedBox(height: WoofySpacing.lg),
+              Row(
+                children: [
+                  if (vet.whatsappPhone != null)
+                    Expanded(
+                      child: WoofyBrandButton(
+                        brand: WoofyBrand.whatsapp,
+                        label: 'WhatsApp',
+                        onPressed: () => _openWhatsapp(context, vet),
                       ),
                     ),
-                  );
-              },
-            ),
-            const SizedBox(height: WoofySpacing.sm),
-          ],
-        ],
-        if (detail.services.isNotEmpty) ...[
-          const SizedBox(height: WoofySpacing.xxl),
-          const WoofySectionHeader(
-            title: 'Servicios',
-            subtitle: 'Elegí un servicio y reservá el turno.',
-          ),
-          const SizedBox(height: WoofySpacing.md),
-          for (final service in detail.services) ...[
-            VetServiceTile(
-              service: service,
-              onReserve: () => context.push(
-                RoutePaths.vetReservation(vet.slug),
-                extra: service.id,
+                  if (vet.whatsappPhone != null)
+                    const SizedBox(width: WoofySpacing.sm),
+                  Expanded(
+                    child: WoofyButton(
+                      label: 'Cómo llegar',
+                      icon: Icons.map_outlined,
+                      variant: WoofyButtonVariant.secondary,
+                      onPressed: () =>
+                          _open(context, WhatsappMessage.mapsUri(vet)),
+                    ),
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(height: WoofySpacing.sm),
-          ],
-        ],
-        if (detail.products.isEmpty && detail.services.isEmpty) ...[
-          const SizedBox(height: WoofySpacing.xxl),
-          const WoofyEmptyState(
-            icon: Icons.inventory_2_outlined,
-            title: 'Catálogo en camino',
-            message:
-                'Esta veterinaria todavía no cargó productos ni servicios.',
+              if (detail.products.isNotEmpty) ...[
+                const SizedBox(height: WoofySpacing.xxl),
+                const WoofySectionHeader(
+                  title: 'Productos',
+                  subtitle:
+                      'Agregá al carrito y coordinás la entrega por WhatsApp.',
+                ),
+                const SizedBox(height: WoofySpacing.md),
+                for (final product in detail.products) ...[
+                  VetProductCard(
+                    product: product,
+                    inCart: cartLines
+                        .where((line) => line.productId == product.id)
+                        .fold(0, (total, line) => total + line.quantity),
+                    onOpen: () => context.push(
+                      RoutePaths.vetProduct(vet.slug, product.id),
+                    ),
+                    onAdd: () {
+                      ref.read(cartProvider.notifier).add(vet, product);
+                      ScaffoldMessenger.of(context)
+                        ..clearSnackBars()
+                        ..showSnackBar(
+                          SnackBar(
+                            content: Text('${product.name} va al carrito'),
+                            action: SnackBarAction(
+                              label: 'Ver carrito',
+                              onPressed: () => context.push(RoutePaths.vetCart),
+                            ),
+                          ),
+                        );
+                    },
+                  ),
+                  const SizedBox(height: WoofySpacing.sm),
+                ],
+              ],
+              if (detail.services.isNotEmpty) ...[
+                const SizedBox(height: WoofySpacing.xxl),
+                const WoofySectionHeader(
+                  title: 'Servicios',
+                  subtitle: 'Elegí un servicio y reservá el turno.',
+                ),
+                const SizedBox(height: WoofySpacing.md),
+                for (final service in detail.services) ...[
+                  VetServiceTile(
+                    service: service,
+                    onReserve: () => context.push(
+                      RoutePaths.vetReservation(vet.slug),
+                      extra: service.id,
+                    ),
+                  ),
+                  const SizedBox(height: WoofySpacing.sm),
+                ],
+              ],
+              if (detail.products.isEmpty && detail.services.isEmpty) ...[
+                const SizedBox(height: WoofySpacing.xxl),
+                const WoofyEmptyState(
+                  icon: Icons.inventory_2_outlined,
+                  title: 'Catálogo en camino',
+                  message:
+                      'Esta veterinaria todavía no cargó productos ni servicios.',
+                ),
+              ],
+            ],
           ),
-        ],
+        ),
       ],
     );
   }

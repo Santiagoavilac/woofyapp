@@ -14,8 +14,6 @@ class Vet {
     this.city,
     this.address,
     this.locationNotes,
-    this.lat,
-    this.lng,
     this.whatsappPhone,
     this.phone,
     this.email,
@@ -38,8 +36,6 @@ class Vet {
     city: _nullableString(json['city']),
     address: _nullableString(json['address']),
     locationNotes: _nullableString(json['location_notes']),
-    lat: _double(json['lat']),
-    lng: _double(json['lng']),
     whatsappPhone: _nullableString(json['whatsapp_phone']),
     phone: _nullableString(json['phone']),
     email: _nullableString(json['email']),
@@ -59,8 +55,6 @@ class Vet {
   final String? city;
   final String? address;
   final String? locationNotes;
-  final double? lat;
-  final double? lng;
   final String? whatsappPhone;
   final String? phone;
   final String? email;
@@ -74,8 +68,9 @@ class Vet {
   final bool verified;
   final String? status;
 
-  /// Hay coordenadas utilizables para abrir el mapa.
-  bool get hasLocation => lat != null && lng != null;
+  /// Hay algo escrito con qué buscar la veterinaria en el mapa.
+  bool get hasLocation =>
+      (address?.isNotEmpty ?? false) || (city?.isNotEmpty ?? false);
 
   Vet copyWith({String? profileImageUrl, String? coverImageUrl}) => Vet(
     id: id,
@@ -85,8 +80,6 @@ class Vet {
     city: city,
     address: address,
     locationNotes: locationNotes,
-    lat: lat,
-    lng: lng,
     whatsappPhone: whatsappPhone,
     phone: phone,
     email: email,
@@ -315,9 +308,6 @@ String? _nullableString(Object? value) {
 }
 
 int? _int(Object? value) => value is int ? value : int.tryParse('$value');
-
-double? _double(Object? value) =>
-    value is num ? value.toDouble() : double.tryParse('$value');
 
 bool? _bool(Object? value) {
   if (value is bool) return value;

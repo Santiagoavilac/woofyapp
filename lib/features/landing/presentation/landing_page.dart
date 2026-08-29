@@ -15,6 +15,7 @@ import 'package:woofy/shared/widgets/woofy_bottom_navigation.dart';
 import 'package:woofy/shared/widgets/woofy_button.dart';
 import 'package:woofy/shared/widgets/woofy_circle_icon_button.dart';
 import 'package:woofy/shared/widgets/woofy_promo_banner.dart';
+import 'package:woofy/shared/widgets/woofy_refresh.dart';
 import 'package:woofy/shared/widgets/woofy_search_field.dart';
 import 'package:woofy/shared/widgets/woofy_section_header.dart';
 
@@ -27,13 +28,20 @@ class LandingPage extends ConsumerStatefulWidget {
   ConsumerState<LandingPage> createState() => _LandingPageState();
 }
 
-class _LandingPageState extends ConsumerState<LandingPage> {
+class _LandingPageState extends ConsumerState<LandingPage>
+    with WoofyRefreshMixin {
   final _searchController = TextEditingController();
 
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  @override
+  Future<void> onWoofyRefresh() async {
+    ref.invalidate(publishedDogsProvider);
+    await ref.read(publishedDogsProvider.future);
   }
 
   @override
@@ -52,6 +60,7 @@ class _LandingPageState extends ConsumerState<LandingPage> {
           constraints: const BoxConstraints(maxWidth: 680),
           child: CustomScrollView(
             slivers: [
+              WoofyRefreshControl(onRefresh: refreshData),
               SliverToBoxAdapter(
                 child: _ImmersiveHeader(
                   searchController: _searchController,
@@ -72,9 +81,7 @@ class _LandingPageState extends ConsumerState<LandingPage> {
                 ),
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
-                    WoofyPromoBanner(
-                      onTap: () => context.go(RoutePaths.dogs),
-                    ),
+                    WoofyPromoBanner(onTap: () => context.go(RoutePaths.dogs)),
                     const SizedBox(height: WoofySpacing.xl),
                     _LandingQuickActions(
                       onExplore: () => context.go(RoutePaths.dogs),

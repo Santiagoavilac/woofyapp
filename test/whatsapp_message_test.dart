@@ -97,22 +97,7 @@ void main() {
   });
 
   group('mapsUri', () {
-    test('uses coordinates when the vet has them', () {
-      const vet = Vet(
-        id: 'v1',
-        name: 'Vet',
-        slug: 'vet',
-        lat: -17.78,
-        lng: -63.18,
-      );
-
-      expect(
-        WhatsappMessage.mapsUri(vet).toString(),
-        'https://www.google.com/maps/search/?api=1&query=-17.78,-63.18',
-      );
-    });
-
-    test('falls back to a text search when there are no coordinates', () {
+    test('searches by name, address and city', () {
       const vet = Vet(
         id: 'v1',
         name: 'Vet Santa Cruz',

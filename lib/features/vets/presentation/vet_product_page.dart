@@ -15,12 +15,17 @@ import 'package:woofy/shared/widgets/woofy_app_bar.dart';
 import 'package:woofy/shared/widgets/woofy_empty_state.dart';
 import 'package:woofy/shared/widgets/woofy_error.dart';
 import 'package:woofy/shared/widgets/woofy_loading.dart';
+import 'package:woofy/shared/widgets/woofy_refresh.dart';
 import 'package:woofy/shared/widgets/woofy_section_header.dart';
 
 /// Detalle de un producto: foto, descripción, cuánto agregar y qué más vende
 /// la misma veterinaria.
 class VetProductPage extends ConsumerStatefulWidget {
-  const VetProductPage({required this.slug, required this.productId, super.key});
+  const VetProductPage({
+    required this.slug,
+    required this.productId,
+    super.key,
+  });
 
   final String slug;
   final String productId;
@@ -29,8 +34,15 @@ class VetProductPage extends ConsumerStatefulWidget {
   ConsumerState<VetProductPage> createState() => _VetProductPageState();
 }
 
-class _VetProductPageState extends ConsumerState<VetProductPage> {
+class _VetProductPageState extends ConsumerState<VetProductPage>
+    with WoofyRefreshMixin {
   int _quantity = 1;
+
+  @override
+  Future<void> onWoofyRefresh() async {
+    ref.invalidate(vetDetailProvider(widget.slug));
+    await ref.read(vetDetailProvider(widget.slug).future);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -104,95 +116,105 @@ class _VetProductPageState extends ConsumerState<VetProductPage> {
       ),
       body: SafeArea(
         bottom: false,
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(
-            WoofySpacing.lg,
-            WoofySpacing.lg,
-            WoofySpacing.lg,
-            WoofySpacing.xxl,
-          ),
-          children: [
-            ClipRRect(
-              borderRadius: WoofyRadius.cardLargeAll,
-              child: AspectRatio(
-                aspectRatio: 1,
-                child: ColoredBox(
-                  color: WoofyColors.surfaceMuted,
-                  child: VetImage(
-                    url: product.imageUrl,
-                    icon: Icons.inventory_2_outlined,
-                  ),
-                ),
+        child: CustomScrollView(
+          slivers: [
+            WoofyRefreshControl(onRefresh: refreshData),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(
+                WoofySpacing.lg,
+                WoofySpacing.lg,
+                WoofySpacing.lg,
+                WoofySpacing.xxl,
               ),
-            ),
-            const SizedBox(height: WoofySpacing.lg),
-            Text(product.name, style: theme.textTheme.headlineSmall),
-            const SizedBox(height: WoofySpacing.xs),
-            Text(
-              detail.vet.name,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: WoofySpacing.md),
-            Text(
-              Money.fromCents(product.priceCents),
-              style: theme.textTheme.headlineSmall?.copyWith(
-                color: WoofyColors.primary,
-              ),
-            ),
-            if (!product.isAvailable) ...[
-              const SizedBox(height: WoofySpacing.xs),
-              Text(
-                'Sin stock por ahora',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.error,
-                ),
-              ),
-            ],
-            if (inCart != null && inCart > 0) ...[
-              const SizedBox(height: WoofySpacing.xs),
-              Text(
-                inCart == 1
-                    ? 'Ya tenés 1 en el carrito'
-                    : 'Ya tenés $inCart en el carrito',
-                key: const ValueKey('vet-product-in-cart'),
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-            if (product.description case final description?) ...[
-              const SizedBox(height: WoofySpacing.lg),
-              Text('Descripción', style: theme.textTheme.titleSmall),
-              const SizedBox(height: WoofySpacing.xs),
-              Text(description, style: theme.textTheme.bodyLarge),
-            ],
-            if (others.isNotEmpty) ...[
-              const SizedBox(height: WoofySpacing.xxl),
-              const WoofySectionHeader(
-                title: 'Otras personas también compraron',
-              ),
-              const SizedBox(height: WoofySpacing.md),
-              SizedBox(
-                height: 208,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: others.length,
-                  separatorBuilder: (context, index) =>
-                      const SizedBox(width: WoofySpacing.md),
-                  itemBuilder: (context, index) => _RelatedProductCard(
-                    product: others[index],
-                    // `pushReplacement`: encadenar productos apilaría una
-                    // pantalla por cada toque y el back tendría que deshacer
-                    // toda la caminata para volver al perfil.
-                    onTap: () => context.pushReplacement(
-                      RoutePaths.vetProduct(widget.slug, others[index].id),
+              sliver: SliverList.list(
+                children: [
+                  ClipRRect(
+                    borderRadius: WoofyRadius.cardLargeAll,
+                    child: AspectRatio(
+                      aspectRatio: 1,
+                      child: ColoredBox(
+                        color: WoofyColors.surfaceMuted,
+                        child: VetImage(
+                          url: product.imageUrl,
+                          icon: Icons.inventory_2_outlined,
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                  const SizedBox(height: WoofySpacing.lg),
+                  Text(product.name, style: theme.textTheme.headlineSmall),
+                  const SizedBox(height: WoofySpacing.xs),
+                  Text(
+                    detail.vet.name,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: WoofySpacing.md),
+                  Text(
+                    Money.fromCents(product.priceCents),
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      color: WoofyColors.primary,
+                    ),
+                  ),
+                  if (!product.isAvailable) ...[
+                    const SizedBox(height: WoofySpacing.xs),
+                    Text(
+                      'Sin stock por ahora',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.error,
+                      ),
+                    ),
+                  ],
+                  if (inCart != null && inCart > 0) ...[
+                    const SizedBox(height: WoofySpacing.xs),
+                    Text(
+                      inCart == 1
+                          ? 'Ya tenés 1 en el carrito'
+                          : 'Ya tenés $inCart en el carrito',
+                      key: const ValueKey('vet-product-in-cart'),
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                  if (product.description case final description?) ...[
+                    const SizedBox(height: WoofySpacing.lg),
+                    Text('Descripción', style: theme.textTheme.titleSmall),
+                    const SizedBox(height: WoofySpacing.xs),
+                    Text(description, style: theme.textTheme.bodyLarge),
+                  ],
+                  if (others.isNotEmpty) ...[
+                    const SizedBox(height: WoofySpacing.xxl),
+                    const WoofySectionHeader(
+                      title: 'Otras personas también compraron',
+                    ),
+                    const SizedBox(height: WoofySpacing.md),
+                    SizedBox(
+                      height: 208,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: others.length,
+                        separatorBuilder: (context, index) =>
+                            const SizedBox(width: WoofySpacing.md),
+                        itemBuilder: (context, index) => _RelatedProductCard(
+                          product: others[index],
+                          // `pushReplacement`: encadenar productos apilaría una
+                          // pantalla por cada toque y el back tendría que deshacer
+                          // toda la caminata para volver al perfil.
+                          onTap: () => context.pushReplacement(
+                            RoutePaths.vetProduct(
+                              widget.slug,
+                              others[index].id,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
-            ],
+            ),
           ],
         ),
       ),

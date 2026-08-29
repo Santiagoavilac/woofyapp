@@ -171,7 +171,8 @@ class SupabaseAuthRepository implements AuthRepository {
       // Apple manda el nombre una única vez, en el primer ingreso. Si no lo
       // guardamos ahora, se pierde para siempre.
       final fullName = _appleFullName(credential);
-      if (fullName != null && (user.fullName == null || user.fullName!.isEmpty)) {
+      if (fullName != null &&
+          (user.fullName == null || user.fullName!.isEmpty)) {
         await _client.auth.updateUser(
           UserAttributes(data: {'full_name': fullName}),
         );

@@ -61,11 +61,7 @@ class _BannerFallback extends StatelessWidget {
         padding: const EdgeInsets.all(WoofySpacing.lg),
         child: Row(
           children: [
-            const Icon(
-              Icons.pets_rounded,
-              color: WoofyColors.accent,
-              size: 32,
-            ),
+            const Icon(Icons.pets_rounded, color: WoofyColors.accent, size: 32),
             const SizedBox(width: WoofySpacing.md),
             Expanded(
               child: Text(

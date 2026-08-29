@@ -74,8 +74,7 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
                           : Form(
                               key: _formKey,
                               child: Column(
-                                crossAxisAlignment:
-                                    CrossAxisAlignment.stretch,
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
                                   WoofyTextField(
                                     key: const ValueKey(

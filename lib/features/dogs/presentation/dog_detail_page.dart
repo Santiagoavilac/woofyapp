@@ -13,6 +13,7 @@ import 'package:woofy/shared/widgets/woofy_card.dart';
 import 'package:woofy/shared/widgets/woofy_empty_state.dart';
 import 'package:woofy/shared/widgets/woofy_error.dart';
 import 'package:woofy/shared/widgets/woofy_loading.dart';
+import 'package:woofy/shared/widgets/woofy_refresh.dart';
 import 'package:go_router/go_router.dart';
 import 'package:woofy/app/route_names.dart';
 import 'package:woofy/features/reports/data/report_models.dart';
@@ -83,7 +84,7 @@ class _PlainDetailScaffold extends StatelessWidget {
   }
 }
 
-class _DogDetailContent extends ConsumerWidget {
+class _DogDetailContent extends ConsumerStatefulWidget {
   const _DogDetailContent({required this.detail});
 
   /// Radius of the curve where the hero photo meets the content panel.
@@ -92,13 +93,28 @@ class _DogDetailContent extends ConsumerWidget {
   final DogDetail detail;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_DogDetailContent> createState() => _DogDetailContentState();
+}
+
+class _DogDetailContentState extends ConsumerState<_DogDetailContent>
+    with WoofyRefreshMixin {
+  @override
+  Future<void> onWoofyRefresh() async {
+    final slug = widget.detail.dog.slug;
+    ref.invalidate(dogDetailProvider(slug));
+    await ref.read(dogDetailProvider(slug).future);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final detail = widget.detail;
     final dog = detail.dog;
     final topInset = MediaQuery.paddingOf(context).top;
 
     return Scaffold(
       body: CustomScrollView(
         slivers: [
+          WoofyRefreshControl(onRefresh: refreshData),
           SliverAppBar(
             pinned: true,
             centerTitle: true,

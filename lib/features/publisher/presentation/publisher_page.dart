@@ -14,6 +14,7 @@ import 'package:woofy/shared/widgets/woofy_card.dart';
 import 'package:woofy/shared/widgets/woofy_empty_state.dart';
 import 'package:woofy/shared/widgets/woofy_error.dart';
 import 'package:woofy/shared/widgets/woofy_loading.dart';
+import 'package:woofy/shared/widgets/woofy_refresh.dart';
 
 class PublisherPage extends ConsumerWidget {
   const PublisherPage({super.key});
@@ -89,13 +90,26 @@ class PublisherPage extends ConsumerWidget {
   }
 }
 
-class _PublisherBody extends ConsumerWidget {
+class _PublisherBody extends ConsumerStatefulWidget {
   const _PublisherBody({required this.session});
 
   final ShelterPortalSession session;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_PublisherBody> createState() => _PublisherBodyState();
+}
+
+class _PublisherBodyState extends ConsumerState<_PublisherBody>
+    with WoofyRefreshMixin {
+  @override
+  Future<void> onWoofyRefresh() async {
+    ref.invalidate(shelterPortalDogsProvider);
+    await ref.read(shelterPortalDogsProvider.future);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final session = widget.session;
     final dogs = ref.watch(shelterPortalDogsProvider);
 
     return Column(
@@ -171,16 +185,19 @@ class _PublisherBody extends ConsumerWidget {
                   message: 'Usá "Nuevo perro" para empezar.',
                 );
               }
-              return RefreshIndicator(
-                onRefresh: () async =>
-                    ref.invalidate(shelterPortalDogsProvider),
-                child: ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                  itemCount: items.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 8),
-                  itemBuilder: (context, index) =>
-                      _DogListTile(dog: items[index].dog),
-                ),
+              return CustomScrollView(
+                slivers: [
+                  WoofyRefreshControl(onRefresh: refreshData),
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    sliver: SliverList.separated(
+                      itemCount: items.length,
+                      separatorBuilder: (_, _) => const SizedBox(height: 8),
+                      itemBuilder: (context, index) =>
+                          _DogListTile(dog: items[index].dog),
+                    ),
+                  ),
+                ],
               );
             },
           ),

@@ -99,8 +99,7 @@ class WoofyBottomNavigation extends StatelessWidget {
                   ),
                   Row(
                     children: [
-                      for (final (index, destination)
-                          in _destinations.indexed)
+                      for (final (index, destination) in _destinations.indexed)
                         SizedBox(
                           width: slotWidth,
                           child: _NavItem(

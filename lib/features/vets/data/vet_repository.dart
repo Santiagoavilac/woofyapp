@@ -36,7 +36,7 @@ class SupabaseVetRepository implements VetRepository {
   static const _bucket = 'vet-images';
 
   static const _vetFields = '''
-    id, name, slug, description, city, address, location_notes, lat, lng,
+    id, name, slug, description, city, address, location_notes,
     whatsapp_phone, phone, email, instagram, facebook, website,
     profile_image_path, cover_image_path, verified, status
   ''';

@@ -28,10 +28,11 @@ class BlockController extends AsyncNotifier<void> {
   @override
   FutureOr<void> build() {}
 
-  Future<void> blockShelter(String shelterId, {String? reason}) =>
-      _run(() => ref
-          .read(blocksRepositoryProvider)
-          .blockShelter(shelterId, reason: reason));
+  Future<void> blockShelter(String shelterId, {String? reason}) => _run(
+    () => ref
+        .read(blocksRepositoryProvider)
+        .blockShelter(shelterId, reason: reason),
+  );
 
   Future<void> unblockShelter(String shelterId) =>
       _run(() => ref.read(blocksRepositoryProvider).unblockShelter(shelterId));

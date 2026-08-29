@@ -66,10 +66,9 @@ class ShelterPortalNotifier extends AsyncNotifier<ShelterPortalSession?> {
       final refreshed = await ref
           .read(shelterPortalRepositoryProvider)
           .refreshSession(stored);
-      await ref.read(secureStorageServiceProvider).write(
-        _shelterSessionKey,
-        jsonEncode(refreshed.toJson()),
-      );
+      await ref
+          .read(secureStorageServiceProvider)
+          .write(_shelterSessionKey, jsonEncode(refreshed.toJson()));
       state = AsyncData(refreshed);
     } on AppException catch (error) {
       if (_isSessionInvalid(error)) {
@@ -102,10 +101,9 @@ class ShelterPortalNotifier extends AsyncNotifier<ShelterPortalSession?> {
       final session = await ref
           .read(shelterPortalRepositoryProvider)
           .login(loginCode.trim(), password);
-      await ref.read(secureStorageServiceProvider).write(
-        _shelterSessionKey,
-        jsonEncode(session.toJson()),
-      );
+      await ref
+          .read(secureStorageServiceProvider)
+          .write(_shelterSessionKey, jsonEncode(session.toJson()));
       state = AsyncData(session);
     } catch (error, stackTrace) {
       state = AsyncError(error, stackTrace);
@@ -130,10 +128,9 @@ class ShelterPortalNotifier extends AsyncNotifier<ShelterPortalSession?> {
     final updated = await ref
         .read(shelterPortalRepositoryProvider)
         .updateShelter(current, data);
-    await ref.read(secureStorageServiceProvider).write(
-      _shelterSessionKey,
-      jsonEncode(updated.toJson()),
-    );
+    await ref
+        .read(secureStorageServiceProvider)
+        .write(_shelterSessionKey, jsonEncode(updated.toJson()));
     state = AsyncData(updated);
   }
 
@@ -147,10 +144,9 @@ class ShelterPortalNotifier extends AsyncNotifier<ShelterPortalSession?> {
       mimeType,
     );
     final updated = await repo.updateShelterProfileImage(current, path);
-    await ref.read(secureStorageServiceProvider).write(
-      _shelterSessionKey,
-      jsonEncode(updated.toJson()),
-    );
+    await ref
+        .read(secureStorageServiceProvider)
+        .write(_shelterSessionKey, jsonEncode(updated.toJson()));
     state = AsyncData(updated);
   }
 }

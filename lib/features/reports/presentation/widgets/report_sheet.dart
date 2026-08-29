@@ -75,9 +75,7 @@ class _ReportSheetState extends ConsumerState<_ReportSheet> {
       if (!mounted) return;
       Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Gracias. Vamos a revisar tu denuncia.'),
-        ),
+        const SnackBar(content: Text('Gracias. Vamos a revisar tu denuncia.')),
       );
     } catch (_) {}
   }
@@ -110,9 +108,8 @@ class _ReportSheetState extends ConsumerState<_ReportSheet> {
                   WoofyFilterOption(value: reason.name, label: reason.label),
               ],
               selected: _reason.name,
-              onSelected: (value) => setState(
-                () => _reason = ReportReason.values.byName(value),
-              ),
+              onSelected: (value) =>
+                  setState(() => _reason = ReportReason.values.byName(value)),
             ),
             const SizedBox(height: WoofySpacing.lg),
             WoofyTextField(

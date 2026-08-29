@@ -97,7 +97,11 @@ class VetCard extends StatelessWidget {
 
 /// Imagen de veterinaria con marcador de posición propio.
 class VetImage extends StatelessWidget {
-  const VetImage({required this.url, this.icon = Icons.storefront_rounded, super.key});
+  const VetImage({
+    required this.url,
+    this.icon = Icons.storefront_rounded,
+    super.key,
+  });
 
   final String? url;
   final IconData icon;

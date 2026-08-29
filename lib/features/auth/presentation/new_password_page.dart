@@ -121,7 +121,8 @@ class _NewPasswordPageState extends ConsumerState<NewPasswordPage> {
                             textInputAction: TextInputAction.done,
                             onFieldSubmitted: (_) => _submit(),
                             prefixIcon: const Icon(Icons.lock_outline_rounded),
-                            validator: (value) => value == _passwordController.text
+                            validator: (value) =>
+                                value == _passwordController.text
                                 ? null
                                 : 'Las contraseñas no coinciden.',
                           ),

@@ -14,6 +14,7 @@ import 'package:woofy/shared/widgets/woofy_empty_state.dart';
 import 'package:woofy/shared/widgets/woofy_error.dart';
 import 'package:woofy/shared/widgets/woofy_filter_chips.dart';
 import 'package:woofy/shared/widgets/woofy_loading.dart';
+import 'package:woofy/shared/widgets/woofy_refresh.dart';
 import 'package:woofy/shared/widgets/woofy_search_field.dart';
 
 /// Listado de veterinarias aliadas, con búsqueda y filtro por ciudad.
@@ -24,7 +25,7 @@ class VetsPage extends ConsumerStatefulWidget {
   ConsumerState<VetsPage> createState() => _VetsPageState();
 }
 
-class _VetsPageState extends ConsumerState<VetsPage> {
+class _VetsPageState extends ConsumerState<VetsPage> with WoofyRefreshMixin {
   final _searchController = TextEditingController();
   String _query = '';
 
@@ -34,6 +35,12 @@ class _VetsPageState extends ConsumerState<VetsPage> {
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  @override
+  Future<void> onWoofyRefresh() async {
+    ref.invalidate(activeVetsProvider);
+    await ref.read(activeVetsProvider.future);
   }
 
   List<Vet> _applyFilters(List<Vet> vets) {
@@ -100,6 +107,7 @@ class _VetsPageState extends ConsumerState<VetsPage> {
                       constraints: const BoxConstraints(maxWidth: 900),
                       child: CustomScrollView(
                         slivers: [
+                          WoofyRefreshControl(onRefresh: refreshData),
                           SliverPadding(
                             padding: EdgeInsets.fromLTRB(
                               horizontal,
@@ -121,7 +129,9 @@ class _VetsPageState extends ConsumerState<VetsPage> {
                                   Text(
                                     'Veterinarias aliadas con productos y '
                                     'turnos que reservás desde acá.',
-                                    style: Theme.of(context).textTheme.bodyLarge,
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodyLarge,
                                   ),
                                   const SizedBox(height: WoofySpacing.lg),
                                   WoofySearchField(

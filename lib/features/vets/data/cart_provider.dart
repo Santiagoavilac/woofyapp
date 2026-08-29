@@ -119,8 +119,9 @@ class Cart extends Notifier<Map<String, CartGroup>> {
 
     final lines = group.lines
         .map(
-          (line) =>
-              line.productId == productId ? line.copyWith(quantity: quantity) : line,
+          (line) => line.productId == productId
+              ? line.copyWith(quantity: quantity)
+              : line,
         )
         .where((line) => line.quantity > 0)
         .toList();

@@ -1,6 +1,4 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:woofy/app/route_names.dart';
@@ -14,6 +12,7 @@ import 'package:woofy/shared/widgets/woofy_empty_state.dart';
 import 'package:woofy/shared/widgets/woofy_error.dart';
 import 'package:woofy/shared/widgets/woofy_filter_chips.dart';
 import 'package:woofy/shared/widgets/woofy_loading.dart';
+import 'package:woofy/shared/widgets/woofy_refresh.dart';
 import 'package:woofy/shared/widgets/woofy_search_field.dart';
 import 'package:woofy/features/favorites/presentation/widgets/favorite_toggle_button.dart';
 
@@ -26,12 +25,11 @@ class DogsPage extends ConsumerStatefulWidget {
   ConsumerState<DogsPage> createState() => _DogsPageState();
 }
 
-class _DogsPageState extends ConsumerState<DogsPage> {
+class _DogsPageState extends ConsumerState<DogsPage> with WoofyRefreshMixin {
   final _searchController = TextEditingController();
   String _query = '';
   String _size = _all;
   String _sex = _all;
-  Future<void>? _refreshFuture;
 
   static const _all = 'todos';
 
@@ -41,34 +39,10 @@ class _DogsPageState extends ConsumerState<DogsPage> {
     super.dispose();
   }
 
-  Future<void> _refresh() {
-    final existing = _refreshFuture;
-    if (existing != null) return existing;
-    final future = _runRefresh();
-    _refreshFuture = future;
-    future.whenComplete(() {
-      if (mounted && identical(_refreshFuture, future)) {
-        setState(() => _refreshFuture = null);
-      } else {
-        _refreshFuture = null;
-      }
-    });
-    return future;
-  }
-
-  Future<void> _runRefresh() async {
-    HapticFeedback.mediumImpact();
-    final started = DateTime.now();
+  @override
+  Future<void> onWoofyRefresh() async {
     ref.invalidate(publishedDogsProvider);
-    try {
-      await ref.read(publishedDogsProvider.future);
-    } catch (_) {}
-    const minVisible = Duration(milliseconds: 1600);
-    final elapsed = DateTime.now().difference(started);
-    if (elapsed < minVisible) {
-      await Future<void>.delayed(minVisible - elapsed);
-    }
-    await Future<void>.delayed(const Duration(milliseconds: 800));
+    await ref.read(publishedDogsProvider.future);
   }
 
   List<Dog> _applyFilters(List<Dog> dogs) {
@@ -156,11 +130,7 @@ class _DogsPageState extends ConsumerState<DogsPage> {
                           parent: AlwaysScrollableScrollPhysics(),
                         ),
                         slivers: [
-                          CupertinoSliverRefreshControl(
-                            refreshTriggerPullDistance: 180,
-                            refreshIndicatorExtent: 120,
-                            onRefresh: _refresh,
-                          ),
+                          WoofyRefreshControl(onRefresh: refreshData),
                           SliverPadding(
                             padding: EdgeInsets.fromLTRB(
                               horizontal,

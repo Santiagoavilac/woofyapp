@@ -23,7 +23,9 @@ Future<void> openLegalUrl(String url) async {
 
 /// Abre el cliente de correo con el asunto ya puesto. Va por
 /// externalApplication porque mailto: lo resuelve otra app, no el navegador.
-Future<void> openSupportEmail({String subject = 'Consulta desde la app'}) async {
+Future<void> openSupportEmail({
+  String subject = 'Consulta desde la app',
+}) async {
   final uri = Uri(
     scheme: 'mailto',
     path: LegalLinks.soporteEmail,

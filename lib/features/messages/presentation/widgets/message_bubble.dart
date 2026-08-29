@@ -39,32 +39,32 @@ class MessageBubble extends StatelessWidget {
                 title: 'Denunciar mensaje',
               ),
         child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 310),
-        child: DecoratedBox(
-          decoration: BoxDecoration(color: background, borderRadius: radius),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  message.displayBody,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(color: foreground),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  _formatMessageTime(message.createdAt),
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: foreground.withValues(alpha: 0.72),
+          constraints: const BoxConstraints(maxWidth: 310),
+          child: DecoratedBox(
+            decoration: BoxDecoration(color: background, borderRadius: radius),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    message.displayBody,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.copyWith(color: foreground),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 6),
+                  Text(
+                    _formatMessageTime(message.createdAt),
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: foreground.withValues(alpha: 0.72),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
-      ),
       ),
     );
   }

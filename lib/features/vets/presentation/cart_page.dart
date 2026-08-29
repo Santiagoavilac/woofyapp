@@ -52,8 +52,7 @@ class _CartPageState extends ConsumerState<CartPage> {
             ? WoofyEmptyState(
                 icon: Icons.shopping_bag_outlined,
                 title: 'Tu carrito está vacío',
-                message:
-                    'Agregá productos desde el perfil de una veterinaria.',
+                message: 'Agregá productos desde el perfil de una veterinaria.',
                 actionLabel: 'Ver veterinarias',
                 onAction: () => context.go(RoutePaths.vets),
               )
@@ -88,7 +87,6 @@ class _CartPageState extends ConsumerState<CartPage> {
     // `user_id`: el login se pide recién acá.
     final user = ref.read(currentUserProvider);
     if (user == null) {
-      _notify('Entrá a tu cuenta para mandar el pedido.');
       context.push(RoutePaths.auth);
       return;
     }
@@ -187,7 +185,8 @@ class _CartGroupCard extends ConsumerWidget {
                 child: Text(group.vetName, style: theme.textTheme.titleMedium),
               ),
               TextButton(
-                onPressed: () => context.push(RoutePaths.vetDetail(group.vetSlug)),
+                onPressed: () =>
+                    context.push(RoutePaths.vetDetail(group.vetSlug)),
                 child: const Text('Ver perfil'),
               ),
             ],
@@ -234,16 +233,14 @@ class _CartGroupCard extends ConsumerWidget {
                 IconButton(
                   key: ValueKey('cart-decrement-${line.productId}'),
                   tooltip: 'Quitar uno',
-                  onPressed: () =>
-                      cart.decrement(group.vetId, line.productId),
+                  onPressed: () => cart.decrement(group.vetId, line.productId),
                   icon: const Icon(Icons.remove_circle_outline),
                 ),
                 Text('${line.quantity}', style: theme.textTheme.titleSmall),
                 IconButton(
                   key: ValueKey('cart-increment-${line.productId}'),
                   tooltip: 'Agregar uno',
-                  onPressed: () =>
-                      cart.increment(group.vetId, line.productId),
+                  onPressed: () => cart.increment(group.vetId, line.productId),
                   icon: const Icon(Icons.add_circle_outline),
                 ),
               ],
@@ -267,8 +264,8 @@ class _CartGroupCard extends ConsumerWidget {
           const SizedBox(height: WoofySpacing.md),
           WoofyButton(
             key: ValueKey('cart-checkout-${group.vetId}'),
-            label: 'Mandar mensaje',
-            icon: Icons.chat_rounded,
+            label: 'Comprar',
+            icon: Icons.shopping_bag_rounded,
             isExpanded: true,
             isLoading: isSubmitting,
             onPressed: isBlocked ? null : onCheckout,

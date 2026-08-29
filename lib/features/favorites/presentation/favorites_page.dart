@@ -11,12 +11,25 @@ import 'package:woofy/shared/widgets/woofy_app_bar.dart';
 import 'package:woofy/shared/widgets/woofy_button.dart';
 import 'package:woofy/shared/widgets/woofy_error.dart';
 import 'package:woofy/shared/widgets/woofy_loading.dart';
+import 'package:woofy/shared/widgets/woofy_refresh.dart';
 
-class FavoritesPage extends ConsumerWidget {
+class FavoritesPage extends ConsumerStatefulWidget {
   const FavoritesPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<FavoritesPage> createState() => _FavoritesPageState();
+}
+
+class _FavoritesPageState extends ConsumerState<FavoritesPage>
+    with WoofyRefreshMixin {
+  @override
+  Future<void> onWoofyRefresh() async {
+    ref.invalidate(favoriteDogsProvider);
+    await ref.read(favoriteDogsProvider.future);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final favorites = ref.watch(favoriteDogsProvider);
     return BackFallbackScope(
       fallbackLocation: RoutePaths.dogs,
@@ -83,23 +96,31 @@ class FavoritesPage extends ConsumerWidget {
               return LayoutBuilder(
                 builder: (context, constraints) {
                   final columns = constraints.maxWidth >= 600 ? 2 : 1;
-                  return GridView.builder(
-                    padding: const EdgeInsets.all(16),
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: columns,
-                      mainAxisSpacing: 16,
-                      crossAxisSpacing: 16,
-                      mainAxisExtent: 448,
-                    ),
-                    itemCount: dogs.length,
-                    itemBuilder: (context, index) {
-                      final dog = dogs[index];
-                      return FavoriteDogCard(
-                        dog: dog,
-                        onTap: () =>
-                            context.push(RoutePaths.dogDetail(dog.slug)),
-                      );
-                    },
+                  return CustomScrollView(
+                    slivers: [
+                      WoofyRefreshControl(onRefresh: refreshData),
+                      SliverPadding(
+                        padding: const EdgeInsets.all(16),
+                        sliver: SliverGrid.builder(
+                          gridDelegate:
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: columns,
+                                mainAxisSpacing: 16,
+                                crossAxisSpacing: 16,
+                                mainAxisExtent: 448,
+                              ),
+                          itemCount: dogs.length,
+                          itemBuilder: (context, index) {
+                            final dog = dogs[index];
+                            return FavoriteDogCard(
+                              dog: dog,
+                              onTap: () =>
+                                  context.push(RoutePaths.dogDetail(dog.slug)),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
                   );
                 },
               );

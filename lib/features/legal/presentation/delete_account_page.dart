@@ -73,9 +73,9 @@ class _DeleteAccountPageState extends ConsumerState<DeleteAccountPage> {
 
       await ref.read(authControllerProvider.notifier).signOut();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Tu cuenta fue eliminada.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Tu cuenta fue eliminada.')));
       context.go(RoutePaths.landing);
     } catch (error) {
       if (!mounted) return;
@@ -134,8 +134,10 @@ class _DeleteAccountPageState extends ConsumerState<DeleteAccountPage> {
                             'cumplimiento legal.',
                           ),
                           const SizedBox(height: 8),
-                          const Text('Si tenés dudas, escribinos antes de '
-                              'continuar.'),
+                          const Text(
+                            'Si tenés dudas, escribinos antes de '
+                            'continuar.',
+                          ),
                           Align(
                             alignment: Alignment.centerLeft,
                             child: TextButton(

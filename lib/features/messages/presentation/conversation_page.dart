@@ -7,6 +7,7 @@ import 'package:woofy/features/auth/providers/auth_providers.dart';
 import 'package:woofy/features/blocks/providers/blocks_providers.dart';
 import 'package:woofy/features/reports/data/report_models.dart';
 import 'package:woofy/features/reports/presentation/widgets/report_sheet.dart';
+import 'package:woofy/features/messages/data/message_models.dart';
 import 'package:woofy/features/messages/data/messages_providers.dart';
 import 'package:woofy/features/messages/presentation/widgets/conversation_header.dart';
 import 'package:woofy/features/messages/presentation/widgets/message_bubble.dart';
@@ -15,6 +16,7 @@ import 'package:woofy/shared/widgets/woofy_app_bar.dart';
 import 'package:woofy/shared/widgets/woofy_empty_state.dart';
 import 'package:woofy/shared/widgets/woofy_error.dart';
 import 'package:woofy/shared/widgets/woofy_loading.dart';
+import 'package:woofy/shared/widgets/woofy_refresh.dart';
 
 class ConversationPage extends ConsumerWidget {
   const ConversationPage({required this.threadId, super.key});
@@ -52,9 +54,9 @@ class ConversationPage extends ConsumerWidget {
     try {
       await ref.read(blockControllerProvider.notifier).blockShelter(shelterId);
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Bloqueaste a $shelterName.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Bloqueaste a $shelterName.')));
       context.go(RoutePaths.messages);
     } catch (_) {
       if (!context.mounted) return;
@@ -104,10 +106,7 @@ class ConversationPage extends ConsumerWidget {
                   value: 'report',
                   child: Text('Denunciar conversación'),
                 ),
-                PopupMenuItem(
-                  value: 'block',
-                  child: Text('Bloquear refugio'),
-                ),
+                PopupMenuItem(value: 'block', child: Text('Bloquear refugio')),
               ],
             ),
           ],
@@ -145,22 +144,10 @@ class ConversationPage extends ConsumerWidget {
                               'Escribí el primero para coordinar con el refugio.',
                         );
                       }
-                      return RefreshIndicator(
-                        onRefresh: () async =>
-                            ref.invalidate(threadMessagesProvider(threadId)),
-                        child: ListView.separated(
-                          padding: const EdgeInsets.all(16),
-                          itemCount: items.length,
-                          separatorBuilder: (_, _) =>
-                              const SizedBox(height: 10),
-                          itemBuilder: (context, index) {
-                            final message = items[index];
-                            return MessageBubble(
-                              message: message,
-                              isMine: userId != null && message.isMine(userId),
-                            );
-                          },
-                        ),
+                      return _MessageList(
+                        threadId: threadId,
+                        messages: items,
+                        userId: userId,
                       );
                     },
                   ),
@@ -176,6 +163,59 @@ class ConversationPage extends ConsumerWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Lista de mensajes con el mismo gesto de recarga que el resto de la app.
+///
+/// Va aparte de [ConversationPage] porque el gesto necesita un [State] y la
+/// página entera no tiene por qué volverse stateful por esto.
+class _MessageList extends ConsumerStatefulWidget {
+  const _MessageList({
+    required this.threadId,
+    required this.messages,
+    required this.userId,
+  });
+
+  final String threadId;
+  final List<Message> messages;
+  final String? userId;
+
+  @override
+  ConsumerState<_MessageList> createState() => _MessageListState();
+}
+
+class _MessageListState extends ConsumerState<_MessageList>
+    with WoofyRefreshMixin {
+  @override
+  Future<void> onWoofyRefresh() async {
+    ref.invalidate(threadMessagesProvider(widget.threadId));
+    await ref.read(threadMessagesProvider(widget.threadId).future);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final userId = widget.userId;
+
+    return CustomScrollView(
+      slivers: [
+        WoofyRefreshControl(onRefresh: refreshData),
+        SliverPadding(
+          padding: const EdgeInsets.all(16),
+          sliver: SliverList.separated(
+            itemCount: widget.messages.length,
+            separatorBuilder: (_, _) => const SizedBox(height: 10),
+            itemBuilder: (context, index) {
+              final message = widget.messages[index];
+              return MessageBubble(
+                message: message,
+                isMine: userId != null && message.isMine(userId),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }
