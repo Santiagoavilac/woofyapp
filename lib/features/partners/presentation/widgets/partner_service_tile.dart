@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:woofy/core/theme/woofy_colors.dart';
 import 'package:woofy/core/theme/woofy_spacing.dart';
-import 'package:woofy/features/vets/data/money.dart';
-import 'package:woofy/features/vets/data/vet_models.dart';
+import 'package:woofy/features/partners/data/money.dart';
+import 'package:woofy/features/partners/data/partner_models.dart';
 import 'package:woofy/shared/widgets/woofy_card.dart';
 
 /// Servicio reservable: precio y acceso a la reserva.
-class VetServiceTile extends StatelessWidget {
-  const VetServiceTile({
+class PartnerServiceTile extends StatelessWidget {
+  const PartnerServiceTile({
     required this.service,
     required this.onReserve,
     super.key,
   });
 
-  final VetService service;
+  final PartnerService service;
   final VoidCallback onReserve;
 
   @override

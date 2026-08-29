@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:woofy/core/theme/woofy_colors.dart';
 import 'package:woofy/core/theme/woofy_radius.dart';
 import 'package:woofy/core/theme/woofy_spacing.dart';
-import 'package:woofy/features/vets/data/money.dart';
+import 'package:woofy/features/partners/data/money.dart';
 
 /// Barra fija de compra: a la izquierda cuántas unidades y a la derecha el
 /// total de lo que se está por agregar, con el contador y el botón debajo.
 ///
 /// El total se calcula con enteros de centavos, igual que el resto de la
 /// vertical: `unitPriceCents * quantity` nunca pasa por flotante.
-class VetAddToCartBar extends StatelessWidget {
-  const VetAddToCartBar({
+class AddToCartBar extends StatelessWidget {
+  const AddToCartBar({
     required this.unitPriceCents,
     required this.quantity,
     required this.onDecrement,

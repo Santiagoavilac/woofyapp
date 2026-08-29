@@ -4,10 +4,10 @@ import 'package:go_router/go_router.dart';
 import 'package:woofy/app/route_names.dart';
 import 'package:woofy/core/theme/woofy_colors.dart';
 import 'package:woofy/core/theme/woofy_spacing.dart';
-import 'package:woofy/features/vets/data/cart_provider.dart';
-import 'package:woofy/features/vets/data/vet_models.dart';
-import 'package:woofy/features/vets/data/vet_repository_provider.dart';
-import 'package:woofy/features/vets/presentation/widgets/vet_card.dart';
+import 'package:woofy/features/partners/data/cart_provider.dart';
+import 'package:woofy/features/partners/data/partner_models.dart';
+import 'package:woofy/features/partners/data/partner_repository_provider.dart';
+import 'package:woofy/features/partners/presentation/widgets/partner_card.dart';
 import 'package:woofy/shared/widgets/woofy_app_bar.dart';
 import 'package:woofy/shared/widgets/woofy_bottom_navigation.dart';
 import 'package:woofy/shared/widgets/woofy_empty_state.dart';
@@ -39,20 +39,20 @@ class _VetsPageState extends ConsumerState<VetsPage> with WoofyRefreshMixin {
 
   @override
   Future<void> onWoofyRefresh() async {
-    ref.invalidate(activeVetsProvider);
-    await ref.read(activeVetsProvider.future);
+    ref.invalidate(activePartnersProvider);
+    await ref.read(activePartnersProvider.future);
   }
 
-  List<Vet> _applyFilters(List<Vet> vets) {
+  List<Partner> _applyFilters(List<Partner> partners) {
     final query = _query.trim().toLowerCase();
-    final city = ref.watch(selectedVetCityProvider);
-    return vets.where((vet) {
-      if (city != null && vet.city != city) return false;
+    final city = ref.watch(selectedPartnerCityProvider);
+    return partners.where((partner) {
+      if (city != null && partner.city != city) return false;
       if (query.isEmpty) return true;
       final haystack = [
-        vet.name,
-        vet.city ?? '',
-        vet.description ?? '',
+        partner.name,
+        partner.city ?? '',
+        partner.description ?? '',
       ].join(' ').toLowerCase();
       return haystack.contains(query);
     }).toList();
@@ -60,9 +60,9 @@ class _VetsPageState extends ConsumerState<VetsPage> with WoofyRefreshMixin {
 
   @override
   Widget build(BuildContext context) {
-    final vets = ref.watch(activeVetsProvider);
-    final cities = ref.watch(availableVetCitiesProvider);
-    final selectedCity = ref.watch(selectedVetCityProvider);
+    final vets = ref.watch(activePartnersProvider);
+    final cities = ref.watch(availablePartnerCitiesProvider);
+    final selectedCity = ref.watch(selectedPartnerCityProvider);
 
     return PopScope<Object?>(
       // Rama del shell, no ruta apilada: el back del sistema vuelve a Inicio.
@@ -83,7 +83,7 @@ class _VetsPageState extends ConsumerState<VetsPage> with WoofyRefreshMixin {
                 const WoofyLoading(message: 'Cargando veterinarias…'),
             error: (error, stackTrace) => WoofyError(
               message: 'No pudimos cargar las veterinarias.',
-              onRetry: () => ref.invalidate(activeVetsProvider),
+              onRetry: () => ref.invalidate(activePartnersProvider),
             ),
             data: (items) {
               if (items.isEmpty) {
@@ -164,7 +164,7 @@ class _VetsPageState extends ConsumerState<VetsPage> with WoofyRefreshMixin {
                                   ],
                                   selected: selectedCity ?? _all,
                                   onSelected: (value) => ref
-                                      .read(selectedVetCityProvider.notifier)
+                                      .read(selectedPartnerCityProvider.notifier)
                                       .select(value == _all ? null : value),
                                   padding: EdgeInsets.symmetric(
                                     horizontal: horizontal,
@@ -200,11 +200,11 @@ class _VetsPageState extends ConsumerState<VetsPage> with WoofyRefreshMixin {
                                 separatorBuilder: (context, index) =>
                                     const SizedBox(height: WoofySpacing.lg),
                                 itemBuilder: (context, index) {
-                                  final vet = results[index];
-                                  return VetCard(
-                                    vet: vet,
+                                  final partner = results[index];
+                                  return PartnerCard(
+                                    partner: partner,
                                     onTap: () => context.push(
-                                      RoutePaths.vetDetail(vet.slug),
+                                      RoutePaths.partnerDetail(partner.slug),
                                     ),
                                   );
                                 },
@@ -224,7 +224,7 @@ class _VetsPageState extends ConsumerState<VetsPage> with WoofyRefreshMixin {
   }
 
   void _clearFilters() {
-    ref.read(selectedVetCityProvider.notifier).select(null);
+    ref.read(selectedPartnerCityProvider.notifier).select(null);
     setState(() {
       _searchController.clear();
       _query = '';
@@ -242,7 +242,7 @@ class _CartButton extends ConsumerWidget {
     return IconButton(
       key: const ValueKey('vet-cart-button'),
       tooltip: 'Mi carrito',
-      onPressed: () => context.push(RoutePaths.vetCart),
+      onPressed: () => context.push(RoutePaths.cart),
       icon: Stack(
         clipBehavior: Clip.none,
         children: [

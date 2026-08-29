@@ -9,50 +9,52 @@ import 'package:woofy/app/route_names.dart';
 import 'package:woofy/app/router.dart';
 import 'package:woofy/features/auth/data/auth_models.dart';
 import 'package:woofy/features/auth/providers/auth_providers.dart';
-import 'package:woofy/features/vets/data/cart_provider.dart';
-import 'package:woofy/features/vets/data/vet_models.dart';
-import 'package:woofy/features/vets/data/vet_repository.dart';
-import 'package:woofy/features/vets/data/vet_repository_provider.dart';
+import 'package:woofy/features/partners/data/cart_provider.dart';
+import 'package:woofy/features/partners/data/partner_models.dart';
+import 'package:woofy/features/partners/data/partner_repository.dart';
+import 'package:woofy/features/partners/data/partner_repository_provider.dart';
 import 'package:woofy/shared/widgets/woofy_bottom_navigation.dart';
 import 'package:woofy/shared/widgets/woofy_filter_chips.dart';
 
 import 'support/fake_auth_repository.dart';
 
-const _santaCruz = Vet(
+const _santaCruz = Partner(
   id: 'vet-1',
-  name: 'Vet Santa Cruz',
+  name: 'Partner Santa Cruz',
   slug: 'vet-santa-cruz',
   city: 'Santa Cruz',
   description: 'Consultas y peluquería canina.',
   whatsappPhone: '70123456',
   verified: true,
+  categories: [PartnerCategory.vet],
 );
 
-const _laPaz = Vet(
+const _laPaz = Partner(
   id: 'vet-2',
   name: 'Clínica La Paz',
   slug: 'clinica-la-paz',
   city: 'La Paz',
+  categories: [PartnerCategory.vet],
 );
 
-const _alimento = VetProduct(
+const _alimento = PartnerProduct(
   id: 'p1',
-  vetId: 'vet-1',
+  partnerId: 'vet-1',
   name: 'Alimento Premium',
   priceCents: 15000,
 );
 
-const _collar = VetProduct(
+const _collar = PartnerProduct(
   id: 'p2',
-  vetId: 'vet-1',
+  partnerId: 'vet-1',
   name: 'Collar reflectivo',
   description: 'Se ve de noche a cien metros.',
   priceCents: 4550,
 );
 
-const _bano = VetService(
+const _bano = PartnerService(
   id: 's1',
-  vetId: 'vet-1',
+  partnerId: 'vet-1',
   name: 'Baño para perro',
   priceCents: 7000,
 );
@@ -69,17 +71,17 @@ void _useTallScreen(WidgetTester tester) {
 
 void main() {
   testWidgets('vets page shows loading, then the empty state', (tester) async {
-    final completer = Completer<List<Vet>>();
+    final completer = Completer<List<Partner>>();
     final loading = await _pumpVets(
       tester,
-      FakeVetRepository(vetsFuture: completer.future),
+      FakePartnerRepository(partnersFuture: completer.future),
     );
 
     expect(find.text('Cargando veterinarias…'), findsOneWidget);
     loading.dispose();
 
     await tester.pumpWidget(const SizedBox.shrink());
-    final empty = await _pumpVets(tester, FakeVetRepository());
+    final empty = await _pumpVets(tester, FakePartnerRepository());
     await tester.pumpAndSettle();
 
     expect(find.text('Todavía no hay veterinarias'), findsOneWidget);
@@ -91,7 +93,7 @@ void main() {
   ) async {
     final container = await _pumpVets(
       tester,
-      FakeVetRepository(error: StateError('network detail')),
+      FakePartnerRepository(error: StateError('network detail')),
     );
     await tester.pumpAndSettle();
 
@@ -106,11 +108,11 @@ void main() {
     _useTallScreen(tester);
     final container = await _pumpVets(
       tester,
-      FakeVetRepository(vets: const [_santaCruz, _laPaz]),
+      FakePartnerRepository(partners: const [_santaCruz, _laPaz]),
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Vet Santa Cruz'), findsOneWidget);
+    expect(find.text('Partner Santa Cruz'), findsOneWidget);
     expect(find.text('Clínica La Paz'), findsOneWidget);
 
     // El nombre de la ciudad también aparece en la tarjeta, así que el tap se
@@ -123,13 +125,13 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Vet Santa Cruz'), findsNothing);
+    expect(find.text('Partner Santa Cruz'), findsNothing);
     expect(find.text('Clínica La Paz'), findsOneWidget);
 
     await tester.tap(find.text('Todas'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Vet Santa Cruz'), findsOneWidget);
+    expect(find.text('Partner Santa Cruz'), findsOneWidget);
     container.dispose();
   });
 
@@ -138,7 +140,7 @@ void main() {
   ) async {
     final container = await _pumpVets(
       tester,
-      FakeVetRepository(vets: const [_santaCruz, _laPaz]),
+      FakePartnerRepository(partners: const [_santaCruz, _laPaz]),
     );
     await tester.pumpAndSettle();
 
@@ -150,7 +152,7 @@ void main() {
     await tester.tap(find.text('Limpiar filtros'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Vet Santa Cruz'), findsOneWidget);
+    expect(find.text('Partner Santa Cruz'), findsOneWidget);
     container.dispose();
   });
 
@@ -160,10 +162,10 @@ void main() {
     _useTallScreen(tester);
     final container = await _pumpVets(
       tester,
-      FakeVetRepository(
-        vets: const [_santaCruz],
-        detail: const VetDetail(
-          vet: _santaCruz,
+      FakePartnerRepository(
+        partners: const [_santaCruz],
+        detail: const PartnerDetail(
+          partner: _santaCruz,
           products: [_alimento],
           services: [_bano],
         ),
@@ -185,8 +187,8 @@ void main() {
   testWidgets('a missing vet shows the unavailable state', (tester) async {
     final container = await _pumpRoute(
       tester,
-      FakeVetRepository(detail: null),
-      RoutePaths.vetDetail('no-existe'),
+      FakePartnerRepository(detail: null),
+      RoutePaths.partnerDetail('no-existe'),
     );
     await tester.pumpAndSettle();
 
@@ -200,11 +202,11 @@ void main() {
     _useTallScreen(tester);
     final container = await _pumpRoute(
       tester,
-      FakeVetRepository(
-        vets: const [_santaCruz],
-        detail: const VetDetail(vet: _santaCruz, products: [_alimento]),
+      FakePartnerRepository(
+        partners: const [_santaCruz],
+        detail: const PartnerDetail(partner: _santaCruz, products: [_alimento]),
       ),
-      RoutePaths.vetDetail('vet-santa-cruz'),
+      RoutePaths.partnerDetail('vet-santa-cruz'),
     );
     await tester.pumpAndSettle();
 
@@ -224,14 +226,14 @@ void main() {
     _useTallScreen(tester);
     final container = await _pumpRoute(
       tester,
-      FakeVetRepository(
-        vets: const [_santaCruz],
-        detail: const VetDetail(
-          vet: _santaCruz,
+      FakePartnerRepository(
+        partners: const [_santaCruz],
+        detail: const PartnerDetail(
+          partner: _santaCruz,
           products: [_collar, _alimento],
         ),
       ),
-      RoutePaths.vetDetail('vet-santa-cruz'),
+      RoutePaths.partnerDetail('vet-santa-cruz'),
     );
     await tester.pumpAndSettle();
 
@@ -240,7 +242,7 @@ void main() {
 
     expect(
       _currentPath(container),
-      RoutePaths.vetProduct('vet-santa-cruz', 'p2'),
+      RoutePaths.partnerProduct('vet-santa-cruz', 'p2'),
     );
     expect(find.text('Se ve de noche a cien metros.'), findsOneWidget);
     expect(find.text('Otras personas también compraron'), findsOneWidget);
@@ -258,11 +260,11 @@ void main() {
     // pide recién al mandar el pedido.
     final container = await _pumpRoute(
       tester,
-      FakeVetRepository(
-        vets: const [_santaCruz],
-        detail: const VetDetail(vet: _santaCruz, products: [_alimento]),
+      FakePartnerRepository(
+        partners: const [_santaCruz],
+        detail: const PartnerDetail(partner: _santaCruz, products: [_alimento]),
       ),
-      RoutePaths.vetProduct('vet-santa-cruz', 'p1'),
+      RoutePaths.partnerProduct('vet-santa-cruz', 'p1'),
     );
     await tester.pumpAndSettle();
 
@@ -280,7 +282,7 @@ void main() {
     expect(container.read(cartProvider)['vet-1']!.lines.single.quantity, 2);
     expect(
       _currentPath(container),
-      RoutePaths.vetCart,
+      RoutePaths.cart,
     );
     container.dispose();
   });
@@ -290,7 +292,7 @@ void main() {
   ) async {
     final container = await _pumpRoute(
       tester,
-      FakeVetRepository(vets: const [_santaCruz, _laPaz]),
+      FakePartnerRepository(partners: const [_santaCruz, _laPaz]),
       RoutePaths.vets,
       user: const AppUser(id: 'user-1', email: 'user@example.com'),
     );
@@ -298,16 +300,16 @@ void main() {
       ..add(_santaCruz, _alimento, quantity: 2)
       ..add(
         _laPaz,
-        const VetProduct(
+        const PartnerProduct(
           id: 'p9',
-          vetId: 'vet-2',
+          partnerId: 'vet-2',
           name: 'Juguete',
           priceCents: 3000,
         ),
       );
     expect(cart.totalItemCount, 3);
 
-    container.read(routerProvider).go(RoutePaths.vetCart);
+    container.read(routerProvider).go(RoutePaths.cart);
     await tester.pumpAndSettle();
 
     expect(find.byKey(const ValueKey('cart-group-vet-1')), findsOneWidget);
@@ -323,8 +325,8 @@ void main() {
   testWidgets('an empty cart points back at the catalog', (tester) async {
     final container = await _pumpRoute(
       tester,
-      FakeVetRepository(),
-      RoutePaths.vetCart,
+      FakePartnerRepository(),
+      RoutePaths.cart,
       user: const AppUser(id: 'user-1', email: 'user@example.com'),
     );
     await tester.pumpAndSettle();
@@ -336,7 +338,7 @@ void main() {
   testWidgets('swiping the page sideways changes tab', (tester) async {
     final container = await _pumpRoute(
       tester,
-      FakeVetRepository(),
+      FakePartnerRepository(),
       RoutePaths.landing,
     );
     await tester.pumpAndSettle();
@@ -360,7 +362,7 @@ void main() {
   testWidgets('the bottom navigation reaches the vets tab', (tester) async {
     final container = await _pumpRoute(
       tester,
-      FakeVetRepository(),
+      FakePartnerRepository(),
       RoutePaths.landing,
     );
     await tester.pumpAndSettle();
@@ -382,7 +384,7 @@ void main() {
   testWidgets('Android back from the vets tab returns to landing', (
     tester,
   ) async {
-    final container = await _pumpVets(tester, FakeVetRepository());
+    final container = await _pumpVets(tester, FakePartnerRepository());
     await tester.pumpAndSettle();
 
     await tester.binding.handlePopRoute();
@@ -401,10 +403,10 @@ void main() {
     _useTallScreen(tester);
     final container = await _pumpRoute(
       tester,
-      FakeVetRepository(
-        detail: const VetDetail(vet: _santaCruz, services: [_bano]),
+      FakePartnerRepository(
+        detail: const PartnerDetail(partner: _santaCruz, services: [_bano]),
       ),
-      RoutePaths.vetReservation('vet-santa-cruz'),
+      RoutePaths.partnerReservation('vet-santa-cruz'),
       user: const AppUser(id: 'user-1', email: 'user@example.com'),
     );
     await tester.pumpAndSettle();
@@ -437,56 +439,68 @@ void main() {
 
       final container = await _pumpVets(
         tester,
-        FakeVetRepository(vets: const [_santaCruz, _laPaz]),
+        FakePartnerRepository(partners: const [_santaCruz, _laPaz]),
       );
       await tester.pumpAndSettle();
 
       expect(tester.takeException(), isNull);
-      expect(find.text('Vet Santa Cruz'), findsOneWidget);
+      expect(find.text('Partner Santa Cruz'), findsOneWidget);
       container.dispose();
     });
   }
 }
 
-class FakeVetRepository implements VetRepository {
-  FakeVetRepository({
-    this.vets = const [],
+class FakePartnerRepository implements PartnerRepository {
+  FakePartnerRepository({
+    this.partners = const [],
+    this.services = const [],
     this.detail,
     this.error,
-    this.vetsFuture,
+    this.partnersFuture,
   });
 
-  final List<Vet> vets;
-  final VetDetail? detail;
+  final List<Partner> partners;
+  final List<PartnerService> services;
+  final PartnerDetail? detail;
   final Object? error;
-  final Future<List<Vet>>? vetsFuture;
+  final Future<List<Partner>>? partnersFuture;
 
-  final List<({String vetId, List<({String productId, int quantity})> items})>
+  final List<({String partnerId, List<({String productId, int quantity})> items})>
   createdOrders = [];
 
   @override
-  Future<List<Vet>> fetchActiveVets() {
+  Future<List<Partner>> fetchActivePartners({PartnerCategory? category}) {
     if (error != null) return Future.error(error!);
-    return vetsFuture ?? Future.value(vets);
+    if (partnersFuture != null) return partnersFuture!;
+    if (category == null) return Future.value(partners);
+    return Future.value(
+      partners.where((p) => p.categories.contains(category)).toList(),
+    );
   }
 
   @override
-  Future<VetDetail?> fetchVetBySlug(String slug) {
+  Future<List<PartnerService>> fetchServices() {
+    if (error != null) return Future.error(error!);
+    return Future.value(services);
+  }
+
+  @override
+  Future<PartnerDetail?> fetchPartnerBySlug(String slug) {
     if (error != null) return Future.error(error!);
     return Future.value(detail);
   }
 
   @override
-  Future<VetOrder> createOrder({
-    required String vetId,
+  Future<PartnerOrder> createOrder({
+    required String partnerId,
     required List<({String productId, int quantity})> items,
     String? contactPhone,
     String? notes,
   }) async {
-    createdOrders.add((vetId: vetId, items: items));
-    return VetOrder(
+    createdOrders.add((partnerId: partnerId, items: items));
+    return PartnerOrder(
       id: 'order-1',
-      vetId: vetId,
+      partnerId: partnerId,
       status: 'pending',
       totalCents: 0,
       items: const [],
@@ -494,16 +508,16 @@ class FakeVetRepository implements VetRepository {
   }
 
   @override
-  Future<VetReservation> createReservation({
-    required String vetId,
+  Future<PartnerReservation> createReservation({
+    required String partnerId,
     required String serviceId,
     required DateTime scheduledFor,
     String? petName,
     String? contactPhone,
     String? notes,
-  }) async => VetReservation(
+  }) async => PartnerReservation(
     id: 'reservation-1',
-    vetId: vetId,
+    partnerId: partnerId,
     status: 'pending',
     serviceNameSnapshot: 'Baño para perro',
     priceCentsSnapshot: 7000,
@@ -512,10 +526,10 @@ class FakeVetRepository implements VetRepository {
   );
 
   @override
-  Future<List<VetOrder>> fetchMyOrders() async => const [];
+  Future<List<PartnerOrder>> fetchMyOrders() async => const [];
 
   @override
-  Future<List<VetReservation>> fetchMyReservations() async => const [];
+  Future<List<PartnerReservation>> fetchMyReservations() async => const [];
 }
 
 /// Ubicación actual del router.
@@ -534,12 +548,12 @@ String _currentPath(ProviderContainer container) {
 
 Future<ProviderContainer> _pumpVets(
   WidgetTester tester,
-  VetRepository repository,
+  PartnerRepository repository,
 ) => _pumpRoute(tester, repository, RoutePaths.vets);
 
 Future<ProviderContainer> _pumpRoute(
   WidgetTester tester,
-  VetRepository repository,
+  PartnerRepository repository,
   String route, {
   AppUser? user,
 }) async {
@@ -547,7 +561,7 @@ Future<ProviderContainer> _pumpRoute(
   addTearDown(auth.dispose);
   final container = ProviderContainer(
     overrides: [
-      vetRepositoryProvider.overrideWithValue(repository),
+      partnerRepositoryProvider.overrideWithValue(repository),
       authRepositoryProvider.overrideWithValue(auth),
     ],
   );

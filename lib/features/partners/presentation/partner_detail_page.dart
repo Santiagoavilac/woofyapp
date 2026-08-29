@@ -6,14 +6,14 @@ import 'package:woofy/app/route_names.dart';
 import 'package:woofy/core/theme/woofy_colors.dart';
 import 'package:woofy/core/theme/woofy_radius.dart';
 import 'package:woofy/core/theme/woofy_spacing.dart';
-import 'package:woofy/features/vets/data/cart_provider.dart';
-import 'package:woofy/features/vets/data/vet_models.dart';
-import 'package:woofy/features/vets/data/vet_repository_provider.dart';
-import 'package:woofy/features/vets/data/whatsapp_message.dart';
-import 'package:woofy/features/vets/presentation/widgets/vet_card.dart';
-import 'package:woofy/features/vets/presentation/widgets/vet_cart_summary_bar.dart';
-import 'package:woofy/features/vets/presentation/widgets/vet_product_card.dart';
-import 'package:woofy/features/vets/presentation/widgets/vet_service_tile.dart';
+import 'package:woofy/features/partners/data/cart_provider.dart';
+import 'package:woofy/features/partners/data/partner_models.dart';
+import 'package:woofy/features/partners/data/partner_repository_provider.dart';
+import 'package:woofy/features/partners/data/whatsapp_message.dart';
+import 'package:woofy/features/partners/presentation/widgets/partner_card.dart';
+import 'package:woofy/features/partners/presentation/widgets/cart_summary_bar.dart';
+import 'package:woofy/features/partners/presentation/widgets/partner_product_card.dart';
+import 'package:woofy/features/partners/presentation/widgets/partner_service_tile.dart';
 import 'package:woofy/shared/widgets/woofy_app_bar.dart';
 import 'package:woofy/shared/widgets/woofy_brand_button.dart';
 import 'package:woofy/shared/widgets/woofy_button.dart';
@@ -25,24 +25,24 @@ import 'package:woofy/shared/widgets/woofy_section_header.dart';
 
 /// Perfil de una veterinaria: portada, datos de contacto, productos y
 /// servicios reservables.
-class VetDetailPage extends ConsumerWidget {
-  const VetDetailPage({required this.slug, super.key});
+class PartnerDetailPage extends ConsumerWidget {
+  const PartnerDetailPage({required this.slug, super.key});
 
   final String slug;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final detail = ref.watch(vetDetailProvider(slug));
+    final detail = ref.watch(partnerDetailProvider(slug));
 
     return Scaffold(
       appBar: WoofyAppBar(
-        title: detail.value?.vet.name ?? 'Veterinaria',
+        title: detail.value?.partner.name ?? 'Veterinaria',
         backFallbackLocation: RoutePaths.vets,
         actions: [
           IconButton(
             key: const ValueKey('vet-detail-cart-button'),
             tooltip: 'Mi carrito',
-            onPressed: () => context.push(RoutePaths.vetCart),
+            onPressed: () => context.push(RoutePaths.cart),
             icon: const Icon(Icons.shopping_bag_outlined),
           ),
         ],
@@ -52,7 +52,7 @@ class VetDetailPage extends ConsumerWidget {
           loading: () => const WoofyLoading(message: 'Cargando veterinaria…'),
           error: (error, stackTrace) => WoofyError(
             message: 'No pudimos cargar esta veterinaria.',
-            onRetry: () => ref.invalidate(vetDetailProvider(slug)),
+            onRetry: () => ref.invalidate(partnerDetailProvider(slug)),
           ),
           data: (data) {
             if (data == null) {
@@ -64,39 +64,39 @@ class VetDetailPage extends ConsumerWidget {
                 onAction: () => context.go(RoutePaths.vets),
               );
             }
-            return _VetDetailBody(detail: data);
+            return _PartnerDetailBody(detail: data);
           },
         ),
       ),
-      bottomNavigationBar: const VetCartSummaryBar(),
+      bottomNavigationBar: const CartSummaryBar(),
     );
   }
 }
 
-class _VetDetailBody extends ConsumerStatefulWidget {
-  const _VetDetailBody({required this.detail});
+class _PartnerDetailBody extends ConsumerStatefulWidget {
+  const _PartnerDetailBody({required this.detail});
 
-  final VetDetail detail;
+  final PartnerDetail detail;
 
   @override
-  ConsumerState<_VetDetailBody> createState() => _VetDetailBodyState();
+  ConsumerState<_PartnerDetailBody> createState() => _PartnerDetailBodyState();
 }
 
-class _VetDetailBodyState extends ConsumerState<_VetDetailBody>
+class _PartnerDetailBodyState extends ConsumerState<_PartnerDetailBody>
     with WoofyRefreshMixin {
   @override
   Future<void> onWoofyRefresh() async {
-    final slug = widget.detail.vet.slug;
-    ref.invalidate(vetDetailProvider(slug));
-    await ref.read(vetDetailProvider(slug).future);
+    final slug = widget.detail.partner.slug;
+    ref.invalidate(partnerDetailProvider(slug));
+    await ref.read(partnerDetailProvider(slug).future);
   }
 
   @override
   Widget build(BuildContext context) {
     final detail = widget.detail;
     final theme = Theme.of(context);
-    final vet = detail.vet;
-    final cartLines = ref.watch(cartProvider)[vet.id]?.lines ?? const [];
+    final partner = detail.partner;
+    final cartLines = ref.watch(cartProvider)[partner.id]?.lines ?? const [];
 
     return CustomScrollView(
       slivers: [
@@ -116,8 +116,8 @@ class _VetDetailBodyState extends ConsumerState<_VetDetailBody>
                   aspectRatio: 16 / 9,
                   child: ColoredBox(
                     color: WoofyColors.primarySoft,
-                    child: VetImage(
-                      url: vet.coverImageUrl ?? vet.profileImageUrl,
+                    child: PartnerImage(
+                      url: partner.coverImageUrl ?? partner.profileImageUrl,
                     ),
                   ),
                 ),
@@ -126,44 +126,44 @@ class _VetDetailBodyState extends ConsumerState<_VetDetailBody>
               Row(
                 children: [
                   Expanded(
-                    child: Text(vet.name, style: theme.textTheme.headlineSmall),
+                    child: Text(partner.name, style: theme.textTheme.headlineSmall),
                   ),
-                  if (vet.verified)
+                  if (partner.verified)
                     const Icon(
                       Icons.verified_rounded,
                       color: WoofyColors.primary,
                     ),
                 ],
               ),
-              if ([vet.address, vet.city].whereType<String>().isNotEmpty) ...[
+              if ([partner.address, partner.city].whereType<String>().isNotEmpty) ...[
                 const SizedBox(height: WoofySpacing.xs),
                 Text(
-                  [vet.address, vet.city].whereType<String>().join(' · '),
+                  [partner.address, partner.city].whereType<String>().join(' · '),
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
               ],
-              if (vet.locationNotes case final notes?) ...[
+              if (partner.locationNotes case final notes?) ...[
                 const SizedBox(height: WoofySpacing.xs),
                 Text(notes, style: theme.textTheme.bodySmall),
               ],
-              if (vet.description case final description?) ...[
+              if (partner.description case final description?) ...[
                 const SizedBox(height: WoofySpacing.md),
                 Text(description, style: theme.textTheme.bodyLarge),
               ],
               const SizedBox(height: WoofySpacing.lg),
               Row(
                 children: [
-                  if (vet.whatsappPhone != null)
+                  if (partner.whatsappPhone != null)
                     Expanded(
                       child: WoofyBrandButton(
                         brand: WoofyBrand.whatsapp,
                         label: 'WhatsApp',
-                        onPressed: () => _openWhatsapp(context, vet),
+                        onPressed: () => _openWhatsapp(context, partner),
                       ),
                     ),
-                  if (vet.whatsappPhone != null)
+                  if (partner.whatsappPhone != null)
                     const SizedBox(width: WoofySpacing.sm),
                   Expanded(
                     child: WoofyButton(
@@ -171,7 +171,7 @@ class _VetDetailBodyState extends ConsumerState<_VetDetailBody>
                       icon: Icons.map_outlined,
                       variant: WoofyButtonVariant.secondary,
                       onPressed: () =>
-                          _open(context, WhatsappMessage.mapsUri(vet)),
+                          _open(context, WhatsappMessage.mapsUri(partner)),
                     ),
                   ),
                 ],
@@ -185,16 +185,16 @@ class _VetDetailBodyState extends ConsumerState<_VetDetailBody>
                 ),
                 const SizedBox(height: WoofySpacing.md),
                 for (final product in detail.products) ...[
-                  VetProductCard(
+                  PartnerProductCard(
                     product: product,
                     inCart: cartLines
                         .where((line) => line.productId == product.id)
                         .fold(0, (total, line) => total + line.quantity),
                     onOpen: () => context.push(
-                      RoutePaths.vetProduct(vet.slug, product.id),
+                      RoutePaths.partnerProduct(partner.slug, product.id),
                     ),
                     onAdd: () {
-                      ref.read(cartProvider.notifier).add(vet, product);
+                      ref.read(cartProvider.notifier).add(partner, product);
                       ScaffoldMessenger.of(context)
                         ..clearSnackBars()
                         ..showSnackBar(
@@ -202,7 +202,7 @@ class _VetDetailBodyState extends ConsumerState<_VetDetailBody>
                             content: Text('${product.name} va al carrito'),
                             action: SnackBarAction(
                               label: 'Ver carrito',
-                              onPressed: () => context.push(RoutePaths.vetCart),
+                              onPressed: () => context.push(RoutePaths.cart),
                             ),
                           ),
                         );
@@ -219,10 +219,10 @@ class _VetDetailBodyState extends ConsumerState<_VetDetailBody>
                 ),
                 const SizedBox(height: WoofySpacing.md),
                 for (final service in detail.services) ...[
-                  VetServiceTile(
+                  PartnerServiceTile(
                     service: service,
                     onReserve: () => context.push(
-                      RoutePaths.vetReservation(vet.slug),
+                      RoutePaths.partnerReservation(partner.slug),
                       extra: service.id,
                     ),
                   ),
@@ -245,10 +245,10 @@ class _VetDetailBodyState extends ConsumerState<_VetDetailBody>
     );
   }
 
-  Future<void> _openWhatsapp(BuildContext context, Vet vet) async {
+  Future<void> _openWhatsapp(BuildContext context, Partner partner) async {
     final uri = WhatsappMessage.buildUri(
-      phone: vet.whatsappPhone,
-      message: '¡Hola ${vet.name}! Te escribo desde Woofy.',
+      phone: partner.whatsappPhone,
+      message: '¡Hola ${partner.name}! Te escribo desde Woofy.',
     );
     if (uri == null) {
       _warn(context, 'El número de WhatsApp no es válido.');

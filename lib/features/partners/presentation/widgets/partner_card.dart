@@ -2,23 +2,23 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:woofy/core/theme/woofy_colors.dart';
 import 'package:woofy/core/theme/woofy_spacing.dart';
-import 'package:woofy/features/vets/data/vet_models.dart';
+import 'package:woofy/features/partners/data/partner_models.dart';
 import 'package:woofy/shared/widgets/woofy_card.dart';
 
 /// Tarjeta de veterinaria: portada arriba, nombre y ciudad abajo.
 /// Misma gramática visual que [DogCard], sin precios: el catálogo se ve dentro.
-class VetCard extends StatelessWidget {
-  const VetCard({required this.vet, required this.onTap, super.key});
+class PartnerCard extends StatelessWidget {
+  const PartnerCard({required this.partner, required this.onTap, super.key});
 
-  final Vet vet;
+  final Partner partner;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return WoofyCard(
-      key: ValueKey('vet-card-${vet.slug}'),
-      tapKey: ValueKey('vet-card-${vet.slug}-tap'),
+      key: ValueKey('vet-card-${partner.slug}'),
+      tapKey: ValueKey('vet-card-${partner.slug}-tap'),
       padding: EdgeInsets.zero,
       onTap: onTap,
       child: Column(
@@ -28,7 +28,7 @@ class VetCard extends StatelessWidget {
             aspectRatio: 16 / 9,
             child: ColoredBox(
               color: WoofyColors.primarySoft,
-              child: VetImage(url: vet.coverImageUrl ?? vet.profileImageUrl),
+              child: PartnerImage(url: partner.coverImageUrl ?? partner.profileImageUrl),
             ),
           ),
           Padding(
@@ -40,13 +40,13 @@ class VetCard extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        vet.name,
+                        partner.name,
                         style: theme.textTheme.titleMedium,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    if (vet.verified)
+                    if (partner.verified)
                       const Icon(
                         Icons.verified_rounded,
                         size: 18,
@@ -54,7 +54,7 @@ class VetCard extends StatelessWidget {
                       ),
                   ],
                 ),
-                if (vet.city case final city?) ...[
+                if (partner.city case final city?) ...[
                   const SizedBox(height: WoofySpacing.xs),
                   Row(
                     children: [
@@ -77,7 +77,7 @@ class VetCard extends StatelessWidget {
                     ],
                   ),
                 ],
-                if (vet.description case final description?) ...[
+                if (partner.description case final description?) ...[
                   const SizedBox(height: WoofySpacing.sm),
                   Text(
                     description,
@@ -96,8 +96,8 @@ class VetCard extends StatelessWidget {
 }
 
 /// Imagen de veterinaria con marcador de posición propio.
-class VetImage extends StatelessWidget {
-  const VetImage({
+class PartnerImage extends StatelessWidget {
+  const PartnerImage({
     required this.url,
     this.icon = Icons.storefront_rounded,
     super.key,

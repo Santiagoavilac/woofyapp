@@ -4,13 +4,13 @@ import 'package:go_router/go_router.dart';
 import 'package:woofy/app/route_names.dart';
 import 'package:woofy/core/theme/woofy_colors.dart';
 import 'package:woofy/core/theme/woofy_spacing.dart';
-import 'package:woofy/features/vets/data/cart_provider.dart';
-import 'package:woofy/features/vets/data/money.dart';
+import 'package:woofy/features/partners/data/cart_provider.dart';
+import 'package:woofy/features/partners/data/money.dart';
 
 /// Resumen del carrito anclado abajo: cuántas unidades hay y cuánto suman,
 /// con acceso directo al carrito. Se esconde solo cuando no hay nada cargado.
-class VetCartSummaryBar extends ConsumerWidget {
-  const VetCartSummaryBar({super.key});
+class CartSummaryBar extends ConsumerWidget {
+  const CartSummaryBar({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -58,7 +58,7 @@ class VetCartSummaryBar extends ConsumerWidget {
               const SizedBox(width: WoofySpacing.md),
               FilledButton.icon(
                 key: const ValueKey('cart-summary-open'),
-                onPressed: () => context.push(RoutePaths.vetCart),
+                onPressed: () => context.push(RoutePaths.cart),
                 icon: const Icon(Icons.shopping_bag_outlined),
                 label: const Text('Ver carrito'),
               ),

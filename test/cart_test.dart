@@ -1,34 +1,34 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:woofy/features/vets/data/cart_provider.dart';
-import 'package:woofy/features/vets/data/vet_models.dart';
+import 'package:woofy/features/partners/data/cart_provider.dart';
+import 'package:woofy/features/partners/data/partner_models.dart';
 
-const _vetA = Vet(
+const _vetA = Partner(
   id: 'vet-a',
-  name: 'Vet Santa Cruz',
+  name: 'Partner Santa Cruz',
   slug: 'vet-santa-cruz',
   whatsappPhone: '70123456',
 );
 
-const _vetB = Vet(id: 'vet-b', name: 'Vet La Paz', slug: 'vet-la-paz');
+const _vetB = Partner(id: 'vet-b', name: 'Partner La Paz', slug: 'vet-la-paz');
 
-const _alimento = VetProduct(
+const _alimento = PartnerProduct(
   id: 'p1',
-  vetId: 'vet-a',
+  partnerId: 'vet-a',
   name: 'Alimento Premium',
   priceCents: 15000,
 );
 
-const _collar = VetProduct(
+const _collar = PartnerProduct(
   id: 'p2',
-  vetId: 'vet-a',
+  partnerId: 'vet-a',
   name: 'Collar',
   priceCents: 4550,
 );
 
-const _juguete = VetProduct(
+const _juguete = PartnerProduct(
   id: 'p3',
-  vetId: 'vet-b',
+  partnerId: 'vet-b',
   name: 'Juguete',
   priceCents: 3000,
 );

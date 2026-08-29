@@ -19,10 +19,11 @@ abstract final class RouteNames {
   static const newPassword = 'new-password';
   static const blockedAccounts = 'blocked-accounts';
   static const vets = 'vets';
-  static const vetDetail = 'vet-detail';
-  static const vetCart = 'vet-cart';
-  static const vetProduct = 'vet-product';
-  static const vetReservation = 'vet-reservation';
+  static const services = 'services';
+  static const partnerDetail = 'partner-detail';
+  static const cart = 'cart';
+  static const partnerProduct = 'partner-product';
+  static const partnerReservation = 'partner-reservation';
 }
 
 abstract final class RoutePaths {
@@ -47,21 +48,25 @@ abstract final class RoutePaths {
   static const newPassword = '/auth/nueva-contrasena';
   static const blockedAccounts = '/perfil/bloqueados';
 
+  // Veterinarias y Servicios son dos vistas del mismo padrón de aliados: la
+  // primera lista negocios del rubro `vet`, la segunda lista servicios sueltos
+  // de todos los rubros. El perfil es uno solo y por eso vive en `/aliados`:
+  // un paseador de perros abriéndose bajo `/veterinarias/` sería mentira.
   static const vets = '/veterinarias';
-  // Va declarada antes que `vetDetailPattern` en el router: `carrito` también
-  // encajaría en `:slug` y go_router se queda con la primera coincidencia.
-  static const vetCart = '/veterinarias/carrito';
-  static const vetDetailPattern = '/veterinarias/:slug';
-  static const vetReservationPattern = '/veterinarias/:slug/reservar';
-  static const vetProductPattern = '/veterinarias/:slug/producto/:productId';
+  static const services = '/servicios';
+  static const cart = '/carrito';
+  static const partnerDetailPattern = '/aliados/:slug';
+  static const partnerReservationPattern = '/aliados/:slug/reservar';
+  static const partnerProductPattern = '/aliados/:slug/producto/:productId';
 
-  static String vetDetail(String slug) =>
-      '/veterinarias/${Uri.encodeComponent(slug)}';
+  static String partnerDetail(String slug) =>
+      '/aliados/${Uri.encodeComponent(slug)}';
 
-  static String vetReservation(String slug) => '${vetDetail(slug)}/reservar';
+  static String partnerReservation(String slug) =>
+      '${partnerDetail(slug)}/reservar';
 
-  static String vetProduct(String slug, String productId) =>
-      '${vetDetail(slug)}/producto/${Uri.encodeComponent(productId)}';
+  static String partnerProduct(String slug, String productId) =>
+      '${partnerDetail(slug)}/producto/${Uri.encodeComponent(productId)}';
 
   static String dogDetail(String slug) =>
       '/perros/${Uri.encodeComponent(slug)}';

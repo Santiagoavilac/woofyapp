@@ -16,9 +16,9 @@ import 'package:woofy/features/dogs/data/dog_repository_provider.dart';
 import 'package:woofy/features/messages/data/message_models.dart';
 import 'package:woofy/features/messages/data/messages_providers.dart';
 import 'package:woofy/features/messages/data/messages_repository.dart';
-import 'package:woofy/features/vets/data/vet_models.dart';
-import 'package:woofy/features/vets/data/vet_repository.dart';
-import 'package:woofy/features/vets/data/vet_repository_provider.dart';
+import 'package:woofy/features/partners/data/partner_models.dart';
+import 'package:woofy/features/partners/data/partner_repository.dart';
+import 'package:woofy/features/partners/data/partner_repository_provider.dart';
 
 import 'support/fake_auth_repository.dart';
 
@@ -402,11 +402,11 @@ void main() {
     expect(router.routeInformationProvider.value.uri.path, RoutePaths.vets);
     expect(find.text('Todavía no hay veterinarias'), findsOneWidget);
 
-    router.go(RoutePaths.vetDetail('vet-santa-cruz'));
+    router.go(RoutePaths.partnerDetail('vet-santa-cruz'));
     await tester.pumpAndSettle();
     expect(
       router.routeInformationProvider.value.uri.path,
-      RoutePaths.vetDetail('vet-santa-cruz'),
+      RoutePaths.partnerDetail('vet-santa-cruz'),
     );
     expect(find.text('Veterinaria no disponible'), findsOneWidget);
   });
@@ -425,13 +425,13 @@ void main() {
 
     // El carrito se arma sin cuenta: el login se pide recién al mandar el
     // pedido, que es lo único que escribe una fila con `user_id`.
-    router.go(RoutePaths.vetCart);
+    router.go(RoutePaths.cart);
     await tester.pumpAndSettle();
-    expect(router.routeInformationProvider.value.uri.path, RoutePaths.vetCart);
+    expect(router.routeInformationProvider.value.uri.path, RoutePaths.cart);
 
     // Reservar sí guarda desde el formulario, así que sin sesión no tiene
     // sentido dejar llenarlo.
-    router.go(RoutePaths.vetReservation('vet-santa-cruz'));
+    router.go(RoutePaths.partnerReservation('vet-santa-cruz'));
     await tester.pumpAndSettle();
     expect(router.routeInformationProvider.value.uri.path, RoutePaths.auth);
   });
@@ -447,15 +447,15 @@ void main() {
     );
     final router = container.read(routerProvider);
 
-    router.go(RoutePaths.vetCart);
+    router.go(RoutePaths.cart);
     await tester.pumpAndSettle();
 
     // `carrito` también encaja en `/veterinarias/:slug`: si el orden de las
     // rutas se invierte, acá saldría "Veterinaria no disponible".
-    expect(router.routeInformationProvider.value.uri.path, RoutePaths.vetCart);
+    expect(router.routeInformationProvider.value.uri.path, RoutePaths.cart);
     expect(find.text('Tu carrito está vacío'), findsOneWidget);
 
-    router.go(RoutePaths.vetReservation('vet-santa-cruz'));
+    router.go(RoutePaths.partnerReservation('vet-santa-cruz'));
     await tester.pumpAndSettle();
     expect(find.text('Sin servicios disponibles'), findsOneWidget);
   });
@@ -477,7 +477,7 @@ ProviderContainer _container(
       dogRepositoryProvider.overrideWithValue(
         dogRepository ?? _EmptyDogRepository(),
       ),
-      vetRepositoryProvider.overrideWithValue(const _EmptyVetRepository()),
+      partnerRepositoryProvider.overrideWithValue(const _EmptyPartnerRepository()),
       if (applications != null)
         applicationsRepositoryProvider.overrideWithValue(applications),
       if (messages != null)
@@ -494,26 +494,30 @@ class _EmptyDogRepository implements DogRepository {
   Future<DogDetail?> fetchPublishedDogBySlug(String slug) async => null;
 }
 
-class _EmptyVetRepository implements VetRepository {
-  const _EmptyVetRepository();
+class _EmptyPartnerRepository implements PartnerRepository {
+  const _EmptyPartnerRepository();
 
   @override
-  Future<List<Vet>> fetchActiveVets() async => const [];
+  Future<List<Partner>> fetchActivePartners({PartnerCategory? category}) async =>
+      const [];
 
   @override
-  Future<VetDetail?> fetchVetBySlug(String slug) async => null;
+  Future<List<PartnerService>> fetchServices() async => const [];
 
   @override
-  Future<VetOrder> createOrder({
-    required String vetId,
+  Future<PartnerDetail?> fetchPartnerBySlug(String slug) async => null;
+
+  @override
+  Future<PartnerOrder> createOrder({
+    required String partnerId,
     required List<({String productId, int quantity})> items,
     String? contactPhone,
     String? notes,
   }) => throw UnimplementedError('No se usa en esta prueba.');
 
   @override
-  Future<VetReservation> createReservation({
-    required String vetId,
+  Future<PartnerReservation> createReservation({
+    required String partnerId,
     required String serviceId,
     required DateTime scheduledFor,
     String? petName,
@@ -522,10 +526,10 @@ class _EmptyVetRepository implements VetRepository {
   }) => throw UnimplementedError('No se usa en esta prueba.');
 
   @override
-  Future<List<VetOrder>> fetchMyOrders() async => const [];
+  Future<List<PartnerOrder>> fetchMyOrders() async => const [];
 
   @override
-  Future<List<VetReservation>> fetchMyReservations() async => const [];
+  Future<List<PartnerReservation>> fetchMyReservations() async => const [];
 }
 
 class _EmptyProfileRepository implements ProfileRepository {

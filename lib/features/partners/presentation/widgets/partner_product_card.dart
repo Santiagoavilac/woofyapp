@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:woofy/core/theme/woofy_colors.dart';
 import 'package:woofy/core/theme/woofy_radius.dart';
 import 'package:woofy/core/theme/woofy_spacing.dart';
-import 'package:woofy/features/vets/data/money.dart';
-import 'package:woofy/features/vets/data/vet_models.dart';
-import 'package:woofy/features/vets/presentation/widgets/vet_card.dart';
+import 'package:woofy/features/partners/data/money.dart';
+import 'package:woofy/features/partners/data/partner_models.dart';
+import 'package:woofy/features/partners/presentation/widgets/partner_card.dart';
 import 'package:woofy/shared/widgets/woofy_card.dart';
 
 /// Producto del catálogo de una veterinaria, con su precio y el botón de
 /// agregar al carrito.
-class VetProductCard extends StatelessWidget {
-  const VetProductCard({
+class PartnerProductCard extends StatelessWidget {
+  const PartnerProductCard({
     required this.product,
     required this.onAdd,
     required this.onOpen,
@@ -18,7 +18,7 @@ class VetProductCard extends StatelessWidget {
     super.key,
   });
 
-  final VetProduct product;
+  final PartnerProduct product;
   final VoidCallback onAdd;
 
   /// Abre el detalle del producto. El `+` sigue siendo el atajo para sumar sin
@@ -48,7 +48,7 @@ class VetProductCard extends StatelessWidget {
               height: 72,
               child: ColoredBox(
                 color: WoofyColors.surfaceMuted,
-                child: VetImage(
+                child: PartnerImage(
                   url: product.imageUrl,
                   icon: Icons.inventory_2_outlined,
                 ),

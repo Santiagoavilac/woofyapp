@@ -1,6 +1,6 @@
 import 'package:intl/intl.dart';
-import 'package:woofy/features/vets/data/money.dart';
-import 'package:woofy/features/vets/data/vet_models.dart';
+import 'package:woofy/features/partners/data/money.dart';
+import 'package:woofy/features/partners/data/partner_models.dart';
 
 /// Armado de los enlaces de WhatsApp para pedidos y reservas.
 ///
@@ -39,14 +39,14 @@ abstract final class WhatsappMessage {
   }
 
   static String orderText({
-    required String vetName,
+    required String partnerName,
     required List<({String name, int quantity, int unitPriceCents})> lines,
     required int totalCents,
     String? customerName,
     String? notes,
   }) {
     final buffer = StringBuffer()
-      ..writeln('¡Hola $vetName! Te hago un pedido desde Woofy.')
+      ..writeln('¡Hola $partnerName! Te hago un pedido desde Woofy.')
       ..writeln();
     for (final line in lines) {
       buffer.writeln(
@@ -70,7 +70,7 @@ abstract final class WhatsappMessage {
   }
 
   static String reservationText({
-    required String vetName,
+    required String partnerName,
     required String serviceName,
     required int priceCents,
     required DateTime scheduledFor,
@@ -83,7 +83,7 @@ abstract final class WhatsappMessage {
       'es',
     ).format(scheduledFor);
     final buffer = StringBuffer()
-      ..writeln('¡Hola $vetName! Quiero reservar un turno desde Woofy.')
+      ..writeln('¡Hola $partnerName! Quiero reservar un turno desde Woofy.')
       ..writeln()
       ..writeln('Servicio: $serviceName')
       ..writeln('Fecha: $when')
@@ -108,11 +108,11 @@ abstract final class WhatsappMessage {
   /// Va por búsqueda de texto y no por coordenadas: ninguna veterinaria sabe
   /// su latitud, pero todas saben su dirección, y Maps resuelve bien un nombre
   /// con calle y ciudad.
-  static Uri mapsUri(Vet vet) {
+  static Uri mapsUri(Partner partner) {
     final query = [
-      vet.name,
-      vet.address,
-      vet.city,
+      partner.name,
+      partner.address,
+      partner.city,
     ].whereType<String>().where((value) => value.isNotEmpty).join(', ');
     return Uri.parse(
       'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(query)}',

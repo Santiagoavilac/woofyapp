@@ -1,12 +1,48 @@
-/// Modelos de la vertical de veterinarias.
+/// Modelos de la vertical de aliados: veterinarias, paseadores, peluquerías,
+/// hoteles caninos. Todos son el mismo negocio con distinto rubro.
 ///
 /// El dinero viaja y se guarda siempre como enteros de centavos. Nunca se pasa
 /// a `double` para operar: sumar precios en flotante termina en totales que no
 /// cierran contra los del panel web.
 library;
 
-class Vet {
-  const Vet({
+/// Rubros de un aliado. Los identificadores son los del enum
+/// `public.partner_category` en Postgres y por eso van en inglés: renombrar un
+/// valor de enum es una migración, renombrar la etiqueta que ve el usuario es
+/// cambiar una línea acá.
+enum PartnerCategory {
+  vet('vet', 'Veterinaria'),
+  vaccination('vaccination', 'Vacunación'),
+  emergency('emergency', 'Urgencias'),
+  grooming('grooming', 'Peluquería'),
+  walking('walking', 'Paseos'),
+  boarding('boarding', 'Hotel'),
+  training('training', 'Adiestramiento'),
+  transport('transport', 'Transporte'),
+  homeCare('home_care', 'A domicilio'),
+  shop('shop', 'Tienda');
+
+  const PartnerCategory(this.id, this.label);
+
+  final String id;
+  final String label;
+
+  static PartnerCategory? tryParse(Object? value) {
+    final id = value?.toString();
+    for (final category in PartnerCategory.values) {
+      if (category.id == id) return category;
+    }
+    // Un rubro nuevo en la base no puede tumbar una app vieja: se ignora.
+    return null;
+  }
+
+  static List<PartnerCategory> parseList(Object? value) => value is List
+      ? value.map(PartnerCategory.tryParse).nonNulls.toList()
+      : const [];
+}
+
+class Partner {
+  const Partner({
     required this.id,
     required this.name,
     required this.slug,
@@ -26,9 +62,10 @@ class Vet {
     this.coverImageUrl,
     this.verified = false,
     this.status,
+    this.categories = const [],
   });
 
-  factory Vet.fromJson(Map<String, dynamic> json) => Vet(
+  factory Partner.fromJson(Map<String, dynamic> json) => Partner(
     id: _string(json['id']),
     name: _string(json['name']),
     slug: _string(json['slug']),
@@ -46,6 +83,7 @@ class Vet {
     coverImagePath: _nullableString(json['cover_image_path']),
     verified: _bool(json['verified']) ?? false,
     status: _nullableString(json['status']),
+    categories: PartnerCategory.parseList(json['categories']),
   );
 
   final String id;
@@ -67,12 +105,15 @@ class Vet {
   final String? coverImageUrl;
   final bool verified;
   final String? status;
+  final List<PartnerCategory> categories;
 
-  /// Hay algo escrito con qué buscar la veterinaria en el mapa.
+  /// Hay algo escrito con qué buscar al aliado en el mapa.
   bool get hasLocation =>
       (address?.isNotEmpty ?? false) || (city?.isNotEmpty ?? false);
 
-  Vet copyWith({String? profileImageUrl, String? coverImageUrl}) => Vet(
+  bool get isVet => categories.contains(PartnerCategory.vet);
+
+  Partner copyWith({String? profileImageUrl, String? coverImageUrl}) => Partner(
     id: id,
     name: name,
     slug: slug,
@@ -92,13 +133,14 @@ class Vet {
     coverImageUrl: coverImageUrl ?? this.coverImageUrl,
     verified: verified,
     status: status,
+    categories: categories,
   );
 }
 
-class VetProduct {
-  const VetProduct({
+class PartnerProduct {
+  const PartnerProduct({
     required this.id,
-    required this.vetId,
+    required this.partnerId,
     required this.name,
     required this.priceCents,
     this.description,
@@ -108,9 +150,9 @@ class VetProduct {
     this.position = 0,
   });
 
-  factory VetProduct.fromJson(Map<String, dynamic> json) => VetProduct(
+  factory PartnerProduct.fromJson(Map<String, dynamic> json) => PartnerProduct(
     id: _string(json['id']),
-    vetId: _string(json['vet_id']),
+    partnerId: _string(json['partner_id']),
     name: _string(json['name']),
     priceCents: _int(json['price_cents']) ?? 0,
     description: _nullableString(json['description']),
@@ -120,7 +162,7 @@ class VetProduct {
   );
 
   final String id;
-  final String vetId;
+  final String partnerId;
   final String name;
   final int priceCents;
   final String? description;
@@ -132,9 +174,9 @@ class VetProduct {
   /// `stock` nulo significa "sin control de stock", no "sin unidades".
   bool get isAvailable => stock == null || stock! > 0;
 
-  VetProduct copyWith({String? imageUrl}) => VetProduct(
+  PartnerProduct copyWith({String? imageUrl}) => PartnerProduct(
     id: id,
-    vetId: vetId,
+    partnerId: partnerId,
     name: name,
     priceCents: priceCents,
     description: description,
@@ -145,64 +187,95 @@ class VetProduct {
   );
 }
 
-class VetService {
-  const VetService({
+class PartnerService {
+  const PartnerService({
     required this.id,
-    required this.vetId,
+    required this.partnerId,
     required this.name,
     required this.priceCents,
     this.description,
     this.imagePath,
     this.imageUrl,
     this.position = 0,
+    this.durationMinutes,
+    this.kinds = const [],
+    this.partnerName,
+    this.partnerSlug,
+    this.partnerCity,
   });
 
-  factory VetService.fromJson(Map<String, dynamic> json) => VetService(
-    id: _string(json['id']),
-    vetId: _string(json['vet_id']),
-    name: _string(json['name']),
-    priceCents: _int(json['price_cents']) ?? 0,
-    description: _nullableString(json['description']),
-    imagePath: _nullableString(json['image_path']),
-    position: _int(json['position']) ?? 0,
-  );
+  factory PartnerService.fromJson(Map<String, dynamic> json) {
+    final partner = _singleMap(json['partners']);
+    return PartnerService(
+      id: _string(json['id']),
+      partnerId: _string(json['partner_id']),
+      name: _string(json['name']),
+      priceCents: _int(json['price_cents']) ?? 0,
+      description: _nullableString(json['description']),
+      imagePath: _nullableString(json['image_path']),
+      position: _int(json['position']) ?? 0,
+      durationMinutes: _int(json['duration_minutes']),
+      kinds: PartnerCategory.parseList(json['kinds']),
+      partnerName: _nullableString(partner?['name']),
+      partnerSlug: _nullableString(partner?['slug']),
+      partnerCity: _nullableString(partner?['city']),
+    );
+  }
 
   final String id;
-  final String vetId;
+  final String partnerId;
   final String name;
   final int priceCents;
   final String? description;
   final String? imagePath;
   final String? imageUrl;
   final int position;
+  final int? durationMinutes;
 
-  VetService copyWith({String? imageUrl}) => VetService(
+  /// Rubros del servicio, hasta cuatro. Son los que alimentan los filtros de
+  /// la pantalla de Servicios, y pueden ser un subconjunto de los del negocio:
+  /// una veterinaria que además pasea perros marca `walking` solo en ese
+  /// servicio, no en toda la ficha.
+  final List<PartnerCategory> kinds;
+
+  /// Datos del aliado que lo ofrece. Vienen del join y quedan nulos cuando el
+  /// servicio se leyó desde el perfil, donde el aliado ya se conoce.
+  final String? partnerName;
+  final String? partnerSlug;
+  final String? partnerCity;
+
+  PartnerService copyWith({String? imageUrl}) => PartnerService(
     id: id,
-    vetId: vetId,
+    partnerId: partnerId,
     name: name,
     priceCents: priceCents,
     description: description,
     imagePath: imagePath,
     imageUrl: imageUrl ?? this.imageUrl,
     position: position,
+    durationMinutes: durationMinutes,
+    kinds: kinds,
+    partnerName: partnerName,
+    partnerSlug: partnerSlug,
+    partnerCity: partnerCity,
   );
 }
 
 /// Veterinaria con su catálogo, tal como la muestra el detalle.
-class VetDetail {
-  const VetDetail({
-    required this.vet,
+class PartnerDetail {
+  const PartnerDetail({
+    required this.partner,
     this.products = const [],
     this.services = const [],
   });
 
-  final Vet vet;
-  final List<VetProduct> products;
-  final List<VetService> services;
+  final Partner partner;
+  final List<PartnerProduct> products;
+  final List<PartnerService> services;
 }
 
-class VetOrderItem {
-  const VetOrderItem({
+class PartnerOrderItem {
+  const PartnerOrderItem({
     required this.id,
     required this.nameSnapshot,
     required this.unitPriceCents,
@@ -210,7 +283,7 @@ class VetOrderItem {
     required this.lineTotalCents,
   });
 
-  factory VetOrderItem.fromJson(Map<String, dynamic> json) => VetOrderItem(
+  factory PartnerOrderItem.fromJson(Map<String, dynamic> json) => PartnerOrderItem(
     id: _string(json['id']),
     nameSnapshot: _string(json['name_snapshot']),
     unitPriceCents: _int(json['unit_price_cents']) ?? 0,
@@ -225,46 +298,46 @@ class VetOrderItem {
   final int lineTotalCents;
 }
 
-class VetOrder {
-  const VetOrder({
+class PartnerOrder {
+  const PartnerOrder({
     required this.id,
-    required this.vetId,
+    required this.partnerId,
     required this.status,
     required this.totalCents,
     this.items = const [],
     this.notes,
     this.contactPhone,
     this.createdAt,
-    this.vetName,
+    this.partnerName,
   });
 
-  factory VetOrder.fromJson(Map<String, dynamic> json) => VetOrder(
+  factory PartnerOrder.fromJson(Map<String, dynamic> json) => PartnerOrder(
     id: _string(json['id']),
-    vetId: _string(json['vet_id']),
+    partnerId: _string(json['partner_id']),
     status: _string(json['status']),
     totalCents: _int(json['total_cents']) ?? 0,
-    items: _mapList(json['items']).map(VetOrderItem.fromJson).toList(),
+    items: _mapList(json['items']).map(PartnerOrderItem.fromJson).toList(),
     notes: _nullableString(json['notes']),
     contactPhone: _nullableString(json['contact_phone']),
     createdAt: _date(json['created_at']),
-    vetName: _nullableString(_singleMap(json['vets'])?['name']),
+    partnerName: _nullableString(_singleMap(json['partners'])?['name']),
   );
 
   final String id;
-  final String vetId;
+  final String partnerId;
   final String status;
   final int totalCents;
-  final List<VetOrderItem> items;
+  final List<PartnerOrderItem> items;
   final String? notes;
   final String? contactPhone;
   final DateTime? createdAt;
-  final String? vetName;
+  final String? partnerName;
 }
 
-class VetReservation {
-  const VetReservation({
+class PartnerReservation {
+  const PartnerReservation({
     required this.id,
-    required this.vetId,
+    required this.partnerId,
     required this.status,
     required this.serviceNameSnapshot,
     required this.priceCentsSnapshot,
@@ -272,12 +345,12 @@ class VetReservation {
     this.petName,
     this.notes,
     this.contactPhone,
-    this.vetName,
+    this.partnerName,
   });
 
-  factory VetReservation.fromJson(Map<String, dynamic> json) => VetReservation(
+  factory PartnerReservation.fromJson(Map<String, dynamic> json) => PartnerReservation(
     id: _string(json['id']),
-    vetId: _string(json['vet_id']),
+    partnerId: _string(json['partner_id']),
     status: _string(json['status']),
     serviceNameSnapshot: _string(json['service_name_snapshot']),
     priceCentsSnapshot: _int(json['price_cents_snapshot']) ?? 0,
@@ -285,11 +358,11 @@ class VetReservation {
     petName: _nullableString(json['pet_name']),
     notes: _nullableString(json['notes']),
     contactPhone: _nullableString(json['contact_phone']),
-    vetName: _nullableString(_singleMap(json['vets'])?['name']),
+    partnerName: _nullableString(_singleMap(json['partners'])?['name']),
   );
 
   final String id;
-  final String vetId;
+  final String partnerId;
   final String status;
   final String serviceNameSnapshot;
   final int priceCentsSnapshot;
@@ -297,7 +370,7 @@ class VetReservation {
   final String? petName;
   final String? notes;
   final String? contactPhone;
-  final String? vetName;
+  final String? partnerName;
 }
 
 String _string(Object? value) => value?.toString().trim() ?? '';

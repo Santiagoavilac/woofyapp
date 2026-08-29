@@ -8,11 +8,11 @@ import 'package:woofy/core/theme/woofy_colors.dart';
 import 'package:woofy/core/theme/woofy_radius.dart';
 import 'package:woofy/core/theme/woofy_spacing.dart';
 import 'package:woofy/features/auth/providers/auth_providers.dart';
-import 'package:woofy/features/vets/data/cart_provider.dart';
-import 'package:woofy/features/vets/data/money.dart';
-import 'package:woofy/features/vets/data/vet_repository_provider.dart';
-import 'package:woofy/features/vets/data/whatsapp_message.dart';
-import 'package:woofy/features/vets/presentation/widgets/vet_card.dart';
+import 'package:woofy/features/partners/data/cart_provider.dart';
+import 'package:woofy/features/partners/data/money.dart';
+import 'package:woofy/features/partners/data/partner_repository_provider.dart';
+import 'package:woofy/features/partners/data/whatsapp_message.dart';
+import 'package:woofy/features/partners/presentation/widgets/partner_card.dart';
 import 'package:woofy/shared/widgets/woofy_app_bar.dart';
 import 'package:woofy/shared/widgets/woofy_button.dart';
 import 'package:woofy/shared/widgets/woofy_card.dart';
@@ -65,13 +65,13 @@ class _CartPageState extends ConsumerState<CartPage> {
                   final group = groups[index];
                   return _CartGroupCard(
                     group: group,
-                    isSubmitting: _submittingVetId == group.vetId,
+                    isSubmitting: _submittingVetId == group.partnerId,
                     // Mientras se confirma un pedido los demás botones quedan
                     // apagados: dos RPC en paralelo sobre el mismo carrito son
                     // pedido duplicado asegurado.
                     isBlocked:
                         _submittingVetId != null &&
-                        _submittingVetId != group.vetId,
+                        _submittingVetId != group.partnerId,
                     onCheckout: () => _checkout(group),
                   );
                 },
@@ -91,14 +91,14 @@ class _CartPageState extends ConsumerState<CartPage> {
       return;
     }
 
-    setState(() => _submittingVetId = group.vetId);
+    setState(() => _submittingVetId = group.partnerId);
     try {
       // Primero el registro, después WhatsApp. Al revés se perderían pedidos
       // cuando el RPC falla y el usuario ya mandó el mensaje.
       final order = await ref
-          .read(vetRepositoryProvider)
+          .read(partnerRepositoryProvider)
           .createOrder(
-            vetId: group.vetId,
+            partnerId: group.partnerId,
             items: [
               for (final line in group.lines)
                 (productId: line.productId, quantity: line.quantity),
@@ -110,7 +110,7 @@ class _CartPageState extends ConsumerState<CartPage> {
       final uri = WhatsappMessage.buildUri(
         phone: group.whatsappPhone,
         message: WhatsappMessage.orderText(
-          vetName: group.vetName,
+          partnerName: group.partnerName,
           lines: [
             for (final item in order.items)
               (
@@ -123,8 +123,8 @@ class _CartPageState extends ConsumerState<CartPage> {
         ),
       );
 
-      ref.read(cartProvider.notifier).clearVet(group.vetId);
-      ref.invalidate(myVetOrdersProvider);
+      ref.read(cartProvider.notifier).clearVet(group.partnerId);
+      ref.invalidate(myPartnerOrdersProvider);
 
       if (uri == null) {
         _notify(
@@ -174,7 +174,7 @@ class _CartGroupCard extends ConsumerWidget {
     final cart = ref.read(cartProvider.notifier);
 
     return WoofyCard(
-      key: ValueKey('cart-group-${group.vetId}'),
+      key: ValueKey('cart-group-${group.partnerId}'),
       padding: const EdgeInsets.all(WoofySpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -182,11 +182,11 @@ class _CartGroupCard extends ConsumerWidget {
           Row(
             children: [
               Expanded(
-                child: Text(group.vetName, style: theme.textTheme.titleMedium),
+                child: Text(group.partnerName, style: theme.textTheme.titleMedium),
               ),
               TextButton(
                 onPressed: () =>
-                    context.push(RoutePaths.vetDetail(group.vetSlug)),
+                    context.push(RoutePaths.partnerDetail(group.vetSlug)),
                 child: const Text('Ver perfil'),
               ),
             ],
@@ -202,7 +202,7 @@ class _CartGroupCard extends ConsumerWidget {
                     height: 48,
                     child: ColoredBox(
                       color: WoofyColors.surfaceMuted,
-                      child: VetImage(
+                      child: PartnerImage(
                         url: line.imageUrl,
                         icon: Icons.inventory_2_outlined,
                       ),
@@ -233,14 +233,14 @@ class _CartGroupCard extends ConsumerWidget {
                 IconButton(
                   key: ValueKey('cart-decrement-${line.productId}'),
                   tooltip: 'Quitar uno',
-                  onPressed: () => cart.decrement(group.vetId, line.productId),
+                  onPressed: () => cart.decrement(group.partnerId, line.productId),
                   icon: const Icon(Icons.remove_circle_outline),
                 ),
                 Text('${line.quantity}', style: theme.textTheme.titleSmall),
                 IconButton(
                   key: ValueKey('cart-increment-${line.productId}'),
                   tooltip: 'Agregar uno',
-                  onPressed: () => cart.increment(group.vetId, line.productId),
+                  onPressed: () => cart.increment(group.partnerId, line.productId),
                   icon: const Icon(Icons.add_circle_outline),
                 ),
               ],
@@ -254,7 +254,7 @@ class _CartGroupCard extends ConsumerWidget {
               Text('Total', style: theme.textTheme.titleSmall),
               Text(
                 Money.fromCents(group.totalCents),
-                key: ValueKey('cart-total-${group.vetId}'),
+                key: ValueKey('cart-total-${group.partnerId}'),
                 style: theme.textTheme.titleMedium?.copyWith(
                   color: WoofyColors.primary,
                 ),
@@ -263,7 +263,7 @@ class _CartGroupCard extends ConsumerWidget {
           ),
           const SizedBox(height: WoofySpacing.md),
           WoofyButton(
-            key: ValueKey('cart-checkout-${group.vetId}'),
+            key: ValueKey('cart-checkout-${group.partnerId}'),
             label: 'Comprar',
             icon: Icons.shopping_bag_rounded,
             isExpanded: true,

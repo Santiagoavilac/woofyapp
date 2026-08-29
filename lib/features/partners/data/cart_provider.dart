@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:woofy/features/vets/data/vet_models.dart';
+import 'package:woofy/features/partners/data/partner_models.dart';
 
 /// Una línea del carrito.
 ///
@@ -35,15 +35,15 @@ class CartLine {
 /// Carrito de una veterinaria: sus datos mínimos + sus líneas.
 class CartGroup {
   const CartGroup({
-    required this.vetId,
-    required this.vetName,
+    required this.partnerId,
+    required this.partnerName,
     required this.vetSlug,
     required this.lines,
     this.whatsappPhone,
   });
 
-  final String vetId;
-  final String vetName;
+  final String partnerId;
+  final String partnerName;
   final String vetSlug;
   final String? whatsappPhone;
   final List<CartLine> lines;
@@ -54,8 +54,8 @@ class CartGroup {
   int get itemCount => lines.fold(0, (total, line) => total + line.quantity);
 
   CartGroup copyWith({List<CartLine>? lines}) => CartGroup(
-    vetId: vetId,
-    vetName: vetName,
+    partnerId: partnerId,
+    partnerName: partnerName,
     vetSlug: vetSlug,
     whatsappPhone: whatsappPhone,
     lines: lines ?? this.lines,
@@ -65,7 +65,7 @@ class CartGroup {
 /// Carrito agrupado por veterinaria.
 ///
 /// Vive solo en memoria: no se persiste ni se sube a la base. La fila real se
-/// crea recién al confirmar, con `create_vet_order`.
+/// crea recién al confirmar, con `create_partner_order`.
 final cartProvider = NotifierProvider<Cart, Map<String, CartGroup>>(Cart.new);
 
 class Cart extends Notifier<Map<String, CartGroup>> {
@@ -75,16 +75,16 @@ class Cart extends Notifier<Map<String, CartGroup>> {
   int get totalItemCount =>
       state.values.fold(0, (total, group) => total + group.itemCount);
 
-  void add(Vet vet, VetProduct product, {int quantity = 1}) {
+  void add(Partner partner, PartnerProduct product, {int quantity = 1}) {
     if (quantity <= 0) return;
     final next = Map<String, CartGroup>.from(state);
     final group =
-        next[vet.id] ??
+        next[partner.id] ??
         CartGroup(
-          vetId: vet.id,
-          vetName: vet.name,
-          vetSlug: vet.slug,
-          whatsappPhone: vet.whatsappPhone,
+          partnerId: partner.id,
+          partnerName: partner.name,
+          vetSlug: partner.slug,
+          whatsappPhone: partner.whatsappPhone,
           lines: const [],
         );
 
@@ -106,15 +106,15 @@ class Cart extends Notifier<Map<String, CartGroup>> {
       );
     }
 
-    next[vet.id] = group.copyWith(lines: lines);
+    next[partner.id] = group.copyWith(lines: lines);
     state = next;
   }
 
   /// Fija la cantidad. Con `quantity <= 0` la línea se va, y si era la última
   /// de esa veterinaria el grupo entero desaparece: un carrito con un grupo
   /// vacío mostraría un botón "Comprar" que no compra nada.
-  void setQuantity(String vetId, String productId, int quantity) {
-    final group = state[vetId];
+  void setQuantity(String partnerId, String productId, int quantity) {
+    final group = state[partnerId];
     if (group == null) return;
 
     final lines = group.lines
@@ -128,15 +128,15 @@ class Cart extends Notifier<Map<String, CartGroup>> {
 
     final next = Map<String, CartGroup>.from(state);
     if (lines.isEmpty) {
-      next.remove(vetId);
+      next.remove(partnerId);
     } else {
-      next[vetId] = group.copyWith(lines: lines);
+      next[partnerId] = group.copyWith(lines: lines);
     }
     state = next;
   }
 
-  void increment(String vetId, String productId) {
-    final line = state[vetId]?.lines.firstWhere(
+  void increment(String partnerId, String productId) {
+    final line = state[partnerId]?.lines.firstWhere(
       (line) => line.productId == productId,
       orElse: () => const CartLine(
         productId: '',
@@ -146,11 +146,11 @@ class Cart extends Notifier<Map<String, CartGroup>> {
       ),
     );
     if (line == null || line.productId.isEmpty) return;
-    setQuantity(vetId, productId, line.quantity + 1);
+    setQuantity(partnerId, productId, line.quantity + 1);
   }
 
-  void decrement(String vetId, String productId) {
-    final line = state[vetId]?.lines.firstWhere(
+  void decrement(String partnerId, String productId) {
+    final line = state[partnerId]?.lines.firstWhere(
       (line) => line.productId == productId,
       orElse: () => const CartLine(
         productId: '',
@@ -160,17 +160,17 @@ class Cart extends Notifier<Map<String, CartGroup>> {
       ),
     );
     if (line == null || line.productId.isEmpty) return;
-    setQuantity(vetId, productId, line.quantity - 1);
+    setQuantity(partnerId, productId, line.quantity - 1);
   }
 
-  void removeLine(String vetId, String productId) =>
-      setQuantity(vetId, productId, 0);
+  void removeLine(String partnerId, String productId) =>
+      setQuantity(partnerId, productId, 0);
 
   /// Vacía el carrito de una veterinaria. Se llama después de comprar, para no
   /// tocar lo que el usuario tenga cargado de las demás.
-  void clearVet(String vetId) {
-    if (!state.containsKey(vetId)) return;
-    final next = Map<String, CartGroup>.from(state)..remove(vetId);
+  void clearVet(String partnerId) {
+    if (!state.containsKey(partnerId)) return;
+    final next = Map<String, CartGroup>.from(state)..remove(partnerId);
     state = next;
   }
 

@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:woofy/features/vets/data/money.dart';
-import 'package:woofy/features/vets/data/vet_models.dart';
-import 'package:woofy/features/vets/data/whatsapp_message.dart';
+import 'package:woofy/features/partners/data/money.dart';
+import 'package:woofy/features/partners/data/partner_models.dart';
+import 'package:woofy/features/partners/data/whatsapp_message.dart';
 
 void main() {
   setUpAll(() => initializeDateFormatting('es'));
@@ -62,7 +62,7 @@ void main() {
   group('orderText', () {
     test('lists each line with its total and closes with the order total', () {
       final text = WhatsappMessage.orderText(
-        vetName: 'Vet Santa Cruz',
+        partnerName: 'Partner Santa Cruz',
         lines: const [
           (name: 'Alimento Premium', quantity: 2, unitPriceCents: 15000),
           (name: 'Collar', quantity: 1, unitPriceCents: 4550),
@@ -70,7 +70,7 @@ void main() {
         totalCents: 34550,
       );
 
-      expect(text, contains('Vet Santa Cruz'));
+      expect(text, contains('Partner Santa Cruz'));
       expect(text, contains('2x Alimento Premium'));
       expect(text, contains(Money.fromCents(30000)));
       expect(text, contains('1x Collar'));
@@ -82,7 +82,7 @@ void main() {
   group('reservationText', () {
     test('carries service, price and pet', () {
       final text = WhatsappMessage.reservationText(
-        vetName: 'Vet Santa Cruz',
+        partnerName: 'Partner Santa Cruz',
         serviceName: 'Baño para perro',
         priceCents: 7000,
         scheduledFor: DateTime(2026, 9, 3, 15, 30),
@@ -98,9 +98,9 @@ void main() {
 
   group('mapsUri', () {
     test('searches by name, address and city', () {
-      const vet = Vet(
+      const vet = Partner(
         id: 'v1',
-        name: 'Vet Santa Cruz',
+        name: 'Partner Santa Cruz',
         slug: 'vet',
         address: 'Av. Siempre Viva 123',
         city: 'Santa Cruz',
@@ -108,7 +108,7 @@ void main() {
 
       final uri = WhatsappMessage.mapsUri(vet);
       expect(uri.queryParameters['query'],
-          'Vet Santa Cruz, Av. Siempre Viva 123, Santa Cruz');
+          'Partner Santa Cruz, Av. Siempre Viva 123, Santa Cruz');
     });
   });
 

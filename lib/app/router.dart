@@ -23,11 +23,11 @@ import 'package:woofy/features/publisher/presentation/publisher_dog_form_page.da
 import 'package:woofy/features/publisher/presentation/publisher_page.dart';
 import 'package:woofy/features/publisher/presentation/shelter_edit_profile_page.dart';
 import 'package:woofy/features/publisher/presentation/shelter_login_page.dart';
-import 'package:woofy/features/vets/presentation/cart_page.dart';
-import 'package:woofy/features/vets/presentation/vet_detail_page.dart';
-import 'package:woofy/features/vets/presentation/vet_product_page.dart';
-import 'package:woofy/features/vets/presentation/vet_reservation_page.dart';
-import 'package:woofy/features/vets/presentation/vets_page.dart';
+import 'package:woofy/features/partners/presentation/cart_page.dart';
+import 'package:woofy/features/partners/presentation/partner_detail_page.dart';
+import 'package:woofy/features/partners/presentation/partner_product_page.dart';
+import 'package:woofy/features/partners/presentation/partner_reservation_page.dart';
+import 'package:woofy/features/partners/presentation/vets_page.dart';
 import 'package:woofy/shared/widgets/woofy_bottom_navigation.dart';
 import 'package:woofy/shared/widgets/woofy_error.dart';
 
@@ -80,31 +80,31 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Antes que el patrón `/veterinarias/:slug`: `carrito` también encajaría
       // en `:slug` y go_router se queda con la primera coincidencia.
       GoRoute(
-        name: RouteNames.vetCart,
-        path: RoutePaths.vetCart,
+        name: RouteNames.cart,
+        path: RoutePaths.cart,
         builder: (context, state) => const CartPage(),
       ),
       GoRoute(
-        name: RouteNames.vetReservation,
-        path: RoutePaths.vetReservationPattern,
-        builder: (context, state) => VetReservationPage(
+        name: RouteNames.partnerReservation,
+        path: RoutePaths.partnerReservationPattern,
+        builder: (context, state) => PartnerReservationPage(
           slug: state.pathParameters['slug'] ?? '',
           serviceId: state.extra as String?,
         ),
       ),
       GoRoute(
-        name: RouteNames.vetProduct,
-        path: RoutePaths.vetProductPattern,
-        builder: (context, state) => VetProductPage(
+        name: RouteNames.partnerProduct,
+        path: RoutePaths.partnerProductPattern,
+        builder: (context, state) => PartnerProductPage(
           slug: state.pathParameters['slug'] ?? '',
           productId: state.pathParameters['productId'] ?? '',
         ),
       ),
       GoRoute(
-        name: RouteNames.vetDetail,
-        path: RoutePaths.vetDetailPattern,
+        name: RouteNames.partnerDetail,
+        path: RoutePaths.partnerDetailPattern,
         builder: (context, state) =>
-            VetDetailPage(slug: state.pathParameters['slug'] ?? ''),
+            PartnerDetailPage(slug: state.pathParameters['slug'] ?? ''),
       ),
       GoRoute(
         name: RouteNames.dogDetail,

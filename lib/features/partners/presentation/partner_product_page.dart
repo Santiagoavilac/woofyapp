@@ -5,12 +5,12 @@ import 'package:woofy/app/route_names.dart';
 import 'package:woofy/core/theme/woofy_colors.dart';
 import 'package:woofy/core/theme/woofy_radius.dart';
 import 'package:woofy/core/theme/woofy_spacing.dart';
-import 'package:woofy/features/vets/data/cart_provider.dart';
-import 'package:woofy/features/vets/data/money.dart';
-import 'package:woofy/features/vets/data/vet_models.dart';
-import 'package:woofy/features/vets/data/vet_repository_provider.dart';
-import 'package:woofy/features/vets/presentation/widgets/vet_add_to_cart_bar.dart';
-import 'package:woofy/features/vets/presentation/widgets/vet_card.dart';
+import 'package:woofy/features/partners/data/cart_provider.dart';
+import 'package:woofy/features/partners/data/money.dart';
+import 'package:woofy/features/partners/data/partner_models.dart';
+import 'package:woofy/features/partners/data/partner_repository_provider.dart';
+import 'package:woofy/features/partners/presentation/widgets/add_to_cart_bar.dart';
+import 'package:woofy/features/partners/presentation/widgets/partner_card.dart';
 import 'package:woofy/shared/widgets/woofy_app_bar.dart';
 import 'package:woofy/shared/widgets/woofy_empty_state.dart';
 import 'package:woofy/shared/widgets/woofy_error.dart';
@@ -20,8 +20,8 @@ import 'package:woofy/shared/widgets/woofy_section_header.dart';
 
 /// Detalle de un producto: foto, descripción, cuánto agregar y qué más vende
 /// la misma veterinaria.
-class VetProductPage extends ConsumerStatefulWidget {
-  const VetProductPage({
+class PartnerProductPage extends ConsumerStatefulWidget {
+  const PartnerProductPage({
     required this.slug,
     required this.productId,
     super.key,
@@ -31,39 +31,39 @@ class VetProductPage extends ConsumerStatefulWidget {
   final String productId;
 
   @override
-  ConsumerState<VetProductPage> createState() => _VetProductPageState();
+  ConsumerState<PartnerProductPage> createState() => _VetProductPageState();
 }
 
-class _VetProductPageState extends ConsumerState<VetProductPage>
+class _VetProductPageState extends ConsumerState<PartnerProductPage>
     with WoofyRefreshMixin {
   int _quantity = 1;
 
   @override
   Future<void> onWoofyRefresh() async {
-    ref.invalidate(vetDetailProvider(widget.slug));
-    await ref.read(vetDetailProvider(widget.slug).future);
+    ref.invalidate(partnerDetailProvider(widget.slug));
+    await ref.read(partnerDetailProvider(widget.slug).future);
   }
 
   @override
   Widget build(BuildContext context) {
-    final detail = ref.watch(vetDetailProvider(widget.slug));
+    final detail = ref.watch(partnerDetailProvider(widget.slug));
 
     return detail.when(
       loading: () => Scaffold(
         appBar: WoofyAppBar(
           title: 'Producto',
-          backFallbackLocation: RoutePaths.vetDetail(widget.slug),
+          backFallbackLocation: RoutePaths.partnerDetail(widget.slug),
         ),
         body: const WoofyLoading(message: 'Cargando producto…'),
       ),
       error: (error, stackTrace) => Scaffold(
         appBar: WoofyAppBar(
           title: 'Producto',
-          backFallbackLocation: RoutePaths.vetDetail(widget.slug),
+          backFallbackLocation: RoutePaths.partnerDetail(widget.slug),
         ),
         body: WoofyError(
           message: 'No pudimos cargar este producto.',
-          onRetry: () => ref.invalidate(vetDetailProvider(widget.slug)),
+          onRetry: () => ref.invalidate(partnerDetailProvider(widget.slug)),
         ),
       ),
       data: (data) {
@@ -74,14 +74,14 @@ class _VetProductPageState extends ConsumerState<VetProductPage>
           return Scaffold(
             appBar: WoofyAppBar(
               title: 'Producto',
-              backFallbackLocation: RoutePaths.vetDetail(widget.slug),
+              backFallbackLocation: RoutePaths.partnerDetail(widget.slug),
             ),
             body: WoofyEmptyState(
               icon: Icons.inventory_2_outlined,
               title: 'Producto no disponible',
               message: 'Puede que la veterinaria lo haya sacado del catálogo.',
               actionLabel: 'Ver el catálogo',
-              onAction: () => context.go(RoutePaths.vetDetail(widget.slug)),
+              onAction: () => context.go(RoutePaths.partnerDetail(widget.slug)),
             ),
           );
         }
@@ -90,13 +90,13 @@ class _VetProductPageState extends ConsumerState<VetProductPage>
     );
   }
 
-  Widget _buildProduct(VetDetail detail, VetProduct product) {
+  Widget _buildProduct(PartnerDetail detail, PartnerProduct product) {
     final theme = Theme.of(context);
     final others = detail.products
         .where((item) => item.id != product.id)
         .toList();
     final inCart = ref
-        .watch(cartProvider)[detail.vet.id]
+        .watch(cartProvider)[detail.partner.id]
         ?.lines
         .where((line) => line.productId == product.id)
         .fold(0, (total, line) => total + line.quantity);
@@ -104,12 +104,12 @@ class _VetProductPageState extends ConsumerState<VetProductPage>
     return Scaffold(
       appBar: WoofyAppBar(
         title: product.name,
-        backFallbackLocation: RoutePaths.vetDetail(widget.slug),
+        backFallbackLocation: RoutePaths.partnerDetail(widget.slug),
         actions: [
           IconButton(
             key: const ValueKey('vet-product-cart-button'),
             tooltip: 'Mi carrito',
-            onPressed: () => context.push(RoutePaths.vetCart),
+            onPressed: () => context.push(RoutePaths.cart),
             icon: const Icon(Icons.shopping_bag_outlined),
           ),
         ],
@@ -134,7 +134,7 @@ class _VetProductPageState extends ConsumerState<VetProductPage>
                       aspectRatio: 1,
                       child: ColoredBox(
                         color: WoofyColors.surfaceMuted,
-                        child: VetImage(
+                        child: PartnerImage(
                           url: product.imageUrl,
                           icon: Icons.inventory_2_outlined,
                         ),
@@ -145,7 +145,7 @@ class _VetProductPageState extends ConsumerState<VetProductPage>
                   Text(product.name, style: theme.textTheme.headlineSmall),
                   const SizedBox(height: WoofySpacing.xs),
                   Text(
-                    detail.vet.name,
+                    detail.partner.name,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
@@ -203,7 +203,7 @@ class _VetProductPageState extends ConsumerState<VetProductPage>
                           // pantalla por cada toque y el back tendría que deshacer
                           // toda la caminata para volver al perfil.
                           onTap: () => context.pushReplacement(
-                            RoutePaths.vetProduct(
+                            RoutePaths.partnerProduct(
                               widget.slug,
                               others[index].id,
                             ),
@@ -218,29 +218,29 @@ class _VetProductPageState extends ConsumerState<VetProductPage>
           ],
         ),
       ),
-      bottomNavigationBar: VetAddToCartBar(
+      bottomNavigationBar: AddToCartBar(
         unitPriceCents: product.priceCents,
         quantity: _quantity,
         onDecrement: () => setState(() => _quantity -= 1),
         onIncrement: () => setState(() => _quantity += 1),
         onAdd: product.isAvailable
-            ? () => _addToCart(detail.vet, product)
+            ? () => _addToCart(detail.partner, product)
             : null,
       ),
     );
   }
 
-  void _addToCart(Vet vet, VetProduct product) {
-    ref.read(cartProvider.notifier).add(vet, product, quantity: _quantity);
+  void _addToCart(Partner partner, PartnerProduct product) {
+    ref.read(cartProvider.notifier).add(partner, product, quantity: _quantity);
     setState(() => _quantity = 1);
-    context.push(RoutePaths.vetCart);
+    context.push(RoutePaths.cart);
   }
 }
 
 class _RelatedProductCard extends StatelessWidget {
   const _RelatedProductCard({required this.product, required this.onTap});
 
-  final VetProduct product;
+  final PartnerProduct product;
   final VoidCallback onTap;
 
   @override
@@ -263,7 +263,7 @@ class _RelatedProductCard extends StatelessWidget {
                 width: 148,
                 child: ColoredBox(
                   color: WoofyColors.surfaceMuted,
-                  child: VetImage(
+                  child: PartnerImage(
                     url: product.imageUrl,
                     icon: Icons.inventory_2_outlined,
                   ),

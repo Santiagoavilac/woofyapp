@@ -7,10 +7,10 @@ import 'package:woofy/app/route_names.dart';
 import 'package:woofy/core/errors/app_exception.dart';
 import 'package:woofy/core/theme/woofy_colors.dart';
 import 'package:woofy/core/theme/woofy_spacing.dart';
-import 'package:woofy/features/vets/data/money.dart';
-import 'package:woofy/features/vets/data/vet_models.dart';
-import 'package:woofy/features/vets/data/vet_repository_provider.dart';
-import 'package:woofy/features/vets/data/whatsapp_message.dart';
+import 'package:woofy/features/partners/data/money.dart';
+import 'package:woofy/features/partners/data/partner_models.dart';
+import 'package:woofy/features/partners/data/partner_repository_provider.dart';
+import 'package:woofy/features/partners/data/whatsapp_message.dart';
 import 'package:woofy/shared/widgets/woofy_app_bar.dart';
 import 'package:woofy/shared/widgets/woofy_button.dart';
 import 'package:woofy/shared/widgets/woofy_card.dart';
@@ -21,8 +21,8 @@ import 'package:woofy/shared/widgets/woofy_text_field.dart';
 
 /// Reserva de un servicio: elegir servicio, fecha y hora, y datos de la
 /// mascota. El turno se guarda en la base antes de abrir WhatsApp.
-class VetReservationPage extends ConsumerStatefulWidget {
-  const VetReservationPage({required this.slug, this.serviceId, super.key});
+class PartnerReservationPage extends ConsumerStatefulWidget {
+  const PartnerReservationPage({required this.slug, this.serviceId, super.key});
 
   final String slug;
 
@@ -30,10 +30,10 @@ class VetReservationPage extends ConsumerStatefulWidget {
   final String? serviceId;
 
   @override
-  ConsumerState<VetReservationPage> createState() => _VetReservationPageState();
+  ConsumerState<PartnerReservationPage> createState() => _VetReservationPageState();
 }
 
-class _VetReservationPageState extends ConsumerState<VetReservationPage> {
+class _VetReservationPageState extends ConsumerState<PartnerReservationPage> {
   final _petController = TextEditingController();
   final _phoneController = TextEditingController();
   final _notesController = TextEditingController();
@@ -58,19 +58,19 @@ class _VetReservationPageState extends ConsumerState<VetReservationPage> {
 
   @override
   Widget build(BuildContext context) {
-    final detail = ref.watch(vetDetailProvider(widget.slug));
+    final detail = ref.watch(partnerDetailProvider(widget.slug));
 
     return Scaffold(
       appBar: WoofyAppBar(
         title: 'Reservar turno',
-        backFallbackLocation: RoutePaths.vetDetail(widget.slug),
+        backFallbackLocation: RoutePaths.partnerDetail(widget.slug),
       ),
       body: SafeArea(
         child: detail.when(
           loading: () => const WoofyLoading(message: 'Cargando servicios…'),
           error: (error, stackTrace) => WoofyError(
             message: 'No pudimos cargar los servicios.',
-            onRetry: () => ref.invalidate(vetDetailProvider(widget.slug)),
+            onRetry: () => ref.invalidate(partnerDetailProvider(widget.slug)),
           ),
           data: (data) {
             if (data == null || data.services.isEmpty) {
@@ -79,7 +79,7 @@ class _VetReservationPageState extends ConsumerState<VetReservationPage> {
                 title: 'Sin servicios disponibles',
                 message: 'Esta veterinaria todavía no cargó servicios.',
                 actionLabel: 'Volver',
-                onAction: () => context.go(RoutePaths.vetDetail(widget.slug)),
+                onAction: () => context.go(RoutePaths.partnerDetail(widget.slug)),
               );
             }
             return _buildForm(data);
@@ -89,7 +89,7 @@ class _VetReservationPageState extends ConsumerState<VetReservationPage> {
     );
   }
 
-  Widget _buildForm(VetDetail detail) {
+  Widget _buildForm(PartnerDetail detail) {
     final theme = Theme.of(context);
     // El id que viene por `extra` puede no existir más si el catálogo cambió
     // entre pantallas, así que se valida contra la lista real.
@@ -100,7 +100,7 @@ class _VetReservationPageState extends ConsumerState<VetReservationPage> {
     return ListView(
       padding: const EdgeInsets.all(WoofySpacing.lg),
       children: [
-        Text(detail.vet.name, style: theme.textTheme.headlineSmall),
+        Text(detail.partner.name, style: theme.textTheme.headlineSmall),
         const SizedBox(height: WoofySpacing.lg),
         Text('Servicio', style: theme.textTheme.titleSmall),
         const SizedBox(height: WoofySpacing.sm),
@@ -225,16 +225,16 @@ class _VetReservationPageState extends ConsumerState<VetReservationPage> {
     });
   }
 
-  Future<void> _submit(VetDetail detail, VetService service) async {
+  Future<void> _submit(PartnerDetail detail, PartnerService service) async {
     final scheduledFor = _scheduledFor;
     if (scheduledFor == null || _submitting) return;
 
     setState(() => _submitting = true);
     try {
       final reservation = await ref
-          .read(vetRepositoryProvider)
+          .read(partnerRepositoryProvider)
           .createReservation(
-            vetId: detail.vet.id,
+            partnerId: detail.partner.id,
             serviceId: service.id,
             scheduledFor: scheduledFor,
             petName: _petController.text.trim().isEmpty
@@ -249,12 +249,12 @@ class _VetReservationPageState extends ConsumerState<VetReservationPage> {
           );
 
       if (!mounted) return;
-      ref.invalidate(myVetReservationsProvider);
+      ref.invalidate(myPartnerReservationsProvider);
 
       final uri = WhatsappMessage.buildUri(
-        phone: detail.vet.whatsappPhone,
+        phone: detail.partner.whatsappPhone,
         message: WhatsappMessage.reservationText(
-          vetName: detail.vet.name,
+          partnerName: detail.partner.name,
           serviceName: reservation.serviceNameSnapshot,
           priceCents: reservation.priceCentsSnapshot,
           scheduledFor: reservation.scheduledFor?.toLocal() ?? scheduledFor,
@@ -268,7 +268,7 @@ class _VetReservationPageState extends ConsumerState<VetReservationPage> {
       }
       if (!mounted) return;
       _notify('Reserva registrada. La veterinaria te va a confirmar.');
-      context.go(RoutePaths.vetDetail(widget.slug));
+      context.go(RoutePaths.partnerDetail(widget.slug));
     } on AppException catch (error) {
       if (mounted) _notify(error.message);
     } catch (_) {
