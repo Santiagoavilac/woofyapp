@@ -17,6 +17,7 @@ class WoofyTextField extends StatelessWidget {
     this.minLines,
     this.maxLines = 1,
     this.maxLength,
+    this.fieldKey,
     super.key,
   });
 
@@ -36,9 +37,14 @@ class WoofyTextField extends StatelessWidget {
   final int? maxLines;
   final int? maxLength;
 
+  /// Llega hasta el `TextFormField` de adentro, para poder validar un campo
+  /// suelto sin validar todo el formulario.
+  final GlobalKey<FormFieldState<String>>? fieldKey;
+
   @override
   Widget build(BuildContext context) {
     return TextFormField(
+      key: fieldKey,
       controller: controller,
       validator: validator,
       keyboardType: keyboardType,

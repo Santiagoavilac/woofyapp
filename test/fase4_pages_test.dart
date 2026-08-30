@@ -75,7 +75,7 @@ void main() {
     expect(find.byTooltip('Quitar de favoritos'), findsOneWidget);
   });
 
-  testWidgets('application form validates real required fields', (
+  testWidgets('each step blocks the way forward with its own empty fields', (
     tester,
   ) async {
     var calls = 0;
@@ -88,18 +88,45 @@ void main() {
         ),
       ),
     );
+
+    // Paso 1: teléfono y ciudad vacíos frenan el avance, y marcan solo los
+    // suyos — los campos de los pasos ocultos no gritan por adelantado.
+    await tester.tap(find.text('Continuar'));
+    await tester.pumpAndSettle();
+    expect(find.text('Este campo es obligatorio.'), findsNWidgets(2));
+    expect(find.text('Paso 1 de 3'), findsOneWidget);
+
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Teléfono'),
+      '70000000',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Ciudad'),
+      'La Paz',
+    );
+    await tester.tap(find.text('Continuar'));
+    await tester.pumpAndSettle();
+
+    // Paso 2 es desplegable e interruptores: siempre válido, nunca traba.
+    expect(find.text('Paso 2 de 3'), findsOneWidget);
+    await tester.tap(find.text('Continuar'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Paso 3 de 3'), findsOneWidget);
     await tester.ensureVisible(find.text('Enviar postulación'));
     await tester.tap(find.text('Enviar postulación'));
-    await tester.pump();
-    expect(find.text('Este campo es obligatorio.'), findsNWidgets(4));
+    await tester.pumpAndSettle();
+    expect(find.text('Este campo es obligatorio.'), findsNWidgets(2));
     expect(calls, 0);
   });
 
-  testWidgets('valid application form submits the real fields', (tester) async {
+  testWidgets('walking the three steps submits the same data as before', (
+    tester,
+  ) async {
     final gate = Completer<void>();
-    var calls = 0;
+    ApplicationFormData? sent;
     Future<void> submit(ApplicationFormData data) async {
-      calls++;
+      sent = data;
       await gate.future;
     }
 
@@ -116,6 +143,13 @@ void main() {
       find.widgetWithText(TextFormField, 'Ciudad'),
       'La Paz',
     );
+    await tester.tap(find.text('Continuar'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Hay otros animales'));
+    await tester.tap(find.text('Continuar'));
+    await tester.pumpAndSettle();
+
     await tester.enterText(
       find.widgetWithText(TextFormField, 'Experiencia previa'),
       'Tengo experiencia cuidando perros.',
@@ -127,9 +161,116 @@ void main() {
     await tester.ensureVisible(find.text('Enviar postulación'));
     await tester.tap(find.text('Enviar postulación'));
     await tester.pump();
-    expect(calls, 1);
+
+    // Los pasos ocultos siguen montados: lo que se contestó en el paso 1 y 2
+    // llega entero al envío.
+    expect(sent, isNotNull);
+    expect(sent!.phone, '70000000');
+    expect(sent!.city, 'La Paz');
+    expect(sent!.housingType, HousingType.houseWithYard);
+    expect(sent!.hasChildren, isFalse);
+    expect(sent!.hasPets, isTrue);
+    expect(sent!.experience, 'Tengo experiencia cuidando perros.');
+    expect(sent!.motivation, 'Quiero ofrecer un hogar seguro y responsable.');
     gate.complete();
     await tester.pump();
+  });
+
+  testWidgets('going back keeps what was already answered', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: ApplicationForm(onSubmit: (_) async {}),
+          ),
+        ),
+      ),
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Teléfono'),
+      '70000000',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Ciudad'),
+      'Sucre',
+    );
+    await tester.tap(find.text('Continuar'));
+    await tester.pumpAndSettle();
+    expect(find.text('Tu hogar'), findsOneWidget);
+
+    await tester.tap(find.text('Atrás'));
+    await tester.pumpAndSettle();
+    expect(find.text('Paso 1 de 3'), findsOneWidget);
+    expect(find.text('Sucre'), findsOneWidget);
+  });
+
+  testWidgets('reduced motion shows the step complete on the first frame', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: MediaQuery(
+            data: const MediaQueryData(disableAnimations: true),
+            child: SingleChildScrollView(
+              child: ApplicationForm(
+                initialPhone: '70000000',
+                onSubmit: (_) async {},
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Ciudad'),
+      'La Paz',
+    );
+    await tester.tap(find.text('Continuar'));
+    // Un solo `pump`: el paso nuevo tiene que estar entero, no a medio aparecer.
+    await tester.pump();
+
+    expect(find.text('Tu hogar'), findsOneWidget);
+    final fade = tester.widget<Opacity>(
+      find
+          .ancestor(
+            of: find.text('Tipo de vivienda'),
+            matching: find.byType(Opacity),
+          )
+          .last,
+    );
+    expect(fade.opacity, 1);
+  });
+
+  testWidgets('the stepped form has no overflow at 320x568', (tester) async {
+    tester.view.physicalSize = const Size(320, 568);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: ApplicationForm(
+              initialPhone: '70000000',
+              onSubmit: (_) async {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Ciudad'),
+      'La Paz',
+    );
+    // La fila "Atrás / Continuar" del paso 2 es la más apretada: dos botones
+    // con ícono en 320 px.
+    for (var step = 0; step < 2; step++) {
+      await tester.tap(find.text('Continuar'));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+    }
   });
 
   for (final size in <Size>[const Size(320, 568), const Size(800, 1200)]) {
