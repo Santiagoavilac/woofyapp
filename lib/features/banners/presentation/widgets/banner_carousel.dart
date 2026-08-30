@@ -233,61 +233,70 @@ class _BannerTile extends StatelessWidget {
         child: InkWell(
           key: ValueKey('promo-banner-${banner.id}'),
           onTap: onTap,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              CachedNetworkImage(
-                imageUrl: banner.imageUrl,
-                fit: BoxFit.cover,
-                placeholder: (context, url) =>
-                    const ColoredBox(color: WoofyColors.surfaceMuted),
-                errorWidget: (context, url, error) =>
-                    const ColoredBox(color: WoofyColors.surfaceMuted),
-              ),
-              // Velo en el borde inferior: el título tiene que leerse sobre
-              // cualquier imagen que suba el admin, incluida una clara.
-              const DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.bottomCenter,
-                    end: Alignment.center,
-                    colors: [Color(0xB3000000), Color(0x00000000)],
-                  ),
+          child: Semantics(
+            image: true,
+            // Con el velo puesto el título ya está en pantalla y anunciarlo dos
+            // veces sobra. Sin velo no hay ningún texto que leer: el titular
+            // vive dentro del PNG, así que el label es lo único que queda.
+            label: banner.showCaption ? null : banner.title,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                CachedNetworkImage(
+                  imageUrl: banner.imageUrl,
+                  fit: BoxFit.cover,
+                  placeholder: (context, url) =>
+                      const ColoredBox(color: WoofyColors.surfaceMuted),
+                  errorWidget: (context, url, error) =>
+                      const ColoredBox(color: WoofyColors.surfaceMuted),
                 ),
-              ),
-              Align(
-                alignment: Alignment.bottomLeft,
-                child: Padding(
-                  padding: const EdgeInsets.all(WoofySpacing.lg),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        banner.title,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          color: WoofyColors.white,
-                          fontWeight: FontWeight.w700,
-                        ),
+                if (banner.showCaption) ...[
+                  // Velo en el borde inferior: el título tiene que leerse sobre
+                  // cualquier imagen que suba el admin, incluida una clara.
+                  const DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.bottomCenter,
+                        end: Alignment.center,
+                        colors: [Color(0xB3000000), Color(0x00000000)],
                       ),
-                      if (banner.subtitle case final subtitle?) ...[
-                        const SizedBox(height: WoofySpacing.xs),
-                        Text(
-                          subtitle,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: WoofyColors.white,
-                          ),
-                        ),
-                      ],
-                    ],
+                    ),
                   ),
-                ),
-              ),
-            ],
+                  Align(
+                    alignment: Alignment.bottomLeft,
+                    child: Padding(
+                      padding: const EdgeInsets.all(WoofySpacing.lg),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            banner.title,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              color: WoofyColors.white,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          if (banner.subtitle case final subtitle?) ...[
+                            const SizedBox(height: WoofySpacing.xs),
+                            Text(
+                              subtitle,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: WoofyColors.white,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
         ),
       ),

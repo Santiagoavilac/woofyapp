@@ -78,6 +78,34 @@ void main() {
     );
   });
 
+  group('el texto encima de la imagen', () {
+    testWidgets('por defecto se dibuja', (tester) async {
+      await _pump(tester, [_banner(0, subtitle: 'Bajada')]);
+
+      expect(find.text('Banner 0'), findsOneWidget);
+      expect(find.text('Bajada'), findsOneWidget);
+    });
+
+    testWidgets('un banner que ya trae su texto no lo repite', (tester) async {
+      // El titular y el botón vienen dibujados en el PNG, justo en la esquina
+      // donde iría el velo. Superponer otro título tapa el diseño.
+      await _pump(tester, [_banner(0, subtitle: 'Bajada', showCaption: false)]);
+
+      expect(find.text('Banner 0'), findsNothing);
+      expect(find.text('Bajada'), findsNothing);
+    });
+
+    testWidgets('sin texto encima el título lo dice el lector', (tester) async {
+      // Sin velo no queda ningún texto en pantalla: el label es lo único que
+      // le queda a alguien que no ve la imagen.
+      final handle = tester.ensureSemantics();
+      await _pump(tester, [_banner(0, showCaption: false)]);
+
+      expect(find.bySemanticsLabel('Banner 0'), findsOneWidget);
+      handle.dispose();
+    });
+  });
+
   group('la caja es una sola para todo el carrusel', () {
     test('con formas distintas se reparte el recorte', () {
       // Si cada banner impusiera la suya, el carrusel cambiaría de alto en
@@ -130,11 +158,18 @@ int _pageOf(WidgetTester tester) {
   return view.controller!.page!.round();
 }
 
-PromoBanner _banner(int index, {double? ratio}) => PromoBanner(
+PromoBanner _banner(
+  int index, {
+  double? ratio,
+  String? subtitle,
+  bool showCaption = true,
+}) => PromoBanner(
   id: 'b$index',
   title: 'Banner $index',
+  subtitle: subtitle,
   imageUrl: 'https://x/$index.png',
   aspectRatio: ratio,
+  showCaption: showCaption,
 );
 
 List<PromoBanner> _banners(int count) => [

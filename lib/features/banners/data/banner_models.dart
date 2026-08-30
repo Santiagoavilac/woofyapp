@@ -28,6 +28,7 @@ class PromoBanner {
     this.subtitle,
     this.linkUrl,
     this.aspectRatio,
+    this.showCaption = true,
   });
 
   factory PromoBanner.fromJson(Map<String, dynamic> json, String imageUrl) {
@@ -38,6 +39,9 @@ class PromoBanner {
       imageUrl: imageUrl,
       linkUrl: _stringOrNull(json['link_url']),
       aspectRatio: _positiveOrNull(json['aspect_ratio']),
+      // Ante la duda, el velo se dibuja: un título ilegible sobre una foto clara
+      // es peor que un velo de más sobre una imagen que no lo necesitaba.
+      showCaption: json['show_caption'] != false,
     );
   }
 
@@ -57,6 +61,14 @@ class PromoBanner {
   /// Ruta interna de la app (`/veterinarias`) o URL externa (`https://…`).
   /// Nulo si el banner no lleva a ningún lado.
   final String? linkUrl;
+
+  /// Si se superpone el velo oscuro con el título y la bajada.
+  ///
+  /// Falso en los banners diseñados, que ya traen su titular y su botón
+  /// dibujados —y justo en la esquina donde iría el velo—. Ahí el título sigue
+  /// existiendo: nombra el banner en el panel y es lo que anuncia un lector de
+  /// pantalla, que sin texto encima no tendría nada que leer.
+  final bool showCaption;
 
   bool get isExternalLink =>
       linkUrl != null && Uri.tryParse(linkUrl!)?.hasScheme == true;

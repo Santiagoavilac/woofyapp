@@ -22,7 +22,10 @@ class SupabaseBannerRepository implements BannerRepository {
       // desincronizarse.
       final response = await _client
           .from('promo_banners')
-          .select('id, title, subtitle, image_path, link_url, aspect_ratio')
+          .select(
+            'id, title, subtitle, image_path, link_url, aspect_ratio, '
+            'show_caption',
+          )
           .eq('slot', slot.id)
           .order('position')
           .limit(20);
