@@ -10,7 +10,39 @@ import 'package:woofy/features/favorites/data/favorites_providers.dart';
 import 'package:woofy/features/favorites/presentation/favorites_page.dart';
 
 void main() {
-  testWidgets('favorites page shows empty state', (tester) async {});
+  testWidgets('reduced motion shows the favorites without waiting', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        key: UniqueKey(),
+        overrides: [
+          favoriteDogsProvider.overrideWith((ref) async => const [_dog]),
+          favoriteDogIdsProvider.overrideWith((ref) async => {'dog-1'}),
+        ],
+        child: const MaterialApp(
+          home: MediaQuery(
+            data: MediaQueryData(disableAnimations: true),
+            child: FavoritesPage(),
+          ),
+        ),
+      ),
+    );
+    // Sin `pumpAndSettle`: con el movimiento apagado la grilla tiene que estar
+    // entera en el primer cuadro en que existe, no desvanecida.
+    await tester.pump();
+    await tester.pump();
+
+    final fade = tester.widget<FadeTransition>(
+      find
+          .ancestor(
+            of: find.text('Milo'),
+            matching: find.byType(FadeTransition),
+          )
+          .first,
+    );
+    expect(fade.opacity.value, 1);
+  });
 
   testWidgets('favorites page shows populated state', (tester) async {
     await tester.pumpWidget(

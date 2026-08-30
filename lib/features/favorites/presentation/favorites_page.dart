@@ -12,6 +12,7 @@ import 'package:woofy/shared/widgets/woofy_button.dart';
 import 'package:woofy/shared/widgets/woofy_error.dart';
 import 'package:woofy/shared/widgets/woofy_loading.dart';
 import 'package:woofy/shared/widgets/woofy_refresh.dart';
+import 'package:woofy/shared/widgets/woofy_reveal.dart';
 
 class FavoritesPage extends ConsumerStatefulWidget {
   const FavoritesPage({super.key});
@@ -101,23 +102,29 @@ class _FavoritesPageState extends ConsumerState<FavoritesPage>
                       WoofyRefreshControl(onRefresh: refreshData),
                       SliverPadding(
                         padding: const EdgeInsets.all(16),
-                        sliver: SliverGrid.builder(
-                          gridDelegate:
-                              SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: columns,
-                                mainAxisSpacing: 16,
-                                crossAxisSpacing: 16,
-                                mainAxisExtent: 448,
-                              ),
-                          itemCount: dogs.length,
-                          itemBuilder: (context, index) {
-                            final dog = dogs[index];
-                            return FavoriteDogCard(
-                              dog: dog,
-                              onTap: () =>
-                                  context.push(RoutePaths.dogDetail(dog.slug)),
-                            );
-                          },
+                        sliver: WoofySliverStagger(
+                          sliver: SliverGrid.builder(
+                            gridDelegate:
+                                SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: columns,
+                                  mainAxisSpacing: 16,
+                                  crossAxisSpacing: 16,
+                                  mainAxisExtent: 448,
+                                ),
+                            itemCount: dogs.length,
+                            itemBuilder: (context, index) {
+                              final dog = dogs[index];
+                              return WoofyReveal.indexed(
+                                index: index,
+                                child: FavoriteDogCard(
+                                  dog: dog,
+                                  onTap: () => context.push(
+                                    RoutePaths.dogDetail(dog.slug),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
                         ),
                       ),
                     ],

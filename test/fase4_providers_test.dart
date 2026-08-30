@@ -43,6 +43,33 @@ void main() {
     },
   );
 
+  test('the heart flips before the network answers', () async {
+    final repository = _FakeFavoritesRepository();
+    final gate = Completer<void>();
+    repository.toggleGate = gate;
+    final container = ProviderContainer(
+      overrides: [
+        currentUserProvider.overrideWithValue(user),
+        favoritesRepositoryProvider.overrideWithValue(repository),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await container.read(favoriteDogIdsProvider.future);
+    expect(container.read(isFavoriteProvider('dog-1')), isTrue);
+
+    final pending = container
+        .read(favoriteMutationProvider.notifier)
+        .toggle('dog-1');
+    // Sin esperar el viaje de red: si el corazón tardara, marcar un favorito
+    // se sentiría lento y se perdería el impulso.
+    expect(container.read(isFavoriteProvider('dog-1')), isFalse);
+
+    gate.complete();
+    await pending;
+    expect(container.read(favoriteOverrideProvider), isEmpty);
+  });
+
   test(
     'application provider exposes existing state and blocks double submit',
     () async {
