@@ -59,6 +59,70 @@ void main() {
 
     expect(find.byKey(const ValueKey('fallback')), findsOneWidget);
   });
+
+  testWidgets('la caja toma la forma de lo que se subió', (tester) async {
+    // Un banner más cuadrado que el viejo 2.5:1 tiene que verse entero, no
+    // recortado contra una medida que ya no existe.
+    await _pump(tester, [_banner(0, ratio: 16 / 9)]);
+
+    expect(_boxRatio(tester), closeTo(16 / 9, 0.001));
+  });
+
+  testWidgets('sin proporción guardada usa la de siempre', (tester) async {
+    // Los banners cargados antes de que el panel midiera la imagen.
+    await _pump(tester, _banners(1));
+
+    expect(
+      _boxRatio(tester),
+      closeTo(BannerCarousel.defaultAspectRatio, 0.001),
+    );
+  });
+
+  group('la caja es una sola para todo el carrusel', () {
+    test('con formas distintas se reparte el recorte', () {
+      // Si cada banner impusiera la suya, el carrusel cambiaría de alto en
+      // pleno arrastre. Promediar deja a los dos con un recorte parecido, en
+      // vez de sacrificar uno entero.
+      final ratio = BannerCarousel.aspectRatioOf([
+        _banner(0, ratio: 3),
+        _banner(1, ratio: 1.8),
+      ]);
+
+      expect(ratio, closeTo(2.4, 0.001));
+    });
+
+    test('con todos iguales no recorta a nadie', () {
+      // El caso normal: los banners de una pantalla los hace la misma persona.
+      final ratio = BannerCarousel.aspectRatioOf([
+        _banner(0, ratio: 2.2),
+        _banner(1, ratio: 2.2),
+        _banner(2, ratio: 2.2),
+      ]);
+
+      expect(ratio, closeTo(2.2, 0.001));
+    });
+
+    test('una proporción imposible no rompe el layout', () {
+      // Una fila cargada por fuera del panel, sin el check de la base delante.
+      final ratio = BannerCarousel.aspectRatioOf([
+        _banner(0, ratio: 0.4),
+        _banner(1, ratio: 40),
+      ]);
+
+      expect(ratio, greaterThanOrEqualTo(BannerCarousel.minAspectRatio));
+      expect(ratio, lessThanOrEqualTo(BannerCarousel.maxAspectRatio));
+    });
+  });
+}
+
+double _boxRatio(WidgetTester tester) {
+  final box = tester.widget<AspectRatio>(
+    find.ancestor(
+      of: find.byType(PageView),
+      matching: find.byType(AspectRatio),
+    ),
+  );
+  return box.aspectRatio;
 }
 
 int _pageOf(WidgetTester tester) {
@@ -66,9 +130,15 @@ int _pageOf(WidgetTester tester) {
   return view.controller!.page!.round();
 }
 
+PromoBanner _banner(int index, {double? ratio}) => PromoBanner(
+  id: 'b$index',
+  title: 'Banner $index',
+  imageUrl: 'https://x/$index.png',
+  aspectRatio: ratio,
+);
+
 List<PromoBanner> _banners(int count) => [
-  for (var i = 0; i < count; i++)
-    PromoBanner(id: 'b$i', title: 'Banner $i', imageUrl: 'https://x/$i.png'),
+  for (var i = 0; i < count; i++) _banner(i),
 ];
 
 Future<void> _pump(

@@ -27,6 +27,7 @@ class PromoBanner {
     required this.imageUrl,
     this.subtitle,
     this.linkUrl,
+    this.aspectRatio,
   });
 
   factory PromoBanner.fromJson(Map<String, dynamic> json, String imageUrl) {
@@ -36,6 +37,7 @@ class PromoBanner {
       subtitle: _stringOrNull(json['subtitle']),
       imageUrl: imageUrl,
       linkUrl: _stringOrNull(json['link_url']),
+      aspectRatio: _positiveOrNull(json['aspect_ratio']),
     );
   }
 
@@ -43,6 +45,14 @@ class PromoBanner {
   final String title;
   final String? subtitle;
   final String imageUrl;
+
+  /// Ancho dividido alto de la imagen que subió el admin.
+  ///
+  /// Nulo en los banners cargados antes de que el panel lo midiera. Con esto la
+  /// app arma la caja a medida en vez de recortar todo contra una única
+  /// proporción, que era lo que le comía los bordes a cualquier imagen que no
+  /// viniera exactamente apaisada 2.5:1.
+  final double? aspectRatio;
 
   /// Ruta interna de la app (`/veterinarias`) o URL externa (`https://…`).
   /// Nulo si el banner no lleva a ningún lado.
@@ -54,5 +64,14 @@ class PromoBanner {
   static String? _stringOrNull(Object? value) {
     final text = value?.toString().trim();
     return text == null || text.isEmpty ? null : text;
+  }
+
+  /// Una proporción de cero o negativa no existe; tratarla como "no vino" deja
+  /// que la caja caiga en su valor por defecto en vez de romper el layout.
+  static double? _positiveOrNull(Object? value) {
+    final number = value is num
+        ? value.toDouble()
+        : double.tryParse(value?.toString() ?? '');
+    return number == null || number <= 0 ? null : number;
   }
 }

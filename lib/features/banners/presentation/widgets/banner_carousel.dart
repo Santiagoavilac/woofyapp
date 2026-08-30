@@ -24,8 +24,43 @@ class BannerCarousel extends ConsumerStatefulWidget {
     super.key,
   });
 
-  /// Proporción de las imágenes: apaisadas, como las pide el panel.
-  static const aspectRatio = 1200 / 480;
+  /// La forma que tenían todos los banners cuando el panel pedía una medida
+  /// exacta. Sirve de red para los que se cargaron antes de que se midiera la
+  /// imagen y no traen proporción propia.
+  static const defaultAspectRatio = 1200 / 480;
+
+  /// Hasta dónde se estira la caja. Son los mismos extremos que valida el panel
+  /// y que impone el check de la base: un banner más alto que 1.5:1 se come la
+  /// pantalla y empuja el contenido real fuera de vista; uno más ancho que 4:1
+  /// deja una tira donde el título no entra.
+  ///
+  /// Acá se vuelve a acotar igual, porque una fila vieja o cargada por fuera
+  /// del panel podría traer cualquier cosa y el layout no puede depender de eso.
+  static const minAspectRatio = 1.5;
+  static const maxAspectRatio = 4.0;
+
+  /// La proporción de la caja para un conjunto de banners.
+  ///
+  /// Es una sola para todas las páginas: si cada banner impusiera la suya, el
+  /// carrusel cambiaría de alto en pleno arrastre y todo lo que está abajo
+  /// saltaría de lugar.
+  ///
+  /// Se promedia en vez de tomar el más alto o el más ancho porque es lo que
+  /// reparte el recorte. Con el más alto, un banner bien apaisado perdería
+  /// medio ancho a los costados. Y en el caso normal —todos los banners de una
+  /// pantalla los hace la misma persona, con la misma forma— el promedio *es*
+  /// esa forma, así que no se recorta nada.
+  static double aspectRatioOf(Iterable<PromoBanner> banners) {
+    final ratios = [
+      for (final banner in banners)
+        (banner.aspectRatio ?? defaultAspectRatio).clamp(
+          minAspectRatio,
+          maxAspectRatio,
+        ),
+    ];
+    if (ratios.isEmpty) return defaultAspectRatio;
+    return ratios.reduce((a, b) => a + b) / ratios.length;
+  }
 
   final BannerSlot slot;
 
@@ -130,7 +165,7 @@ class _BannerCarouselState extends ConsumerState<BannerCarousel> {
         mainAxisSize: MainAxisSize.min,
         children: [
           AspectRatio(
-            aspectRatio: BannerCarousel.aspectRatio,
+            aspectRatio: BannerCarousel.aspectRatioOf(banners),
             child: PageView.builder(
               key: ValueKey('banner-carousel-${widget.slot.id}'),
               controller: _controller,
