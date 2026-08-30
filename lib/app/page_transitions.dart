@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -33,6 +34,23 @@ Page<T> woofyPage<T>(
 }) {
   if (kind == WoofyTransition.branch) {
     return NoTransitionPage<T>(key: state.pageKey, child: child);
+  }
+  // Las pantallas a las que se entra y de las que se vuelve se arrastran con el
+  // dedo desde el borde para salir. El gesto es el que la gente ya tiene en la
+  // mano: tener que estirarse hasta la flecha de arriba a la izquierda para
+  // volver es lo que hace que una app se sienta prestada.
+  //
+  // El gesto lo trae la ruta de Cupertino y no se puede injertar en una
+  // `CustomTransitionPage`: el detector vive dentro de su transición y es
+  // privado. La animación propia se pierde, pero la de Cupertino es casi la
+  // misma que teníamos para `detail` (entra de costado y se funde), así que el
+  // cambio se paga barato.
+  //
+  // La postulación queda afuera a propósito: es la única pantalla donde un
+  // arrastre sin querer borra trabajo ya escrito. Sale por su botón, no por un
+  // gesto de borde.
+  if (kind != WoofyTransition.commit) {
+    return CupertinoPage<T>(key: state.pageKey, child: child);
   }
   return CustomTransitionPage<T>(
     key: state.pageKey,

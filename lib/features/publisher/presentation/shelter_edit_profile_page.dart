@@ -28,6 +28,7 @@ class ShelterEditProfilePage extends ConsumerWidget {
         appBar: const WoofyAppBar(title: 'Editar refugio'),
         body: SafeArea(
           child: sessionState.when(
+            skipLoadingOnReload: true,
             loading: () => const WoofyLoading(message: 'Cargando…'),
             error: (_, _) =>
                 const WoofyError(message: 'No pudimos cargar la sesión.'),

@@ -72,6 +72,7 @@ class _AdopterEditProfilePageState
         appBar: const WoofyAppBar(title: 'Editar mi cuenta'),
         body: SafeArea(
           child: profileState.when(
+            skipLoadingOnReload: true,
             loading: () => const WoofyLoading(message: 'Cargando…'),
             error: (_, _) =>
                 const WoofyError(message: 'No pudimos cargar tu perfil.'),

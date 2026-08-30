@@ -50,6 +50,7 @@ class _MessagesPageState extends ConsumerState<MessagesPage>
         appBar: const WoofyAppBar(title: 'Mensajes'),
         body: SafeArea(
           child: threads.when(
+            skipLoadingOnReload: true,
             loading: () => const WoofyLoading(message: 'Cargando mensajes…'),
             error: (_, _) => WoofyError(
               message: 'No pudimos cargar tus mensajes.',

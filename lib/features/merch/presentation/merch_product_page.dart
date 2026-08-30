@@ -35,6 +35,7 @@ class _MerchProductPageState extends ConsumerState<MerchProductPage> {
   Widget build(BuildContext context) {
     final store = ref.watch(officialStoreProvider);
     return store.when(
+      skipLoadingOnReload: true,
       loading: () => Scaffold(
         appBar: _appBar('Producto'),
         body: const WoofyLoading(message: 'Cargando producto…'),

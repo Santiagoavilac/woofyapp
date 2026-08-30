@@ -34,7 +34,22 @@ class _NotificationsBellState extends ConsumerState<NotificationsBell>
     with SingleTickerProviderStateMixin {
   final _portalController = OverlayPortalController();
   final _link = LayerLink();
+  final _bellKey = GlobalKey();
   late final AnimationController _controller;
+
+  /// Cuánto ancho hay entre el borde izquierdo de la pantalla y la campana.
+  ///
+  /// El panel cuelga del borde derecho de la campana y crece hacia la
+  /// izquierda, pero la campana no está pegada al borde de la pantalla: tiene
+  /// el botón de perfil a su derecha. Sin medir esto, un panel de 380 se salía
+  /// por la izquierda y el título quedaba cortado.
+  double _roomToTheLeft = 0;
+
+  void _measureBell() {
+    final box = _bellKey.currentContext?.findRenderObject() as RenderBox?;
+    if (box == null || !box.hasSize) return;
+    _roomToTheLeft = box.localToGlobal(Offset.zero).dx + box.size.width;
+  }
 
   @override
   void initState() {
@@ -53,6 +68,7 @@ class _NotificationsBellState extends ConsumerState<NotificationsBell>
   }
 
   void _open(String userId) {
+    _measureBell();
     _portalController.show();
     _controller.forward(from: 0);
     // Abrir el panel deja de contar como novedad los cambios de postulación,
@@ -96,10 +112,12 @@ class _NotificationsBellState extends ConsumerState<NotificationsBell>
         userId: userId,
         link: _link,
         animation: _controller,
+        roomToTheLeft: _roomToTheLeft,
         onClose: _close,
         onOpenNotification: _openNotification,
       ),
       child: CompositedTransformTarget(
+        key: _bellKey,
         link: _link,
         child: WoofyCountBadge(
           count: count,
@@ -120,6 +138,7 @@ class _NotificationsOverlay extends ConsumerWidget {
     required this.userId,
     required this.link,
     required this.animation,
+    required this.roomToTheLeft,
     required this.onClose,
     required this.onOpenNotification,
   });
@@ -127,17 +146,31 @@ class _NotificationsOverlay extends ConsumerWidget {
   final String userId;
   final LayerLink link;
   final Animation<double> animation;
+
+  /// Distancia del borde izquierdo de la pantalla al borde derecho de la
+  /// campana, que es de donde cuelga el panel.
+  final double roomToTheLeft;
+
   final VoidCallback onClose;
   final ValueChanged<WoofyNotification> onOpenNotification;
 
   static const _maxWidth = 380.0;
   static const _maxHeight = 460.0;
+  static const _margin = WoofySpacing.lg;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final size = MediaQuery.sizeOf(context);
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
-    final width = math.min(size.width - WoofySpacing.xxxl, _maxWidth);
+    // El panel no puede ser más ancho que el espacio que queda a la izquierda
+    // de la campana, o se sale de la pantalla por ese lado.
+    final available = roomToTheLeft > 0
+        ? roomToTheLeft - _margin
+        : size.width - _margin * 2;
+    final width = math.max(
+      200.0,
+      math.min(math.min(available, size.width - _margin * 2), _maxWidth),
+    );
     final height = math.min(size.height * 0.6, _maxHeight);
 
     final curved = CurvedAnimation(
@@ -274,6 +307,7 @@ class _PanelCard extends ConsumerWidget {
             // el cuerpo toma lo que necesita hasta el techo, no todo el alto.
             Flexible(
               child: notifications.when(
+                skipLoadingOnReload: true,
                 loading: () =>
                     const Center(child: CircularProgressIndicator.adaptive()),
                 error: (error, _) => const _PanelMessage(

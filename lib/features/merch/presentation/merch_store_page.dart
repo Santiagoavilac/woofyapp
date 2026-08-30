@@ -39,6 +39,7 @@ class _MerchStorePageState extends ConsumerState<MerchStorePage>
         backFallbackLocation: RoutePaths.landing,
       ),
       body: store.when(
+        skipLoadingOnReload: true,
         loading: () => const WoofyLoading(message: 'Cargando la tienda…'),
         error: (error, stackTrace) => WoofyError(
           message: 'No pudimos cargar la tienda.',

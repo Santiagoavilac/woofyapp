@@ -49,6 +49,7 @@ class _VetProductPageState extends ConsumerState<PartnerProductPage>
     final detail = ref.watch(partnerDetailProvider(widget.slug));
 
     return detail.when(
+      skipLoadingOnReload: true,
       loading: () => Scaffold(
         appBar: WoofyAppBar(
           title: 'Producto',

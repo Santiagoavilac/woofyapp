@@ -44,6 +44,7 @@ class DogDetailPage extends ConsumerWidget {
     return BackFallbackScope(
       fallbackLocation: RoutePaths.dogs,
       child: detail.when(
+        skipLoadingOnReload: true,
         loading: () => const _PlainDetailScaffold(
           title: _title,
           child: WoofyLoading(message: 'Cargando información del perrito…'),
@@ -425,6 +426,7 @@ class _ApplicationAction extends ConsumerWidget {
     return ref
         .watch(currentDogApplicationProvider(dog.id))
         .when(
+          skipLoadingOnReload: true,
           loading: () => (
             state: 'loading',
             child: const WoofyButton(

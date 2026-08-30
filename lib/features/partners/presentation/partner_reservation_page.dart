@@ -68,6 +68,7 @@ class _VetReservationPageState extends ConsumerState<PartnerReservationPage> {
       ),
       body: SafeArea(
         child: detail.when(
+          skipLoadingOnReload: true,
           loading: () => const WoofyLoading(message: 'Cargando servicios…'),
           error: (error, stackTrace) => WoofyError(
             message: 'No pudimos cargar los servicios.',

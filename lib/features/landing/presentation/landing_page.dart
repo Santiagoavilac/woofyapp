@@ -506,6 +506,7 @@ class _RecentDogsPreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return dogs.when(
+      skipLoadingOnReload: true,
       loading: _RecentDogsLoading.new,
       error: (error, stackTrace) => _RecentDogsMessage(
         message: 'No pudimos cargar los recién llegados.',

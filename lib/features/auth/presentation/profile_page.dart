@@ -224,6 +224,7 @@ class _AdopterSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return profile.when(
+      skipLoadingOnReload: true,
       loading: () => const WoofyLoading(message: 'Cargando tu perfil…'),
       error: (error, _) => WoofyError(
         message: error is AppException

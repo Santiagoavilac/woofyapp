@@ -80,6 +80,7 @@ class _VetsPageState extends ConsumerState<VetsPage> with WoofyRefreshMixin {
         ),
         body: SafeArea(
           child: vets.when(
+            skipLoadingOnReload: true,
             skipLoadingOnRefresh: true,
             loading: () =>
                 const WoofyLoading(message: 'Cargando veterinarias…'),

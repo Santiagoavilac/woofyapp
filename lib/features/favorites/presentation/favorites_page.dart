@@ -39,6 +39,7 @@ class _FavoritesPageState extends ConsumerState<FavoritesPage>
         appBar: const WoofyAppBar(title: 'Mis favoritos'),
         body: SafeArea(
           child: favorites.when(
+            skipLoadingOnReload: true,
             loading: () => const WoofyLoading(message: 'Cargando favoritos…'),
             error: (_, _) => WoofyError(
               message: 'No pudimos cargar tus favoritos.',

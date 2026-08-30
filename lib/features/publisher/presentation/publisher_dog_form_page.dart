@@ -36,6 +36,7 @@ class PublisherDogFormPage extends ConsumerWidget {
         appBar: WoofyAppBar(title: _isEdit ? 'Editar perro' : 'Nuevo perro'),
         body: SafeArea(
           child: sessionState.when(
+            skipLoadingOnReload: true,
             loading: () => const WoofyLoading(message: 'Cargando…'),
             error: (_, _) =>
                 const WoofyError(message: 'No pudimos cargar el panel.'),
@@ -49,6 +50,7 @@ class PublisherDogFormPage extends ConsumerWidget {
                 return ref
                     .watch(shelterPortalDogByIdProvider(dogId!))
                     .when(
+                      skipLoadingOnReload: true,
                       loading: () =>
                           const WoofyLoading(message: 'Cargando perro…'),
                       error: (error, _) => WoofyError(

@@ -50,6 +50,7 @@ Future<void> _pumpBell(
   AppUser? user = _user,
   Size size = const Size(412, 915),
   bool reduceMotion = false,
+  Widget? trailing,
 }) async {
   final container = _container(
     unread: unread,
@@ -67,13 +68,21 @@ Future<void> _pumpBell(
     routes: [
       GoRoute(
         path: '/',
-        builder: (context, state) => const Scaffold(
+        builder: (context, state) => Scaffold(
           // Arriba a la derecha, como en Inicio: el panel crece desde ahí.
           body: Align(
             alignment: Alignment.topRight,
             child: Padding(
-              padding: EdgeInsets.all(16),
-              child: NotificationsBell(),
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const NotificationsBell(),
+                  // En Inicio la campana tiene el botón de perfil a su derecha:
+                  // no está pegada al borde, y de ahí salía el desborde.
+                  if (trailing case final trailing?) trailing,
+                ],
+              ),
             ),
           ),
         ),
@@ -315,6 +324,31 @@ void main() {
       expect(find.byKey(const ValueKey('notifications-panel')), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
+
+    for (final size in <Size>[const Size(320, 568), const Size(412, 915)]) {
+      testWidgets('con un botón al lado el panel no se sale por la izquierda '
+          'en ${size.width.toInt()}x${size.height.toInt()}', (tester) async {
+        // La campana no está pegada al borde: tiene el botón de perfil a su
+        // derecha. El panel cuelga de la campana y crece hacia la izquierda,
+        // así que si no mide ese espacio se sale y corta el título.
+        await _pumpBell(
+          tester,
+          unread: [_unread('thread-1')],
+          size: size,
+          trailing: const SizedBox.square(dimension: 48),
+        );
+
+        await tester.tap(find.byTooltip('Notificaciones'));
+        await tester.pumpAndSettle();
+
+        final panel = tester.getRect(
+          find.byKey(const ValueKey('notifications-panel')),
+        );
+        expect(panel.left, greaterThanOrEqualTo(0));
+        expect(panel.right, lessThanOrEqualTo(size.width));
+        expect(find.text('Novedades'), findsOneWidget);
+      });
+    }
   });
 }
 

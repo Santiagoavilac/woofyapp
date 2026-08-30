@@ -33,6 +33,7 @@ class ApplicationFormPage extends ConsumerWidget {
         appBar: const WoofyAppBar(title: 'Postulación'),
         body: SafeArea(
           child: detail.when(
+            skipLoadingOnReload: true,
             loading: () => const WoofyLoading(message: 'Cargando formulario…'),
             error: (_, _) => WoofyError(
               message: 'No pudimos cargar el formulario.',
@@ -73,6 +74,7 @@ class _ApplicationBody extends ConsumerWidget {
     }
 
     return existing.when(
+      skipLoadingOnReload: true,
       loading: () => const WoofyLoading(message: 'Revisando tu postulación…'),
       error: (_, _) => WoofyError(
         message: 'No pudimos revisar tu postulación.',

@@ -86,6 +86,7 @@ class _ServicesPageState extends ConsumerState<ServicesPage>
         ),
         body: SafeArea(
           child: services.when(
+            skipLoadingOnReload: true,
             skipLoadingOnRefresh: true,
             loading: () => const WoofyLoading(message: 'Cargando servicios…'),
             error: (error, stackTrace) => WoofyError(

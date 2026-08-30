@@ -116,6 +116,7 @@ class ConversationPage extends ConsumerWidget {
         ),
         body: SafeArea(
           child: thread.when(
+            skipLoadingOnReload: true,
             loading: () =>
                 const WoofyLoading(message: 'Cargando conversación…'),
             error: (_, _) => WoofyError(
@@ -131,6 +132,7 @@ class ConversationPage extends ConsumerWidget {
                 const Divider(height: 1),
                 Expanded(
                   child: messages.when(
+                    skipLoadingOnReload: true,
                     loading: () =>
                         const WoofyLoading(message: 'Cargando mensajes…'),
                     error: (_, _) => WoofyError(

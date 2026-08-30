@@ -97,6 +97,7 @@ class _DogsPageState extends ConsumerState<DogsPage> with WoofyRefreshMixin {
         ),
         body: SafeArea(
           child: dogs.when(
+            skipLoadingOnReload: true,
             skipLoadingOnRefresh: true,
             loading: () => const WoofyLoading(message: 'Cargando animales…'),
             error: (error, stackTrace) => WoofyError(

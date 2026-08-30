@@ -40,6 +40,7 @@ class PublisherPage extends ConsumerWidget {
         ),
         body: SafeArea(
           child: sessionState.when(
+            skipLoadingOnReload: true,
             loading: () => const WoofyLoading(message: 'Cargando…'),
             error: (error, _) => WoofyError(
               message: error is AppException
@@ -172,6 +173,7 @@ class _PublisherBodyState extends ConsumerState<_PublisherBody>
         const Divider(height: 24),
         Expanded(
           child: dogs.when(
+            skipLoadingOnReload: true,
             loading: () => const WoofyLoading(message: 'Cargando perros…'),
             error: (_, _) => WoofyError(
               message: 'No pudimos cargar los perros.',

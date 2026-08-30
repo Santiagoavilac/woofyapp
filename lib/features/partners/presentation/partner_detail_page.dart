@@ -49,6 +49,7 @@ class PartnerDetailPage extends ConsumerWidget {
       ),
       body: SafeArea(
         child: detail.when(
+          skipLoadingOnReload: true,
           loading: () => const WoofyLoading(message: 'Cargando veterinaria…'),
           error: (error, stackTrace) => WoofyError(
             message: 'No pudimos cargar esta veterinaria.',

@@ -33,6 +33,7 @@ class MyOrdersPage extends ConsumerWidget {
       ),
       body: SafeArea(
         child: orders.when(
+          skipLoadingOnReload: true,
           loading: () => const WoofyLoading(message: 'Cargando tus pedidos…'),
           error: (error, stackTrace) => WoofyError(
             message: 'No pudimos cargar tus pedidos.',

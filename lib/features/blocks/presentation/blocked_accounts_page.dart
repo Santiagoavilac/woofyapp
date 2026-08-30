@@ -68,6 +68,7 @@ class BlockedAccountsPage extends ConsumerWidget {
         appBar: const WoofyAppBar(title: 'Cuentas bloqueadas'),
         body: SafeArea(
           child: blocked.when(
+            skipLoadingOnReload: true,
             loading: () => const WoofyLoading(message: 'Cargando bloqueos…'),
             error: (_, _) => WoofyError(
               message: 'No pudimos cargar tus bloqueos.',
