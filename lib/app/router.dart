@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:woofy/app/page_transitions.dart';
 import 'package:woofy/app/route_names.dart';
 import 'package:woofy/features/auth/data/auth_models.dart';
 import 'package:woofy/features/auth/presentation/auth_page.dart';
@@ -48,7 +49,11 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 name: RouteNames.landing,
                 path: RoutePaths.landing,
-                builder: (context, state) => const LandingPage(),
+                pageBuilder: (context, state) => woofyPage(
+                  state,
+                  const LandingPage(),
+                  kind: WoofyTransition.branch,
+                ),
               ),
             ],
           ),
@@ -57,7 +62,11 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 name: RouteNames.dogs,
                 path: RoutePaths.dogs,
-                builder: (context, state) => const DogsPage(),
+                pageBuilder: (context, state) => woofyPage(
+                  state,
+                  const DogsPage(),
+                  kind: WoofyTransition.branch,
+                ),
               ),
             ],
           ),
@@ -66,7 +75,11 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 name: RouteNames.vets,
                 path: RoutePaths.vets,
-                builder: (context, state) => const VetsPage(),
+                pageBuilder: (context, state) => woofyPage(
+                  state,
+                  const VetsPage(),
+                  kind: WoofyTransition.branch,
+                ),
               ),
             ],
           ),
@@ -75,7 +88,11 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 name: RouteNames.profile,
                 path: RoutePaths.profile,
-                builder: (context, state) => const ProfilePage(),
+                pageBuilder: (context, state) => woofyPage(
+                  state,
+                  const ProfilePage(),
+                  kind: WoofyTransition.branch,
+                ),
               ),
             ],
           ),
@@ -86,135 +103,218 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         name: RouteNames.services,
         path: RoutePaths.services,
-        builder: (context, state) => const ServicesPage(),
+        pageBuilder: (context, state) => woofyPage(
+          state,
+          const ServicesPage(),
+          kind: WoofyTransition.detail,
+        ),
       ),
       GoRoute(
         name: RouteNames.cart,
         path: RoutePaths.cart,
-        builder: (context, state) => const CartPage(),
+        pageBuilder: (context, state) =>
+            woofyPage(state, const CartPage(), kind: WoofyTransition.detail),
       ),
       GoRoute(
         name: RouteNames.store,
         path: RoutePaths.store,
-        builder: (context, state) => const MerchStorePage(),
+        pageBuilder: (context, state) => woofyPage(
+          state,
+          const MerchStorePage(),
+          kind: WoofyTransition.detail,
+        ),
       ),
       GoRoute(
         name: RouteNames.orders,
         path: RoutePaths.orders,
-        builder: (context, state) => const MyOrdersPage(),
+        pageBuilder: (context, state) => woofyPage(
+          state,
+          const MyOrdersPage(),
+          kind: WoofyTransition.detail,
+        ),
       ),
       GoRoute(
         name: RouteNames.storeProduct,
         path: RoutePaths.storeProductPattern,
-        builder: (context, state) => MerchProductPage(
-          productId: state.pathParameters['productId'] ?? '',
+        pageBuilder: (context, state) => woofyPage(
+          state,
+          MerchProductPage(productId: state.pathParameters['productId'] ?? ''),
+          kind: WoofyTransition.detail,
         ),
       ),
       GoRoute(
         name: RouteNames.partnerReservation,
         path: RoutePaths.partnerReservationPattern,
-        builder: (context, state) => PartnerReservationPage(
-          slug: state.pathParameters['slug'] ?? '',
-          serviceId: state.extra as String?,
+        pageBuilder: (context, state) => woofyPage(
+          state,
+          PartnerReservationPage(
+            slug: state.pathParameters['slug'] ?? '',
+            serviceId: state.extra as String?,
+          ),
+          kind: WoofyTransition.detail,
         ),
       ),
       GoRoute(
         name: RouteNames.partnerProduct,
         path: RoutePaths.partnerProductPattern,
-        builder: (context, state) => PartnerProductPage(
-          slug: state.pathParameters['slug'] ?? '',
-          productId: state.pathParameters['productId'] ?? '',
+        pageBuilder: (context, state) => woofyPage(
+          state,
+          PartnerProductPage(
+            slug: state.pathParameters['slug'] ?? '',
+            productId: state.pathParameters['productId'] ?? '',
+          ),
+          kind: WoofyTransition.detail,
         ),
       ),
       GoRoute(
         name: RouteNames.partnerDetail,
         path: RoutePaths.partnerDetailPattern,
-        builder: (context, state) =>
-            PartnerDetailPage(slug: state.pathParameters['slug'] ?? ''),
+        pageBuilder: (context, state) => woofyPage(
+          state,
+          PartnerDetailPage(slug: state.pathParameters['slug'] ?? ''),
+          kind: WoofyTransition.detail,
+        ),
       ),
       GoRoute(
         name: RouteNames.dogDetail,
         path: RoutePaths.dogDetailPattern,
-        builder: (context, state) =>
-            DogDetailPage(slug: state.pathParameters['slug'] ?? ''),
+        pageBuilder: (context, state) => woofyPage(
+          state,
+          DogDetailPage(slug: state.pathParameters['slug'] ?? ''),
+          kind: WoofyTransition.detail,
+        ),
       ),
       GoRoute(
         name: RouteNames.applicationForm,
         path: RoutePaths.applicationFormPattern,
-        builder: (context, state) =>
-            ApplicationFormPage(slug: state.pathParameters['slug'] ?? ''),
+        pageBuilder: (context, state) => woofyPage(
+          state,
+          ApplicationFormPage(slug: state.pathParameters['slug'] ?? ''),
+          kind: WoofyTransition.commit,
+        ),
       ),
       GoRoute(
         name: RouteNames.auth,
         path: RoutePaths.auth,
-        builder: (context, state) => const AuthPage(),
+        pageBuilder: (context, state) =>
+            woofyPage(state, const AuthPage(), kind: WoofyTransition.fade),
       ),
       GoRoute(
         name: RouteNames.forgotPassword,
         path: RoutePaths.forgotPassword,
-        builder: (context, state) => const ForgotPasswordPage(),
+        pageBuilder: (context, state) => woofyPage(
+          state,
+          const ForgotPasswordPage(),
+          kind: WoofyTransition.fade,
+        ),
       ),
       GoRoute(
         name: RouteNames.newPassword,
         path: RoutePaths.newPassword,
-        builder: (context, state) => const NewPasswordPage(),
+        pageBuilder: (context, state) => woofyPage(
+          state,
+          const NewPasswordPage(),
+          kind: WoofyTransition.fade,
+        ),
       ),
       GoRoute(
         name: RouteNames.favorites,
         path: RoutePaths.favorites,
-        builder: (context, state) => const FavoritesPage(),
+        pageBuilder: (context, state) => woofyPage(
+          state,
+          const FavoritesPage(),
+          kind: WoofyTransition.detail,
+        ),
       ),
       GoRoute(
         name: RouteNames.messages,
         path: RoutePaths.messages,
-        builder: (context, state) => const MessagesPage(),
+        pageBuilder: (context, state) => woofyPage(
+          state,
+          const MessagesPage(),
+          kind: WoofyTransition.detail,
+        ),
       ),
       GoRoute(
         name: RouteNames.conversation,
         path: RoutePaths.conversationPattern,
-        builder: (context, state) =>
-            ConversationPage(threadId: state.pathParameters['threadId'] ?? ''),
+        pageBuilder: (context, state) => woofyPage(
+          state,
+          ConversationPage(threadId: state.pathParameters['threadId'] ?? ''),
+          kind: WoofyTransition.detail,
+        ),
       ),
       GoRoute(
         name: RouteNames.publisher,
         path: RoutePaths.publisher,
-        builder: (context, state) => const PublisherPage(),
+        pageBuilder: (context, state) => woofyPage(
+          state,
+          const PublisherPage(),
+          kind: WoofyTransition.detail,
+        ),
       ),
       GoRoute(
         name: RouteNames.publisherNewDog,
         path: RoutePaths.publisherNewDog,
-        builder: (context, state) => const PublisherDogFormPage(),
+        pageBuilder: (context, state) => woofyPage(
+          state,
+          const PublisherDogFormPage(),
+          kind: WoofyTransition.detail,
+        ),
       ),
       GoRoute(
         name: RouteNames.publisherEditDog,
         path: RoutePaths.publisherEditDogPattern,
-        builder: (context, state) =>
-            PublisherDogFormPage(dogId: state.pathParameters['dogId']),
+        pageBuilder: (context, state) => woofyPage(
+          state,
+          PublisherDogFormPage(dogId: state.pathParameters['dogId']),
+          kind: WoofyTransition.detail,
+        ),
       ),
       GoRoute(
         name: RouteNames.shelterLogin,
         path: RoutePaths.shelterLogin,
-        builder: (context, state) => const ShelterLoginPage(),
+        pageBuilder: (context, state) => woofyPage(
+          state,
+          const ShelterLoginPage(),
+          kind: WoofyTransition.fade,
+        ),
       ),
       GoRoute(
         name: RouteNames.shelterEditProfile,
         path: RoutePaths.shelterEditProfile,
-        builder: (context, state) => const ShelterEditProfilePage(),
+        pageBuilder: (context, state) => woofyPage(
+          state,
+          const ShelterEditProfilePage(),
+          kind: WoofyTransition.detail,
+        ),
       ),
       GoRoute(
         name: RouteNames.adopterEditProfile,
         path: RoutePaths.adopterEditProfile,
-        builder: (context, state) => const AdopterEditProfilePage(),
+        pageBuilder: (context, state) => woofyPage(
+          state,
+          const AdopterEditProfilePage(),
+          kind: WoofyTransition.detail,
+        ),
       ),
       GoRoute(
         name: RouteNames.blockedAccounts,
         path: RoutePaths.blockedAccounts,
-        builder: (context, state) => const BlockedAccountsPage(),
+        pageBuilder: (context, state) => woofyPage(
+          state,
+          const BlockedAccountsPage(),
+          kind: WoofyTransition.detail,
+        ),
       ),
       GoRoute(
         name: RouteNames.deleteAccount,
         path: RoutePaths.deleteAccount,
-        builder: (context, state) => const DeleteAccountPage(),
+        pageBuilder: (context, state) => woofyPage(
+          state,
+          const DeleteAccountPage(),
+          kind: WoofyTransition.fade,
+        ),
       ),
     ],
     redirect: (context, state) {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:woofy/app/page_transitions.dart';
 import 'package:woofy/core/theme/woofy_colors.dart';
 import 'package:woofy/core/theme/woofy_radius.dart';
 import 'package:woofy/core/theme/woofy_typography.dart';
@@ -132,6 +133,10 @@ abstract final class WoofyTheme {
         thickness: 1,
         space: 1,
       ),
+      // Los `Navigator.push` imperativos no pasan por go_router: sin esto se
+      // quedarían con la animación del sistema y se verían distinto en iOS
+      // que en Android dentro de la misma app.
+      pageTransitionsTheme: woofyPageTransitionsTheme,
     );
   }
 }
