@@ -25,20 +25,36 @@ void main() {
     expect(find.byKey(const ValueKey('species-tile-todos')), findsOneWidget);
     expect(find.byKey(const ValueKey('species-tile-perro')), findsOneWidget);
     expect(find.byKey(const ValueKey('species-tile-gato')), findsOneWidget);
-    // Nadie publicó un "otro": ofrecer la categoría vacía es prometer algo que
-    // la pantalla no puede cumplir.
-    expect(find.byKey(const ValueKey('species-tile-otro')), findsNothing);
+    // Nadie publicó un "otro" y el mosaico está igual, en cero: es la fila que
+    // cuenta de qué se trata Woofy, no un filtro que aparece y desaparece.
+    expect(find.byKey(const ValueKey('species-tile-otro')), findsOneWidget);
     container.dispose();
   });
 
-  testWidgets('con una sola especie los mosaicos no aparecen', (tester) async {
-    // Elegir entre "Todos" y "Perros" cuando solo hay perros no es una
-    // decisión: es ruido.
+  testWidgets('con puros perros las tres especies siguen estando', (
+    tester,
+  ) async {
+    // Mostrar solo lo que hay hoy haría creer que Woofy es una app de perros.
     final container = await _pumpDogs(tester, [_dog('Milo', 'milo-demo')]);
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const ValueKey('species-tile-todos')), findsNothing);
+    expect(find.byKey(const ValueKey('species-tile-todos')), findsOneWidget);
+    expect(find.byKey(const ValueKey('species-tile-gato')), findsOneWidget);
     expect(find.text('Milo'), findsOneWidget);
+    container.dispose();
+  });
+
+  testWidgets('una especie vacía lleva a un vacío que se explica', (
+    tester,
+  ) async {
+    final container = await _pumpDogs(tester, [_dog('Milo', 'milo-demo')]);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('species-tile-gato')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Milo'), findsNothing);
+    expect(find.text('Sin resultados'), findsOneWidget);
     container.dispose();
   });
 

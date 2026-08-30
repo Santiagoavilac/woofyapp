@@ -85,8 +85,9 @@ void main() {
     expect(find.byKey(const ValueKey('dog-photo-placeholder')), findsOneWidget);
 
     // The shell nav floats over the catalog (`extendBody: true`), so scroll
-    // the card clear of it before tapping.
-    await tester.drag(find.byType(CustomScrollView), const Offset(0, -200));
+    // the card clear of it before tapping. Now the species tiles and the age
+    // pills sit above the results too, so this has to reach further down.
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, -400));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('dog-card-milo-demo-tap')));
     await tester.pumpAndSettle();
@@ -100,6 +101,10 @@ void main() {
       container.read(routerProvider).routeInformationProvider.value.uri.path,
       RoutePaths.dogs,
     );
+    // El catálogo vuelve donde lo dejamos, o sea bajado: el título de arriba
+    // está fuera del viewport hasta que se sube de nuevo.
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, 400));
+    await tester.pumpAndSettle();
     expect(find.text('Encontrá a tu compañero ideal'), findsOneWidget);
     container.dispose();
   });
@@ -285,6 +290,14 @@ void main() {
         tester,
         FakeDogRepository(dogs: [sampleDog()]),
       );
+      await tester.pumpAndSettle();
+
+      // Los mosaicos de especie y las píldoras se llevan la primera pantalla,
+      // y un `find` no ve los slivers que quedaron fuera del viewport. Sin
+      // bajar, el test diría "el catálogo está vacío" cuando en realidad las
+      // tarjetas están un poco más abajo. De paso el scroll destapa desbordes
+      // que arriba no se ven.
+      await tester.drag(find.byType(CustomScrollView), const Offset(0, -400));
       await tester.pumpAndSettle();
 
       expect(tester.takeException(), isNull);

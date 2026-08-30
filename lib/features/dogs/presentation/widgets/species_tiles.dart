@@ -59,15 +59,12 @@ class SpeciesTiles extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Solo las especies que existen hoy. Un mosaico "Gatos (0)" es una promesa
-    // que la pantalla no puede cumplir.
-    final species = AnimalSpecies.values
-        .where((s) => (counts[s] ?? 0) > 0)
-        .toList();
-    // Con una sola categoría el filtro no filtra nada: elegir entre "Todos" y
-    // "Perros" cuando solo hay perros es una decisión vacía.
-    if (species.length < 2) return const SizedBox.shrink();
-
+    // Están siempre las tres, incluso en cero. No son un filtro más: son lo
+    // primero que se ve al entrar y lo que dice de qué se trata Woofy. Mostrar
+    // solo lo que hay hoy —puros perros— haría creer que la app es de perros, y
+    // el contador en cero es información honesta, no una promesa incumplida:
+    // dice "todavía no hay gatos", no "acá no van gatos".
+    const species = AnimalSpecies.values;
     final total = counts.values.fold(0, (sum, value) => sum + value);
     return SizedBox(
       height: _heightOf(context),
@@ -154,8 +151,12 @@ class _Tile extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.labelLarge?.copyWith(
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  // Una especie sin animales se ve apagada: sigue estando y se
+                  // puede tocar, pero no compite con las que tienen algo.
                   color: isSelected
                       ? WoofyColors.primary
+                      : count == 0
+                      ? WoofyColors.textSecondary
                       : WoofyColors.textPrimary,
                 ),
               ),
@@ -175,9 +176,14 @@ class _Tile extends StatelessWidget {
   Widget _cover() {
     final url = imageUrl;
     if (url == null) {
-      return const ColoredBox(
-        color: WoofyColors.primarySoft,
-        child: Icon(Icons.pets_rounded, color: WoofyColors.primary),
+      // Sin foto propia queda la huella. Apagada cuando no hay ningún animal de
+      // esa especie, para que el mosaico se lea como "acá todavía no hay nada".
+      return ColoredBox(
+        color: count == 0 ? WoofyColors.surfaceMuted : WoofyColors.primarySoft,
+        child: Icon(
+          Icons.pets_rounded,
+          color: count == 0 ? WoofyColors.textSecondary : WoofyColors.primary,
+        ),
       );
     }
     return CachedNetworkImage(
