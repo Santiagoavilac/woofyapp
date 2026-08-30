@@ -179,6 +179,68 @@ class WoofySliverStagger extends StatelessWidget {
   Widget build(BuildContext context) => WoofyRevealGroup(child: sliver);
 }
 
+/// Aparición suelta, sin grupo: se anima una sola vez al montarse.
+///
+/// Para cosas que llegan de a una y cuando llegan — un mensaje nuevo en una
+/// conversación — donde no hay una tanda que escalonar.
+class WoofyEnteringReveal extends StatefulWidget {
+  const WoofyEnteringReveal({
+    required this.child,
+    this.offset = const Offset(0, 0.06),
+    this.duration = const Duration(milliseconds: 260),
+    super.key,
+  });
+
+  final Widget child;
+  final Offset offset;
+  final Duration duration;
+
+  @override
+  State<WoofyEnteringReveal> createState() => _WoofyEnteringRevealState();
+}
+
+class _WoofyEnteringRevealState extends State<WoofyEnteringReveal>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: widget.duration,
+  );
+
+  late final CurvedAnimation _curve = CurvedAnimation(
+    parent: _controller,
+    curve: Curves.easeOutCubic,
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _curve.dispose();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Sin movimiento el mensaje está desde el primer cuadro: nunca invisible.
+    if (MediaQuery.disableAnimationsOf(context)) return widget.child;
+    return FadeTransition(
+      opacity: _curve,
+      child: SlideTransition(
+        position: Tween<Offset>(
+          begin: widget.offset,
+          end: Offset.zero,
+        ).animate(_curve),
+        child: widget.child,
+      ),
+    );
+  }
+}
+
 /// Aparición de un bloque: se funde mientras sube un poco.
 ///
 /// El desplazamiento es corto a propósito. Una entrada larga desde abajo pelea

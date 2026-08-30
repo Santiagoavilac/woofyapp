@@ -8,6 +8,8 @@ import 'package:woofy/features/applications/presentation/widgets/application_for
 import 'package:woofy/features/dogs/data/dog_models.dart';
 import 'package:woofy/features/favorites/data/favorites_providers.dart';
 import 'package:woofy/features/favorites/presentation/favorites_page.dart';
+import 'package:woofy/features/favorites/presentation/widgets/favorite_dog_card.dart';
+import 'package:woofy/features/favorites/presentation/widgets/favorite_row_card.dart';
 
 void main() {
   testWidgets('reduced motion shows the favorites without waiting', (
@@ -73,6 +75,42 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Milo'), findsOneWidget);
     expect(find.byTooltip('Quitar de favoritos'), findsOneWidget);
+  });
+
+  testWidgets('one column lays favorites out flat, two columns keeps the card', (
+    tester,
+  ) async {
+    Future<void> pumpAt(Size size) async {
+      tester.view.physicalSize = size;
+      tester.view.devicePixelRatio = 1;
+      await tester.pumpWidget(
+        ProviderScope(
+          key: UniqueKey(),
+          overrides: [
+            favoriteDogsProvider.overrideWith((ref) async => const [_dog]),
+            favoriteDogIdsProvider.overrideWith((ref) async => {'dog-1'}),
+          ],
+          child: const MaterialApp(home: FavoritesPage()),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    // En teléfono la tarjeta grande deja ver un favorito por pantalla, así que
+    // la lista va acostada.
+    await pumpAt(const Size(390, 844));
+    expect(find.byType(FavoriteRowCard), findsOneWidget);
+    expect(find.byType(FavoriteDogCard), findsNothing);
+    expect(find.text('Milo'), findsOneWidget);
+    expect(find.byTooltip('Quitar de favoritos'), findsOneWidget);
+
+    // Con ancho de sobra la tarjeta grande sí luce.
+    await pumpAt(const Size(900, 1200));
+    expect(find.byType(FavoriteDogCard), findsOneWidget);
+    expect(find.byType(FavoriteRowCard), findsNothing);
   });
 
   testWidgets('each step blocks the way forward with its own empty fields', (

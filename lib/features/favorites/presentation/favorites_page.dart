@@ -7,6 +7,7 @@ import 'package:woofy/features/favorites/data/favorites_providers.dart';
 import 'package:woofy/core/theme/woofy_colors.dart';
 import 'package:woofy/core/theme/woofy_spacing.dart';
 import 'package:woofy/features/favorites/presentation/widgets/favorite_dog_card.dart';
+import 'package:woofy/features/favorites/presentation/widgets/favorite_row_card.dart';
 import 'package:woofy/shared/widgets/woofy_app_bar.dart';
 import 'package:woofy/shared/widgets/woofy_button.dart';
 import 'package:woofy/shared/widgets/woofy_error.dart';
@@ -96,7 +97,11 @@ class _FavoritesPageState extends ConsumerState<FavoritesPage>
               }
               return LayoutBuilder(
                 builder: (context, constraints) {
+                  // En una sola columna la tarjeta grande deja ver un favorito
+                  // por pantalla y la lista parece vacía; acostada entran
+                  // cinco. Con dos columnas la tarjeta grande sí luce.
                   final columns = constraints.maxWidth >= 600 ? 2 : 1;
+                  final isRow = columns == 1;
                   return CustomScrollView(
                     slivers: [
                       WoofyRefreshControl(onRefresh: refreshData),
@@ -107,21 +112,22 @@ class _FavoritesPageState extends ConsumerState<FavoritesPage>
                             gridDelegate:
                                 SliverGridDelegateWithFixedCrossAxisCount(
                                   crossAxisCount: columns,
-                                  mainAxisSpacing: 16,
+                                  mainAxisSpacing: isRow ? 12 : 16,
                                   crossAxisSpacing: 16,
-                                  mainAxisExtent: 448,
+                                  mainAxisExtent: isRow
+                                      ? FavoriteRowCard.extent
+                                      : 448,
                                 ),
                             itemCount: dogs.length,
                             itemBuilder: (context, index) {
                               final dog = dogs[index];
+                              void open() =>
+                                  context.push(RoutePaths.dogDetail(dog.slug));
                               return WoofyReveal.indexed(
                                 index: index,
-                                child: FavoriteDogCard(
-                                  dog: dog,
-                                  onTap: () => context.push(
-                                    RoutePaths.dogDetail(dog.slug),
-                                  ),
-                                ),
+                                child: isRow
+                                    ? FavoriteRowCard(dog: dog, onTap: open)
+                                    : FavoriteDogCard(dog: dog, onTap: open),
                               );
                             },
                           ),

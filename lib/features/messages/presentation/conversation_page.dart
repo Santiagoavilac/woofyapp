@@ -10,6 +10,7 @@ import 'package:woofy/features/reports/presentation/widgets/report_sheet.dart';
 import 'package:woofy/features/messages/data/message_models.dart';
 import 'package:woofy/features/messages/data/messages_providers.dart';
 import 'package:woofy/features/messages/presentation/widgets/conversation_header.dart';
+import 'package:woofy/features/messages/presentation/widgets/date_separator.dart';
 import 'package:woofy/features/messages/presentation/widgets/message_bubble.dart';
 import 'package:woofy/features/messages/presentation/widgets/message_input.dart';
 import 'package:woofy/features/notifications/data/notifications_providers.dart';
@@ -18,6 +19,7 @@ import 'package:woofy/shared/widgets/woofy_empty_state.dart';
 import 'package:woofy/shared/widgets/woofy_error.dart';
 import 'package:woofy/shared/widgets/woofy_loading.dart';
 import 'package:woofy/shared/widgets/woofy_refresh.dart';
+import 'package:woofy/shared/widgets/woofy_reveal.dart';
 
 class ConversationPage extends ConsumerWidget {
   const ConversationPage({required this.threadId, super.key});
@@ -189,10 +191,58 @@ class _MessageList extends ConsumerStatefulWidget {
 
 class _MessageListState extends ConsumerState<_MessageList>
     with WoofyRefreshMixin {
+  /// Cuánto silencio corta una tanda del mismo autor.
+  static const _groupWindow = Duration(minutes: 3);
+
+  final _scroll = ScrollController();
+
+  /// Los mensajes que ya estaban cuando se abrió la pantalla.
+  ///
+  /// Solo los que llegan después entran animados: si animara todo, cada
+  /// recarga volvería a "escribir" la conversación entera y se vería falso.
+  late final Set<String> _seen = {
+    for (final message in widget.messages) message.id,
+  };
+
   @override
   void initState() {
     super.initState();
     _markRead();
+  }
+
+  @override
+  void didUpdateWidget(covariant _MessageList oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final arrived = widget.messages.length > oldWidget.messages.length;
+    if (arrived) WidgetsBinding.instance.addPostFrameCallback(_followNew);
+    // Lo viejo pasa a ser conocido recién después de que se animó una vez.
+    if (!arrived) _seen.addAll(widget.messages.map((message) => message.id));
+  }
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  /// Baja al mensaje nuevo solo si ya estabas mirando el final.
+  ///
+  /// Si estabas leyendo más arriba, arrastrarte hasta abajo te hace perder el
+  /// renglón: peor que no enterarte del mensaje.
+  void _followNew(Duration _) {
+    if (!mounted || !_scroll.hasClients) return;
+    final position = _scroll.position;
+    final distance = position.maxScrollExtent - position.pixels;
+    if (distance > 160) return;
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _scroll.jumpTo(position.maxScrollExtent);
+      return;
+    }
+    _scroll.animateTo(
+      position.maxScrollExtent,
+      duration: const Duration(milliseconds: 320),
+      curve: Curves.easeOutCubic,
+    );
   }
 
   /// Se marca leído acá y no al abrir el panel de la campana: leer es abrir la
@@ -220,20 +270,66 @@ class _MessageListState extends ConsumerState<_MessageList>
   @override
   Widget build(BuildContext context) {
     final userId = widget.userId;
+    final messages = widget.messages;
 
     return CustomScrollView(
+      controller: _scroll,
       slivers: [
         WoofyRefreshControl(onRefresh: refreshData),
         SliverPadding(
           padding: const EdgeInsets.all(16),
-          sliver: SliverList.separated(
-            itemCount: widget.messages.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 10),
+          sliver: SliverList.builder(
+            itemCount: messages.length,
             itemBuilder: (context, index) {
-              final message = widget.messages[index];
-              return MessageBubble(
-                message: message,
-                isMine: userId != null && message.isMine(userId),
+              final message = messages[index];
+              final previous = index == 0 ? null : messages[index - 1];
+              final next = index == messages.length - 1
+                  ? null
+                  : messages[index + 1];
+              final isMine = userId != null && message.isMine(userId);
+
+              final startsDay =
+                  previous == null ||
+                  DateSeparator.splits(previous.createdAt, message.createdAt);
+              // Una tanda es el mismo autor sin un silencio largo en el medio.
+              final continuesGroup =
+                  !startsDay &&
+                  previous.senderId == message.senderId &&
+                  message.createdAt.difference(previous.createdAt) <
+                      _groupWindow;
+              final endsGroup =
+                  next == null ||
+                  next.senderId != message.senderId ||
+                  next.createdAt.difference(message.createdAt) >=
+                      _groupWindow ||
+                  DateSeparator.splits(message.createdAt, next.createdAt);
+
+              final bubble = Padding(
+                padding: EdgeInsets.only(top: continuesGroup ? 3 : 10),
+                child: MessageBubble(
+                  message: message,
+                  isMine: isMine,
+                  showTime: endsGroup,
+                ),
+              );
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (startsDay)
+                    Padding(
+                      padding: EdgeInsets.only(top: index == 0 ? 0 : 16),
+                      child: DateSeparator(date: message.createdAt),
+                    ),
+                  if (_seen.contains(message.id))
+                    bubble
+                  else
+                    WoofyEnteringReveal(
+                      key: ValueKey('message-in-${message.id}'),
+                      offset: const Offset(0, 0.08),
+                      child: bubble,
+                    ),
+                ],
               );
             },
           ),

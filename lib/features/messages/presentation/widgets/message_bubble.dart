@@ -4,10 +4,19 @@ import 'package:woofy/features/reports/data/report_models.dart';
 import 'package:woofy/features/reports/presentation/widgets/report_sheet.dart';
 
 class MessageBubble extends StatelessWidget {
-  const MessageBubble({required this.message, required this.isMine, super.key});
+  const MessageBubble({
+    required this.message,
+    required this.isMine,
+    this.showTime = true,
+    super.key,
+  });
 
   final Message message;
   final bool isMine;
+
+  /// La hora se muestra solo en el último mensaje de una tanda del mismo autor.
+  /// Repetirla en cada burbuja de una ráfaga de tres llena la charla de ruido.
+  final bool showTime;
 
   @override
   Widget build(BuildContext context) {
@@ -53,13 +62,15 @@ class MessageBubble extends StatelessWidget {
                       context,
                     ).textTheme.bodyMedium?.copyWith(color: foreground),
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    _formatMessageTime(message.createdAt),
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: foreground.withValues(alpha: 0.72),
+                  if (showTime) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      _formatMessageTime(message.createdAt),
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: foreground.withValues(alpha: 0.72),
+                      ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),

@@ -1,12 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:woofy/features/messages/data/message_models.dart';
 import 'package:woofy/shared/widgets/woofy_card.dart';
+import 'package:woofy/shared/widgets/woofy_count_badge.dart';
 
 class ThreadCard extends StatelessWidget {
-  const ThreadCard({required this.thread, required this.onTap, super.key});
+  const ThreadCard({
+    required this.thread,
+    required this.onTap,
+    this.unreadCount = 0,
+    super.key,
+  });
 
   final ConversationThread thread;
   final VoidCallback onTap;
+
+  /// Cuántos mensajes del refugio quedaron sin abrir en esta conversación.
+  final int unreadCount;
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +52,12 @@ class ThreadCard extends StatelessWidget {
                   preview ?? 'Sin mensajes todavía',
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodyMedium,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    // Lo que no leíste se lee más fuerte que lo que ya viste.
+                    fontWeight: unreadCount > 0
+                        ? FontWeight.w700
+                        : FontWeight.normal,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -56,7 +70,11 @@ class ThreadCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          const Icon(Icons.chevron_right_rounded),
+          WoofyCountBadge(
+            key: ValueKey('thread-unread-${thread.id}'),
+            count: unreadCount,
+            child: const Icon(Icons.chevron_right_rounded),
+          ),
         ],
       ),
     );
