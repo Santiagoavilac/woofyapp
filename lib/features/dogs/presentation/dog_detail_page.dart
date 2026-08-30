@@ -14,6 +14,7 @@ import 'package:woofy/shared/widgets/woofy_empty_state.dart';
 import 'package:woofy/shared/widgets/woofy_error.dart';
 import 'package:woofy/shared/widgets/woofy_loading.dart';
 import 'package:woofy/shared/widgets/woofy_refresh.dart';
+import 'package:woofy/shared/widgets/woofy_reveal.dart';
 import 'package:go_router/go_router.dart';
 import 'package:woofy/app/route_names.dart';
 import 'package:woofy/features/reports/data/report_models.dart';
@@ -231,7 +232,7 @@ class _DogHero extends StatelessWidget {
             borderRadius: const BorderRadius.vertical(
               bottom: Radius.circular(_DogDetailContent._panelOverlap),
             ),
-            child: DogPhotoCarousel(photos: dog.photos),
+            child: DogPhotoCarousel(photos: dog.photos, heroSlug: dog.slug),
           ),
         ),
       ),
@@ -247,7 +248,13 @@ class _DogDetailBody extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final dog = detail.dog;
-    return Column(
+    // El orden es a propósito: primero quién es, después los datos. La historia
+    // arriba de las características es lo que hace que la ficha se lea como la
+    // presentación de un perro y no como una planilla.
+    //
+    // Sigue siendo una `Column` y no slivers: el cuerpo se construye entero, y
+    // de eso dependen los tests que buscan texto que queda fuera de pantalla.
+    return WoofyStaggeredColumn(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Row(
@@ -261,28 +268,35 @@ class _DogDetailBody extends ConsumerWidget {
             FavoriteToggleButton(dogId: dog.id),
           ],
         ),
-        const SizedBox(height: WoofySpacing.lg),
-        _AttributesCard(dog: dog, breed: detail.breed),
-        if (dog.story.isNotEmpty) ...[
-          const SizedBox(height: WoofySpacing.lg),
-          _TextSection(title: 'Su historia', body: dog.story),
-        ],
-        if (_compatibilityItems(dog).isNotEmpty) ...[
-          const SizedBox(height: WoofySpacing.lg),
-          _CompatibilityCard(items: _compatibilityItems(dog)),
-        ],
-        if (_detailItems(detail).isNotEmpty) ...[
-          const SizedBox(height: WoofySpacing.lg),
-          _DetailsCard(items: _detailItems(detail)),
-        ],
-        if (dog.shelter case final shelter?) ...[
-          const SizedBox(height: WoofySpacing.lg),
-          DogShelterSection(shelter: shelter),
-        ],
-        if (detail.medicalEvents.isNotEmpty) ...[
-          const SizedBox(height: WoofySpacing.lg),
-          DogMedicalEventsSection(events: detail.medicalEvents),
-        ],
+        if (dog.story.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: WoofySpacing.lg),
+            child: _TextSection(title: 'Su historia', body: dog.story),
+          ),
+        Padding(
+          padding: const EdgeInsets.only(top: WoofySpacing.lg),
+          child: _AttributesCard(dog: dog, breed: detail.breed),
+        ),
+        if (_compatibilityItems(dog).isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: WoofySpacing.lg),
+            child: _CompatibilityCard(items: _compatibilityItems(dog)),
+          ),
+        if (_detailItems(detail).isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: WoofySpacing.lg),
+            child: _DetailsCard(items: _detailItems(detail)),
+          ),
+        if (detail.medicalEvents.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: WoofySpacing.lg),
+            child: DogMedicalEventsSection(events: detail.medicalEvents),
+          ),
+        if (dog.shelter case final shelter?)
+          Padding(
+            padding: const EdgeInsets.only(top: WoofySpacing.lg),
+            child: DogShelterSection(shelter: shelter),
+          ),
         // The adoption CTA lives in the pinned bottom bar, but an existing
         // application shows a full status card that is far too tall to pin.
         if (ref.watch(currentUserProvider) != null)
@@ -381,41 +395,65 @@ class _ApplicationAction extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // La key es el estado, nunca el contenido. Si dependiera del texto, cada
+    // vez que cambia una palabra el botón se funde consigo mismo y parpadea.
+    final ({String state, Widget child}) action = _action(context, ref);
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 220),
+      switchInCurve: Curves.easeOutCubic,
+      switchOutCurve: Curves.easeInCubic,
+      child: KeyedSubtree(key: ValueKey(action.state), child: action.child),
+    );
+  }
+
+  ({String state, Widget child}) _action(BuildContext context, WidgetRef ref) {
     if (ref.watch(currentUserProvider) == null) {
-      return WoofyButton(
-        label: 'Iniciar sesión para postular',
-        onPressed: () => context.go(RoutePaths.auth),
-        icon: Icons.login_rounded,
-        isExpanded: true,
+      return (
+        state: 'anon',
+        child: WoofyButton(
+          label: 'Iniciar sesión para postular',
+          onPressed: () => context.go(RoutePaths.auth),
+          icon: Icons.login_rounded,
+          isExpanded: true,
+        ),
       );
     }
     return ref
         .watch(currentDogApplicationProvider(dog.id))
         .when(
-          loading: () => const WoofyButton(
-            label: 'Revisando postulación…',
-            onPressed: null,
-            isLoading: true,
-            isExpanded: true,
+          loading: () => (
+            state: 'loading',
+            child: const WoofyButton(
+              label: 'Revisando postulación…',
+              onPressed: null,
+              isLoading: true,
+              isExpanded: true,
+            ),
           ),
-          error: (_, _) => WoofyButton(
-            label: 'Reintentar estado de postulación',
-            onPressed: () =>
-                ref.invalidate(currentDogApplicationProvider(dog.id)),
-            variant: WoofyButtonVariant.secondary,
-            isExpanded: true,
+          error: (_, _) => (
+            state: 'error',
+            child: WoofyButton(
+              label: 'Reintentar estado de postulación',
+              onPressed: () =>
+                  ref.invalidate(currentDogApplicationProvider(dog.id)),
+              variant: WoofyButtonVariant.secondary,
+              isExpanded: true,
+            ),
           ),
           // Already applied: the status card renders inline in the scroll
           // body, so the pinned bar has nothing to show here.
           data: (application) => application == null
-              ? WoofyButton(
-                  label: 'Postular a ${dog.name}',
-                  onPressed: () =>
-                      context.push(RoutePaths.applicationForm(dog.slug)),
-                  icon: Icons.favorite_outline,
-                  isExpanded: true,
+              ? (
+                  state: 'apply',
+                  child: WoofyButton(
+                    label: 'Postular a ${dog.name}',
+                    onPressed: () =>
+                        context.push(RoutePaths.applicationForm(dog.slug)),
+                    icon: Icons.favorite_outline,
+                    isExpanded: true,
+                  ),
                 )
-              : const SizedBox.shrink(),
+              : (state: 'applied', child: const SizedBox.shrink()),
         );
   }
 }
@@ -506,21 +544,29 @@ class _DogChips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        if (dog.ageLabel case final age?)
-          DogInfoChip(label: age, icon: Icons.cake_outlined),
-        if (dog.size case final size?)
-          DogInfoChip(label: size, icon: Icons.straighten),
-        if (dog.sex case final sex?)
-          DogInfoChip(label: sex, icon: Icons.pets_outlined),
-        if (breed case final breedName?)
-          DogInfoChip(label: breedName, icon: Icons.badge_outlined),
-        if (dog.energyLevel case final energy?)
-          DogInfoChip(label: energy, icon: Icons.bolt_outlined),
-      ],
+    final chips = <Widget>[
+      if (dog.ageLabel case final age?)
+        DogInfoChip(label: age, icon: Icons.cake_outlined),
+      if (dog.size case final size?)
+        DogInfoChip(label: size, icon: Icons.straighten),
+      if (dog.sex case final sex?)
+        DogInfoChip(label: sex, icon: Icons.pets_outlined),
+      if (breed case final breedName?)
+        DogInfoChip(label: breedName, icon: Icons.badge_outlined),
+      if (dog.energyLevel case final energy?)
+        DogInfoChip(label: energy, icon: Icons.bolt_outlined),
+    ];
+    // Los datos duros entran de a uno: leídos en cascada se sienten pocos y
+    // ordenados, todos juntos se sienten una planilla.
+    return WoofyRevealGroup(
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          for (var index = 0; index < chips.length; index++)
+            WoofyReveal.indexed(index: index, child: chips[index]),
+        ],
+      ),
     );
   }
 }

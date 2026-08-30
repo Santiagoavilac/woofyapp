@@ -104,6 +104,50 @@ void main() {
     container.dispose();
   });
 
+  testWidgets('the detail sheet leads with the story, not with the data', (
+    tester,
+  ) async {
+    final dog = sampleDog();
+    final container = await _pumpRoute(
+      tester,
+      FakeDogRepository(
+        dogs: [dog],
+        detail: DogDetail(dog: dog),
+      ),
+      RoutePaths.dogDetail(dog.slug),
+    );
+    await tester.pumpAndSettle();
+
+    // Primero quién es, después los datos: la historia tiene que quedar por
+    // encima de "Características" en la pantalla.
+    final story = tester.getTopLeft(find.text('Su historia')).dy;
+    final facts = tester.getTopLeft(find.text('Características')).dy;
+    expect(story, lessThan(facts));
+    container.dispose();
+  });
+
+  testWidgets('only the catalog card flies its photo to the detail', (
+    tester,
+  ) async {
+    final dog = sampleDog();
+    final repository = FakeDogRepository(
+      dogs: [dog],
+      detail: DogDetail(dog: dog),
+    );
+
+    final catalog = await _pumpRoute(tester, repository, RoutePaths.dogs);
+    await tester.pumpAndSettle();
+    expect(_heroTags(tester), contains('dog-photo-milo-demo'));
+    catalog.dispose();
+
+    // En Inicio el mismo perro puede salir dos veces (carrusel y recientes) y
+    // dos `Hero` con la misma etiqueta en una ruta rompen el vuelo.
+    final landing = await _pumpRoute(tester, repository, RoutePaths.landing);
+    await tester.pumpAndSettle();
+    expect(_heroTags(tester), isNot(contains('dog-photo-milo-demo')));
+    landing.dispose();
+  });
+
   testWidgets('missing dog detail shows unavailable state', (tester) async {
     final container = await _pumpRoute(
       tester,
@@ -249,6 +293,9 @@ void main() {
     });
   }
 }
+
+Set<Object> _heroTags(WidgetTester tester) =>
+    tester.widgetList<Hero>(find.byType(Hero)).map((hero) => hero.tag).toSet();
 
 Dog sampleDog() => const Dog(
   id: 'dog-1',

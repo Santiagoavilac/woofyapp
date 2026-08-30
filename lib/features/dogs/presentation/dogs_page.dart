@@ -379,6 +379,9 @@ class _DogsMasonry extends StatelessWidget {
         DogCard(
           dog: dog,
           compact: true,
+          // Solo el catálogo prende el vuelo de la foto: acá cada perro
+          // aparece una sola vez, así que no hay etiquetas repetidas.
+          flyPhotoToDetail: true,
           aspectRatio: _aspects[index % _aspects.length],
           overlay: FavoriteToggleButton(dogId: dog.id),
           onTap: () => context.push(RoutePaths.dogDetail(dog.slug)),

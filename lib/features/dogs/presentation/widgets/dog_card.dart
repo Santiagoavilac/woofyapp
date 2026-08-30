@@ -5,6 +5,10 @@ import 'package:woofy/core/theme/woofy_spacing.dart';
 import 'package:woofy/features/dogs/data/dog_models.dart';
 import 'package:woofy/features/dogs/presentation/widgets/dog_info_chip.dart';
 import 'package:woofy/shared/widgets/woofy_card.dart';
+import 'package:woofy/shared/widgets/woofy_photo_hero.dart';
+
+/// La etiqueta que comparten la foto de la tarjeta y la primera del carrusel.
+String dogPhotoHeroTag(String slug) => 'dog-photo-$slug';
 
 /// Editorial adoption card: a large photo takes the lead, an info panel below
 /// keeps name, location and quick facts scannable in a couple of seconds.
@@ -15,8 +19,16 @@ class DogCard extends StatelessWidget {
     this.overlay,
     this.aspectRatio = 16 / 11,
     this.compact = false,
+    this.flyPhotoToDetail = false,
     super.key,
   });
+
+  /// Si la foto vuela hasta la ficha al tocar la tarjeta.
+  ///
+  /// Va apagado por defecto porque dos `Hero` con la misma etiqueta en una
+  /// misma ruta rompen el vuelo, y el mismo perro puede aparecer a la vez en
+  /// el carrusel de Inicio y en "recién llegados". Solo el catálogo lo prende.
+  final bool flyPhotoToDetail;
 
   /// Photo shape. The catalog alternates it to build the staggered grid.
   final double aspectRatio;
@@ -59,9 +71,13 @@ class DogCard extends StatelessWidget {
             children: [
               AspectRatio(
                 aspectRatio: aspectRatio,
-                child: ColoredBox(
-                  color: _backgroundFor(dog),
-                  child: _DogCardPhoto(dog: dog),
+                child: WoofyPhotoHero(
+                  tag: dogPhotoHeroTag(dog.slug),
+                  enabled: flyPhotoToDetail,
+                  child: ColoredBox(
+                    color: _backgroundFor(dog),
+                    child: _DogCardPhoto(dog: dog),
+                  ),
                 ),
               ),
               if (overlay != null)

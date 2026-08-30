@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:woofy/app/back_fallback_scope.dart';
@@ -13,6 +14,7 @@ import 'package:woofy/features/dogs/data/dog_models.dart';
 import 'package:woofy/features/dogs/data/dog_repository_provider.dart';
 import 'package:woofy/shared/widgets/woofy_app_bar.dart';
 import 'package:woofy/shared/widgets/woofy_button.dart';
+import 'package:woofy/shared/widgets/woofy_celebration.dart';
 import 'package:woofy/shared/widgets/woofy_empty_state.dart';
 import 'package:woofy/shared/widgets/woofy_error.dart';
 import 'package:woofy/shared/widgets/woofy_loading.dart';
@@ -131,37 +133,75 @@ class _ApplicationBody extends ConsumerWidget {
   }
 }
 
-class _Result extends StatelessWidget {
+class _Result extends StatefulWidget {
   const _Result({required this.dog, required this.application, this.message});
 
   final Dog dog;
   final AdoptionApplication application;
+
+  /// Solo viene con texto cuando la postulación se acaba de enviar. Volver a
+  /// una postulación vieja no se celebra: ya lo celebraste una vez.
   final String? message;
 
   @override
-  Widget build(BuildContext context) => Center(
-    child: SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 620),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (message != null) ...[
-              Text(message!, style: Theme.of(context).textTheme.titleLarge),
-              const SizedBox(height: 16),
+  State<_Result> createState() => _ResultState();
+}
+
+class _ResultState extends State<_Result> {
+  @override
+  void initState() {
+    super.initState();
+    // El golpecito llega junto con el check. Es lo que hace que enviar se
+    // sienta en la mano y no solo en la pantalla.
+    if (widget.message != null) HapticFeedback.mediumImpact();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final dog = widget.dog;
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 620),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (widget.message case final message?) ...[
+                WoofyCelebration(
+                  title: '¡${dog.name} ya sabe de vos!',
+                  body:
+                      '$message El refugio la va a revisar y te escribe por '
+                      'Mensajes cuando tenga novedades.',
+                  actions: [
+                    WoofyButton(
+                      label: 'Ver mis mensajes',
+                      onPressed: () => context.go(RoutePaths.messages),
+                      icon: Icons.chat_bubble_outline,
+                      isExpanded: true,
+                    ),
+                    WoofyButton(
+                      label: 'Seguir mirando',
+                      onPressed: () => context.go(RoutePaths.dogs),
+                      variant: WoofyButtonVariant.secondary,
+                      isExpanded: true,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+              ],
+              ApplicationStatusCard(application: widget.application),
+              const SizedBox(height: 20),
+              WoofyButton(
+                label: 'Volver al perfil de ${dog.name}',
+                onPressed: () => context.go(RoutePaths.dogDetail(dog.slug)),
+                variant: WoofyButtonVariant.secondary,
+                isExpanded: true,
+              ),
             ],
-            ApplicationStatusCard(application: application),
-            const SizedBox(height: 20),
-            WoofyButton(
-              label: 'Volver al perfil de ${dog.name}',
-              onPressed: () => context.go(RoutePaths.dogDetail(dog.slug)),
-              variant: WoofyButtonVariant.secondary,
-              isExpanded: true,
-            ),
-          ],
+          ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }
