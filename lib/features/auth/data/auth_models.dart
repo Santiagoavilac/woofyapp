@@ -31,6 +31,26 @@ class AppUser {
     final normalized = value?.trim();
     return normalized == null || normalized.isEmpty ? null : normalized;
   }
+
+  // Se compara por valor y no por identidad porque de eso depende que la app
+  // no se recargue sola.
+  //
+  // Supabase emite `onAuthStateChange` en la sesión inicial, en cada refresco
+  // de token y cada vez que la app vuelve del fondo. Cada emisión arma un
+  // `AppUser` nuevo. Sin este `==`, Riverpod lo veía como un usuario distinto,
+  // avisaba a todo lo que depende de la sesión y la pantalla entera volvía a
+  // pedir datos y a mostrar el spinner — encima de cualquier animación.
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is AppUser &&
+          other.id == id &&
+          other.email == email &&
+          other.fullName == fullName &&
+          other.phone == phone;
+
+  @override
+  int get hashCode => Object.hash(id, email, fullName, phone);
 }
 
 class UserProfile {

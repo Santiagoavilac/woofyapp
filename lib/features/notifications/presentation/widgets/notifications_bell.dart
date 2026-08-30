@@ -182,29 +182,30 @@ class _NotificationsOverlay extends ConsumerWidget {
                     ),
                   ),
                 ),
+                // Sin `Align` adentro: el seguidor ancla el borde derecho de su
+                // hijo, y un `Align` se estira a toda la pantalla, así que
+                // anclaba el borde derecho de la pantalla y el panel terminaba
+                // corrido hacia la izquierda.
                 CompositedTransformFollower(
                   link: link,
                   targetAnchor: Alignment.bottomRight,
                   followerAnchor: Alignment.topRight,
                   offset: const Offset(0, WoofySpacing.sm),
-                  child: Align(
-                    alignment: Alignment.topRight,
-                    child: FadeTransition(
-                      opacity: progress,
-                      child: ScaleTransition(
-                        scale: Tween<double>(
-                          begin: 0.94,
-                          end: 1,
-                        ).animate(progress),
-                        // Crece desde la esquina de la campana, no desde el
-                        // centro: así se lee como que salió de ahí.
-                        alignment: Alignment.topRight,
-                        child: _PanelCard(
-                          userId: userId,
-                          width: width,
-                          height: height,
-                          onOpenNotification: onOpenNotification,
-                        ),
+                  child: FadeTransition(
+                    opacity: progress,
+                    child: ScaleTransition(
+                      scale: Tween<double>(
+                        begin: 0.94,
+                        end: 1,
+                      ).animate(progress),
+                      // Crece desde la esquina de la campana, no desde el
+                      // centro: así se lee como que salió de ahí.
+                      alignment: Alignment.topRight,
+                      child: _PanelCard(
+                        userId: userId,
+                        width: width,
+                        maxHeight: height,
+                        onOpenNotification: onOpenNotification,
                       ),
                     ),
                   ),
@@ -222,13 +223,13 @@ class _PanelCard extends ConsumerWidget {
   const _PanelCard({
     required this.userId,
     required this.width,
-    required this.height,
+    required this.maxHeight,
     required this.onOpenNotification,
   });
 
   final String userId;
   final double width;
-  final double height;
+  final double maxHeight;
   final ValueChanged<WoofyNotification> onOpenNotification;
 
   @override
@@ -240,11 +241,18 @@ class _PanelCard extends ConsumerWidget {
       shadowColor: const Color(0x1F1B2A33),
       borderRadius: WoofyRadius.cardAll,
       clipBehavior: Clip.antiAlias,
-      child: SizedBox(
+      child: ConstrainedBox(
         key: const ValueKey('notifications-panel'),
-        width: width,
-        height: height,
+        // Alto al contenido, con techo: con una sola novedad el panel medía
+        // media pantalla de blanco vacío. Se estira solo cuando hay de qué.
+        constraints: BoxConstraints(
+          minWidth: width,
+          maxWidth: width,
+          minHeight: 120,
+          maxHeight: maxHeight,
+        ),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Padding(
@@ -262,7 +270,9 @@ class _PanelCard extends ConsumerWidget {
               ),
             ),
             const Divider(height: 1),
-            Expanded(
+            // `Flexible` y no `Expanded`: la columna mide al contenido, así que
+            // el cuerpo toma lo que necesita hasta el techo, no todo el alto.
+            Flexible(
               child: notifications.when(
                 loading: () =>
                     const Center(child: CircularProgressIndicator.adaptive()),
@@ -281,6 +291,7 @@ class _PanelCard extends ConsumerWidget {
                       )
                     : WoofyRevealGroup(
                         child: ListView.builder(
+                          shrinkWrap: true,
                           padding: const EdgeInsets.symmetric(
                             vertical: WoofySpacing.sm,
                             horizontal: WoofySpacing.sm,

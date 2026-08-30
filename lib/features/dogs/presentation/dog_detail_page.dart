@@ -23,6 +23,7 @@ import 'package:woofy/core/errors/app_exception.dart';
 import 'package:woofy/features/applications/data/applications_providers.dart';
 import 'package:woofy/features/applications/presentation/widgets/application_status_card.dart';
 import 'package:woofy/features/auth/providers/auth_providers.dart';
+import 'package:woofy/features/favorites/presentation/widgets/double_tap_like.dart';
 import 'package:woofy/features/favorites/presentation/widgets/favorite_toggle_button.dart';
 import 'package:woofy/features/messages/data/messages_providers.dart';
 import 'package:woofy/core/theme/woofy_colors.dart';
@@ -232,7 +233,10 @@ class _DogHero extends StatelessWidget {
             borderRadius: const BorderRadius.vertical(
               bottom: Radius.circular(_DogDetailContent._panelOverlap),
             ),
-            child: DogPhotoCarousel(photos: dog.photos, heroSlug: dog.slug),
+            child: DoubleTapLike(
+              dogId: dog.id,
+              child: DogPhotoCarousel(photos: dog.photos, heroSlug: dog.slug),
+            ),
           ),
         ),
       ),

@@ -56,6 +56,20 @@ class FavoriteMutationController extends Notifier<Set<String>> {
   @override
   Set<String> build() => const <String>{};
 
+  /// Marca favorito y nunca desmarca.
+  ///
+  /// Es lo que necesita el doble toque: en Instagram el doble toque siempre
+  /// suma. Si alternara, el segundo doble toque sobre la misma foto le quitaría
+  /// el favorito a alguien que solo quería volver a festejarla.
+  Future<void> like(String dogId) async {
+    // Se espera la lista antes de preguntar. Si todavía no llegó,
+    // `isFavoriteProvider` contesta que no es favorito, y entonces el doble
+    // toque sobre un perro ya guardado terminaría quitándolo.
+    await ref.read(favoriteDogIdsProvider.future);
+    if (ref.read(isFavoriteProvider(dogId))) return;
+    await toggle(dogId);
+  }
+
   Future<void> toggle(String dogId) async {
     if (state.contains(dogId)) return;
     final wasFavorite = ref.read(isFavoriteProvider(dogId));
