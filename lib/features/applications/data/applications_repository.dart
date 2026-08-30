@@ -6,6 +6,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 abstract interface class ApplicationsRepository {
   Future<AdoptionApplication?> fetchMyApplicationForDog(String dogId);
 
+  /// Todas mis postulaciones, de la que cambió más recientemente a la más
+  /// vieja. El panel de notificaciones vive de esto.
+  Future<List<AdoptionApplication>> fetchMyApplications();
+
   Future<AdoptionApplication> createApplication(
     Dog dog,
     ApplicationFormData formData,
@@ -20,14 +24,19 @@ abstract interface class ApplicationsDataSource {
     String dogId,
   );
 
+  Future<List<Map<String, dynamic>>> fetchApplications(String adopterId);
+
   Future<Map<String, dynamic>> insertApplication(Map<String, dynamic> values);
 }
 
 class SupabaseApplicationsDataSource implements ApplicationsDataSource {
   SupabaseApplicationsDataSource(this._client);
 
+  // `updated_at` ya existía en la tabla desde el arranque; simplemente no se
+  // pedía. Sin él no hay forma de saber si una postulación cambió de estado
+  // después de la última vez que el adoptante miró.
   static const _applicationFields =
-      'id, dog_id, adopter_id, shelter_id, status, created_at';
+      'id, dog_id, adopter_id, shelter_id, status, created_at, updated_at';
 
   final SupabaseClient _client;
 
@@ -44,6 +53,18 @@ class SupabaseApplicationsDataSource implements ApplicationsDataSource {
       .eq('adopter_id', adopterId)
       .eq('dog_id', dogId)
       .maybeSingle();
+
+  @override
+  Future<List<Map<String, dynamic>>> fetchApplications(String adopterId) async {
+    final rows = await _client
+        .from('applications')
+        // Con el perro adentro: una novedad que dice "Milo" y sabe adónde
+        // llevarte vale mucho más que uno que dice "tu postulación".
+        .select('$_applicationFields, dogs(name, slug)')
+        .eq('adopter_id', adopterId)
+        .order('updated_at', ascending: false);
+    return rows.cast<Map<String, dynamic>>();
+  }
 
   @override
   Future<Map<String, dynamic>> insertApplication(Map<String, dynamic> values) =>
@@ -113,6 +134,23 @@ class SupabaseApplicationsRepository implements ApplicationsRepository {
       throw AppException(
         code: 'application_load',
         message: 'No pudimos revisar tu postulación.',
+        cause: error,
+        stackTrace: stackTrace,
+      );
+    }
+  }
+
+  @override
+  Future<List<AdoptionApplication>> fetchMyApplications() async {
+    final userId = _requireUserId();
+    try {
+      final rows = await _source.fetchApplications(userId);
+      return rows.map(AdoptionApplication.fromJson).toList();
+    } catch (error, stackTrace) {
+      if (error is AppException) rethrow;
+      throw AppException(
+        code: 'applications_load',
+        message: 'No pudimos revisar tus postulaciones.',
         cause: error,
         stackTrace: stackTrace,
       );

@@ -114,6 +114,12 @@ class _FakeAuthRepository implements AuthRepository {
 }
 
 class _FakeMessagesRepository implements MessagesRepository {
+  @override
+  Future<List<UnreadThread>> fetchUnreadThreads() async =>
+      const <UnreadThread>[];
+
+  @override
+  Future<void> markThreadRead(String threadId) async {}
   final sentBodies = <String>[];
 
   @override

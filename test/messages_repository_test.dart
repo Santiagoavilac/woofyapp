@@ -200,6 +200,13 @@ void main() {
 }
 
 class _FakeMessagesDataSource implements MessagesDataSource {
+  @override
+  Future<List<Map<String, dynamic>>> fetchUnreadMessages(
+    String adopterId,
+  ) async => const <Map<String, dynamic>>[];
+
+  @override
+  Future<void> markThreadRead(String threadId) async {}
   _FakeMessagesDataSource({
     this.currentUserId = 'user-1',
     this.hasThread = true,

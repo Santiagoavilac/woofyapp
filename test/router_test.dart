@@ -606,6 +606,9 @@ class _SingleDogRepository implements DogRepository {
 
 class _EmptyApplicationsRepository implements ApplicationsRepository {
   @override
+  Future<List<AdoptionApplication>> fetchMyApplications() async =>
+      const <AdoptionApplication>[];
+  @override
   Future<AdoptionApplication?> fetchMyApplicationForDog(String dogId) async =>
       null;
 
@@ -619,6 +622,9 @@ class _EmptyApplicationsRepository implements ApplicationsRepository {
 }
 
 class _AppliedApplicationsRepository implements ApplicationsRepository {
+  @override
+  Future<List<AdoptionApplication>> fetchMyApplications() async =>
+      const <AdoptionApplication>[];
   @override
   Future<AdoptionApplication?> fetchMyApplicationForDog(String dogId) async =>
       AdoptionApplication(
@@ -640,6 +646,12 @@ class _AppliedApplicationsRepository implements ApplicationsRepository {
 }
 
 class _FakeMessagesRepository implements MessagesRepository {
+  @override
+  Future<List<UnreadThread>> fetchUnreadThreads() async =>
+      const <UnreadThread>[];
+
+  @override
+  Future<void> markThreadRead(String threadId) async {}
   _FakeMessagesRepository({this.messages = const [], this.openThread});
 
   factory _FakeMessagesRepository.withMessages() => _FakeMessagesRepository(

@@ -93,6 +93,10 @@ void main() {
 }
 
 class _FakeApplicationsDataSource implements ApplicationsDataSource {
+  @override
+  Future<List<Map<String, dynamic>>> fetchApplications(
+    String adopterId,
+  ) async => const <Map<String, dynamic>>[];
   _FakeApplicationsDataSource({this.currentUserId});
 
   @override

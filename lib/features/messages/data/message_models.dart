@@ -122,6 +122,19 @@ class Message {
       hiddenByAdmin ? 'Mensaje ocultado por moderación.' : body;
 }
 
+/// Lo que queda sin leer en una conversación.
+class UnreadThread {
+  const UnreadThread({
+    required this.threadId,
+    required this.count,
+    required this.latestAt,
+  });
+
+  final String threadId;
+  final int count;
+  final DateTime latestAt;
+}
+
 String _string(Object? value) {
   if (value is String && value.trim().isNotEmpty) return value;
   return '';

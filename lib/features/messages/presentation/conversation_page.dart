@@ -12,6 +12,7 @@ import 'package:woofy/features/messages/data/messages_providers.dart';
 import 'package:woofy/features/messages/presentation/widgets/conversation_header.dart';
 import 'package:woofy/features/messages/presentation/widgets/message_bubble.dart';
 import 'package:woofy/features/messages/presentation/widgets/message_input.dart';
+import 'package:woofy/features/notifications/data/notifications_providers.dart';
 import 'package:woofy/shared/widgets/woofy_app_bar.dart';
 import 'package:woofy/shared/widgets/woofy_empty_state.dart';
 import 'package:woofy/shared/widgets/woofy_error.dart';
@@ -188,6 +189,28 @@ class _MessageList extends ConsumerStatefulWidget {
 
 class _MessageListState extends ConsumerState<_MessageList>
     with WoofyRefreshMixin {
+  @override
+  void initState() {
+    super.initState();
+    _markRead();
+  }
+
+  /// Se marca leído acá y no al abrir el panel de la campana: leer es abrir la
+  /// conversación. Si falla no se le avisa a nadie — que el globito quede un
+  /// rato de más es mucho menos molesto que un cartel de error encima de una
+  /// charla.
+  Future<void> _markRead() async {
+    try {
+      await ref
+          .read(messagesRepositoryProvider)
+          .markThreadRead(widget.threadId);
+    } catch (_) {
+      return;
+    }
+    if (!mounted) return;
+    ref.invalidate(unreadThreadsProvider);
+  }
+
   @override
   Future<void> onWoofyRefresh() async {
     ref.invalidate(threadMessagesProvider(widget.threadId));

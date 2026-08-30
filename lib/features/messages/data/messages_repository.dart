@@ -16,6 +16,12 @@ abstract interface class MessagesRepository {
   Future<List<Message>> fetchMessages(String threadId);
 
   Future<void> sendMessage(String threadId, String body);
+
+  /// Cuántos mensajes ajenos sin leer tengo, por conversación.
+  Future<List<UnreadThread>> fetchUnreadThreads();
+
+  /// Marca como leídos los mensajes ajenos de un hilo.
+  Future<void> markThreadRead(String threadId);
 }
 
 abstract interface class MessagesDataSource {
@@ -46,6 +52,10 @@ abstract interface class MessagesDataSource {
   Future<void> insertMessage(Map<String, dynamic> values);
 
   Future<void> updateThreadTimestamp(String threadId, String timestamp);
+
+  Future<List<Map<String, dynamic>>> fetchUnreadMessages(String adopterId);
+
+  Future<void> markThreadRead(String threadId);
 
   String getPublicDogPhotoUrl(String storagePath);
 }
@@ -139,6 +149,30 @@ class SupabaseMessagesDataSource implements MessagesDataSource {
       .order('created_at', ascending: false)
       .limit(1)
       .maybeSingle();
+
+  // La policy "Participants can read messages" ya recorta la tabla a mis
+  // hilos, así que una sola consulta trae todos los no leídos de todas mis
+  // conversaciones. El `adopterId` se pasa igual para no depender de que la
+  // policy siga siendo la misma mañana.
+  @override
+  Future<List<Map<String, dynamic>>> fetchUnreadMessages(String adopterId) =>
+      _client
+          .from('messages')
+          .select('thread_id, created_at')
+          .isFilter('read_at', null)
+          .neq('sender_id', adopterId)
+          .order('created_at', ascending: false);
+
+  // Va por RPC y no por un `update` directo: `messages` no tiene ninguna
+  // policy de UPDATE para adoptantes, así que un update desde el cliente
+  // afecta 0 filas y NO tira error. El bug más silencioso posible.
+  @override
+  Future<void> markThreadRead(String threadId) async {
+    await _client.rpc<void>(
+      'mark_thread_read',
+      params: {'p_thread_id': threadId},
+    );
+  }
 
   @override
   String getPublicDogPhotoUrl(String storagePath) =>
@@ -386,6 +420,54 @@ class SupabaseMessagesRepository implements MessagesRepository {
     } catch (error, stackTrace) {
       if (error is AppException) rethrow;
       throw _sendError(error, stackTrace);
+    }
+  }
+
+  @override
+  Future<List<UnreadThread>> fetchUnreadThreads() async {
+    final userId = _requireUserId();
+    try {
+      final rows = await _source.fetchUnreadMessages(userId);
+      final counts = <String, int>{};
+      final latest = <String, DateTime>{};
+      for (final row in rows) {
+        final threadId = row['thread_id'];
+        final createdAt = row['created_at'];
+        if (threadId is! String || createdAt is! String) continue;
+        final at = DateTime.parse(createdAt);
+        counts[threadId] = (counts[threadId] ?? 0) + 1;
+        final known = latest[threadId];
+        if (known == null || at.isAfter(known)) latest[threadId] = at;
+      }
+      final unread =
+          counts.entries
+              .map(
+                (entry) => UnreadThread(
+                  threadId: entry.key,
+                  count: entry.value,
+                  latestAt: latest[entry.key]!,
+                ),
+              )
+              .toList()
+            ..sort((a, b) => b.latestAt.compareTo(a.latestAt));
+      return unread;
+    } catch (error, stackTrace) {
+      throw _loadError(error, stackTrace);
+    }
+  }
+
+  @override
+  Future<void> markThreadRead(String threadId) async {
+    _requireUserId();
+    try {
+      await _source.markThreadRead(threadId);
+    } catch (error, stackTrace) {
+      throw AppException(
+        code: 'messages_mark_read',
+        message: 'No pudimos marcar la conversación como leída.',
+        cause: error,
+        stackTrace: stackTrace,
+      );
     }
   }
 

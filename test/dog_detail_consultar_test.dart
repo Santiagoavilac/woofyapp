@@ -158,6 +158,12 @@ Future<ProviderContainer> _pumpDetail(
 }
 
 class _FakeMessagesRepository implements MessagesRepository {
+  @override
+  Future<List<UnreadThread>> fetchUnreadThreads() async =>
+      const <UnreadThread>[];
+
+  @override
+  Future<void> markThreadRead(String threadId) async {}
   _FakeMessagesRepository({required this.threadId});
 
   final String threadId;
@@ -223,6 +229,9 @@ class _FakeProfileRepository implements ProfileRepository {
 }
 
 class _FakeApplicationsRepository implements ApplicationsRepository {
+  @override
+  Future<List<AdoptionApplication>> fetchMyApplications() async =>
+      const <AdoptionApplication>[];
   @override
   Future<AdoptionApplication?> fetchMyApplicationForDog(String dogId) async =>
       null;

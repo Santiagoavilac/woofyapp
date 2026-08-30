@@ -9,7 +9,10 @@ final messagesRepositoryProvider = Provider<MessagesRepository>(
 );
 
 final myThreadsProvider = FutureProvider<List<ConversationThread>>((ref) async {
-  if (ref.watch(currentUserProvider) == null) {
+  // Por id y no por el `AppUser` entero: el panel de novedades deja esto vivo
+  // en Inicio, y recalcular la sesión no tiene por qué recargar la lista si
+  // sigue siendo la misma persona.
+  if (ref.watch(currentUserProvider.select((user) => user?.id)) == null) {
     return const <ConversationThread>[];
   }
   return ref.watch(messagesRepositoryProvider).fetchMyThreads();

@@ -147,6 +147,9 @@ class _FakeFavoritesRepository implements FavoritesRepository {
 }
 
 class _FakeApplicationsRepository implements ApplicationsRepository {
+  @override
+  Future<List<AdoptionApplication>> fetchMyApplications() async =>
+      const <AdoptionApplication>[];
   Completer<void>? createGate;
   int createCalls = 0;
   @override

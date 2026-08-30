@@ -18,6 +18,7 @@ import 'package:woofy/features/partners/presentation/widgets/partner_card.dart';
 import 'package:woofy/features/partners/presentation/widgets/service_card.dart';
 import 'package:woofy/features/landing/presentation/widgets/landing_shelter_card.dart';
 import 'package:woofy/features/landing/presentation/widgets/recent_dog_preview_card.dart';
+import 'package:woofy/features/notifications/presentation/widgets/notifications_bell.dart';
 import 'package:woofy/features/publisher/data/publisher_providers.dart';
 import 'package:woofy/shared/widgets/woofy_bottom_navigation.dart';
 import 'package:woofy/shared/widgets/woofy_button.dart';
@@ -81,8 +82,6 @@ class _LandingPageState extends ConsumerState<LandingPage>
               SliverToBoxAdapter(
                 child: _ImmersiveHeader(
                   searchController: _searchController,
-                  onNotificationsPressed: () =>
-                      context.push(RoutePaths.messages),
                   onAccountPressed: goToAccount,
                   onExplorePressed: () => context.go(RoutePaths.dogs),
                   onServicesPressed: () => context.push(RoutePaths.services),
@@ -161,14 +160,12 @@ class _LandingPageState extends ConsumerState<LandingPage>
 class _ImmersiveHeader extends StatelessWidget {
   const _ImmersiveHeader({
     required this.searchController,
-    required this.onNotificationsPressed,
     required this.onAccountPressed,
     required this.onExplorePressed,
     required this.onServicesPressed,
   });
 
   final TextEditingController searchController;
-  final VoidCallback onNotificationsPressed;
   final VoidCallback onAccountPressed;
   final VoidCallback onExplorePressed;
   final VoidCallback onServicesPressed;
@@ -214,10 +211,7 @@ class _ImmersiveHeader extends StatelessWidget {
                 left: WoofySpacing.xl,
                 right: WoofySpacing.md,
               ),
-              child: _HeaderBar(
-                onNotificationsPressed: onNotificationsPressed,
-                onAccountPressed: onAccountPressed,
-              ),
+              child: _HeaderBar(onAccountPressed: onAccountPressed),
             ),
             const SizedBox(height: WoofySpacing.lg),
             Padding(
@@ -240,12 +234,8 @@ class _ImmersiveHeader extends StatelessWidget {
 }
 
 class _HeaderBar extends StatelessWidget {
-  const _HeaderBar({
-    required this.onNotificationsPressed,
-    required this.onAccountPressed,
-  });
+  const _HeaderBar({required this.onAccountPressed});
 
-  final VoidCallback onNotificationsPressed;
   final VoidCallback onAccountPressed;
 
   @override
@@ -289,11 +279,7 @@ class _HeaderBar extends StatelessWidget {
           ),
         ),
         const SizedBox(width: WoofySpacing.sm),
-        WoofyCircleIconButton(
-          icon: Icons.notifications_none_rounded,
-          tooltip: 'Notificaciones',
-          onPressed: onNotificationsPressed,
-        ),
+        const NotificationsBell(),
         const SizedBox(width: WoofySpacing.sm),
         WoofyCircleIconButton(
           icon: Icons.person_outline_rounded,

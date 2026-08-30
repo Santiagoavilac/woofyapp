@@ -37,17 +37,39 @@ class AdoptionApplication {
     required this.shelterId,
     required this.status,
     required this.createdAt,
-  });
+    DateTime? updatedAt,
+    this.dogName,
+    this.dogSlug,
+    // Cuándo cambió por última vez: es lo que decide si una postulación cuenta
+    // como novedad. Si la fila vino sin el campo, la creación es el último
+    // cambio conocido.
+  }) : updatedAt = updatedAt ?? createdAt;
 
-  factory AdoptionApplication.fromJson(Map<String, dynamic> json) =>
-      AdoptionApplication(
-        id: json['id'] as String,
-        dogId: json['dog_id'] as String,
-        adopterId: json['adopter_id'] as String,
-        shelterId: json['shelter_id'] as String,
-        status: ApplicationStatus.parse(json['status']),
-        createdAt: DateTime.parse(json['created_at'] as String),
-      );
+  factory AdoptionApplication.fromJson(Map<String, dynamic> json) {
+    final updatedAt = json['updated_at'];
+    final dog = _embeddedDog(json['dogs']);
+    return AdoptionApplication(
+      id: json['id'] as String,
+      dogId: json['dog_id'] as String,
+      adopterId: json['adopter_id'] as String,
+      shelterId: json['shelter_id'] as String,
+      status: ApplicationStatus.parse(json['status']),
+      createdAt: DateTime.parse(json['created_at'] as String),
+      updatedAt: updatedAt is String ? DateTime.parse(updatedAt) : null,
+      dogName: dog?['name'] as String?,
+      dogSlug: dog?['slug'] as String?,
+    );
+  }
+
+  /// El perro embebido llega como mapa o como lista de uno según cómo
+  /// PostgREST resuelva la relación.
+  static Map<String, dynamic>? _embeddedDog(Object? value) => switch (value) {
+    Map<String, dynamic>() => value,
+    Map() => value.cast<String, dynamic>(),
+    List() when value.isNotEmpty && value.first is Map =>
+      (value.first as Map).cast<String, dynamic>(),
+    _ => null,
+  };
 
   final String id;
   final String dogId;
@@ -55,6 +77,9 @@ class AdoptionApplication {
   final String shelterId;
   final ApplicationStatus status;
   final DateTime createdAt;
+  final String? dogName;
+  final String? dogSlug;
+  final DateTime updatedAt;
 }
 
 class ApplicationFormData {
