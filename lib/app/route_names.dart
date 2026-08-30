@@ -27,6 +27,7 @@ abstract final class RouteNames {
   static const store = 'store';
   static const storeProduct = 'store-product';
   static const orders = 'orders';
+  static const search = 'search';
 }
 
 abstract final class RoutePaths {
@@ -62,6 +63,7 @@ abstract final class RoutePaths {
   static const partnerDetailPattern = '/aliados/:slug';
   static const partnerReservationPattern = '/aliados/:slug/reservar';
   static const partnerProductPattern = '/aliados/:slug/producto/:productId';
+  static const search = '/buscar';
   static const store = '/tienda';
   static const storeProductPattern = '/tienda/producto/:productId';
 

@@ -6,6 +6,12 @@ library;
 /// `public.promo_banner_slot` de Postgres.
 enum BannerSlot {
   home('home'),
+
+  /// Segunda tanda de Inicio, más abajo: entre Servicios y Veterinarias.
+  /// Va separada de `home` y no como un banner más del mismo slot para que el
+  /// admin pueda decidir qué se ve arriba y qué se ve abajo.
+  homeSecondary('home_secondary'),
+  explore('explore'),
   vets('vets'),
   services('services');
 

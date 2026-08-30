@@ -42,7 +42,7 @@ class SupabasePublisherDataSource implements PublisherDataSource {
   SupabasePublisherDataSource(this._client);
 
   static const _dogSelect = '''
-    id, shelter_id, name, slug, story, status, sex, age_months, size,
+    id, shelter_id, name, slug, story, status, species, sex, age_months, size,
     energy_level, sterilized, vaccinated, medical_notes, temperament,
     good_with_children, good_with_dogs, good_with_cats, created_at, updated_at,
     deleted_at

@@ -12,8 +12,8 @@ class SupabaseDogRepository implements DogRepository {
   SupabaseDogRepository(this._client);
 
   static const _dogFields = '''
-    id, shelter_id, name, slug, story, sex, age_months, size, energy_level,
-    status, sterilized, vaccinated, medical_notes, temperament,
+    id, shelter_id, name, slug, story, species, sex, age_months, size,
+    energy_level, status, sterilized, vaccinated, medical_notes, temperament,
     good_with_children, good_with_dogs, good_with_cats, created_at, deleted_at,
     shelters!inner(
       id, name, description, city, address, phone, instagram, verified, status,

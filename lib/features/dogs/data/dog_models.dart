@@ -87,6 +87,62 @@ class DogShelter {
   final String? locationNotes;
 }
 
+/// Qué clase de animal es.
+///
+/// La tabla se sigue llamando `dogs` y la clase `Dog` porque renombrarlas
+/// obligaría a tocar policies, storage, rutas y media app de una sola vez. La
+/// especie entra como un campo más; el resto del sistema no se entera.
+enum AnimalSpecies {
+  perro('perro', 'Perro', 'Perros'),
+  gato('gato', 'Gato', 'Gatos'),
+  otro('otro', 'Otro', 'Otros');
+
+  const AnimalSpecies(this.value, this.label, this.plural);
+
+  final String value;
+  final String label;
+  final String plural;
+
+  /// Lo publicado antes de que existiera el campo son todos perros, así que
+  /// cualquier valor que no reconozcamos cae ahí y nada desaparece del catálogo.
+  static AnimalSpecies fromValue(Object? value) {
+    final parsed = value?.toString().trim().toLowerCase();
+    return AnimalSpecies.values.firstWhere(
+      (species) => species.value == parsed,
+      orElse: () => AnimalSpecies.perro,
+    );
+  }
+}
+
+/// Etapa de la vida, para poder filtrar sin pedirle a nadie que piense en meses.
+///
+/// Los cortes son los mismos que usa cualquier veterinaria y se expresan en
+/// meses porque es lo único que guarda la base.
+enum AgeGroup {
+  cachorro('cachorro', 'Cachorro', 0, 12),
+  joven('joven', 'Joven', 12, 36),
+  adulto('adulto', 'Adulto', 36, 96),
+  senior('senior', 'Senior', 96, 1 << 30);
+
+  const AgeGroup(this.value, this.label, this.fromMonths, this.toMonths);
+
+  final String value;
+  final String label;
+  final int fromMonths;
+  final int toMonths;
+
+  /// Sin edad cargada no se puede decir nada: devuelve `null` en vez de
+  /// inventar una etapa, así el filtro deja fuera al animal en lugar de
+  /// mostrarlo en el grupo equivocado.
+  static AgeGroup? fromMonthsOrNull(int? months) {
+    if (months == null || months < 0) return null;
+    for (final group in AgeGroup.values) {
+      if (months >= group.fromMonths && months < group.toMonths) return group;
+    }
+    return null;
+  }
+}
+
 class Dog {
   const Dog({
     required this.id,
@@ -95,6 +151,7 @@ class Dog {
     required this.slug,
     required this.story,
     required this.status,
+    this.species = AnimalSpecies.perro,
     this.sex,
     this.ageMonths,
     this.size,
@@ -124,6 +181,7 @@ class Dog {
       slug: _string(json['slug']),
       story: _string(json['story']),
       status: _string(json['status']),
+      species: AnimalSpecies.fromValue(json['species']),
       sex: _nullableString(json['sex']),
       ageMonths: _int(json['age_months']),
       size: _nullableString(json['size']),
@@ -148,6 +206,7 @@ class Dog {
   final String slug;
   final String story;
   final String status;
+  final AnimalSpecies species;
   final String? sex;
   final int? ageMonths;
   final String? size;
@@ -165,6 +224,8 @@ class Dog {
   final List<DogPhoto> photos;
 
   DogPhoto? get coverPhoto => photos.isEmpty ? null : photos.first;
+
+  AgeGroup? get ageGroup => AgeGroup.fromMonthsOrNull(ageMonths);
 
   String? get ageLabel {
     final months = ageMonths;
@@ -185,6 +246,7 @@ class Dog {
     slug: slug,
     story: story,
     status: status,
+    species: species,
     sex: sex,
     ageMonths: ageMonths,
     size: size,

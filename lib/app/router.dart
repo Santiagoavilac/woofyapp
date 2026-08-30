@@ -33,6 +33,7 @@ import 'package:woofy/features/partners/presentation/partner_product_page.dart';
 import 'package:woofy/features/partners/presentation/partner_reservation_page.dart';
 import 'package:woofy/features/partners/presentation/services_page.dart';
 import 'package:woofy/features/partners/presentation/vets_page.dart';
+import 'package:woofy/features/search/presentation/search_page.dart';
 import 'package:woofy/shared/widgets/woofy_bottom_navigation.dart';
 import 'package:woofy/shared/widgets/woofy_error.dart';
 
@@ -130,6 +131,17 @@ final routerProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => woofyPage(
           state,
           const MyOrdersPage(),
+          kind: WoofyTransition.detail,
+        ),
+      ),
+      // El buscador general. Es una ruta empujada y no una pestaña: se entra
+      // desde Inicio, se busca y se vuelve.
+      GoRoute(
+        name: RouteNames.search,
+        path: RoutePaths.search,
+        pageBuilder: (context, state) => woofyPage(
+          state,
+          SearchPage(initialQuery: state.uri.queryParameters['q'] ?? ''),
           kind: WoofyTransition.detail,
         ),
       ),

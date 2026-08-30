@@ -96,6 +96,7 @@ class _DogFormState extends ConsumerState<_DogForm> {
   late final TextEditingController _slugCtrl;
   late final TextEditingController _storyCtrl;
   late final TextEditingController _ageCtrl;
+  AnimalSpecies _species = AnimalSpecies.perro;
   String? _sex;
   String? _size;
   String _status = 'draft';
@@ -144,6 +145,7 @@ class _DogFormState extends ConsumerState<_DogForm> {
     _ageCtrl = TextEditingController(
       text: dog?.ageMonths != null ? '${dog!.ageMonths}' : '',
     );
+    _species = dog?.species ?? AnimalSpecies.perro;
     _sex = dog?.sex;
     _size = dog?.size;
     _status = dog?.status ?? 'draft';
@@ -247,6 +249,7 @@ class _DogFormState extends ConsumerState<_DogForm> {
       slug: _slugCtrl.text.trim(),
       story: _storyCtrl.text.trim(),
       status: _status,
+      species: _species,
       sex: _sex,
       ageMonths: int.tryParse(_ageCtrl.text.trim()),
       size: _size,
@@ -378,6 +381,28 @@ class _DogFormState extends ConsumerState<_DogForm> {
                       decoration: const InputDecoration(
                         labelText: 'Edad (meses)',
                       ),
+                    ),
+                    const SizedBox(height: 12),
+                    // La especie va primero de los desplegables: es lo que
+                    // decide qué se le está cargando al catálogo, y ahora que
+                    // hay gatos ya no se puede dar por sentado.
+                    DropdownButtonFormField<AnimalSpecies>(
+                      initialValue: _species,
+                      decoration: const InputDecoration(
+                        labelText: 'Tipo de animal',
+                      ),
+                      items: [
+                        for (final species in AnimalSpecies.values)
+                          DropdownMenuItem(
+                            value: species,
+                            child: Text(species.label),
+                          ),
+                      ],
+                      onChanged: _isSaving
+                          ? null
+                          : (v) => setState(
+                              () => _species = v ?? AnimalSpecies.perro,
+                            ),
                     ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(

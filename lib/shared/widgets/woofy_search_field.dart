@@ -9,6 +9,9 @@ class WoofySearchField extends StatelessWidget {
     this.onChanged,
     this.onFilterTap,
     this.filterActive = false,
+    this.onTap,
+    this.readOnly = false,
+    this.autofocus = false,
     super.key,
   });
 
@@ -18,12 +21,24 @@ class WoofySearchField extends StatelessWidget {
   final VoidCallback? onFilterTap;
   final bool filterActive;
 
+  /// Qué hacer cuando lo tocan.
+  ///
+  /// Junto con [readOnly] convierte el campo en un botón con cara de buscador.
+  /// Es lo que usa Inicio para abrir la pantalla de búsqueda, en vez de tener
+  /// dos buscadores distintos y uno de ellos a medias.
+  final VoidCallback? onTap;
+  final bool readOnly;
+  final bool autofocus;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return TextField(
       controller: controller,
       onChanged: onChanged,
+      onTap: onTap,
+      readOnly: readOnly,
+      autofocus: autofocus,
       textInputAction: TextInputAction.search,
       decoration: InputDecoration(
         hintText: hintText,

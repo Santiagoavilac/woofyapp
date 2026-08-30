@@ -1,3 +1,5 @@
+import 'package:woofy/features/dogs/data/dog_models.dart';
+
 class ShelterPortalSession {
   const ShelterPortalSession({
     required this.sessionId,
@@ -221,6 +223,7 @@ class DogFormData {
     required this.slug,
     required this.story,
     required this.status,
+    this.species = AnimalSpecies.perro,
     this.sex,
     this.ageMonths,
     this.size,
@@ -247,6 +250,7 @@ class DogFormData {
   final String slug;
   final String story;
   final String status;
+  final AnimalSpecies species;
   final String? sex;
   final int? ageMonths;
   final String? size;
@@ -279,6 +283,7 @@ class DogFormData {
     'slug': slug,
     'story': story,
     'status': status,
+    'species': species.value,
     if (sex != null) 'sex': sex,
     if (ageMonths != null) 'age_months': ageMonths,
     if (size != null) 'size': size,
@@ -300,6 +305,7 @@ class DogFormData {
       'slug': slug,
       'story': story,
       'status': status,
+      'species': species.value,
       'sex': sex ?? '',
       'age_months': ageMonths,
       'size': size ?? 'mediano',

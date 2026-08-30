@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -40,13 +42,62 @@ class BannerCarousel extends ConsumerStatefulWidget {
 }
 
 class _BannerCarouselState extends ConsumerState<BannerCarousel> {
+  /// Cuánto se queda quieto cada banner.
+  ///
+  /// Cinco segundos alcanzan para leer un título y un subtítulo sin que el
+  /// siguiente se sienta apurado. Menos que eso y el banner se va justo cuando
+  /// la persona terminó de entender qué decía.
+  static const _interval = Duration(seconds: 5);
+
   final _controller = PageController();
   int _page = 0;
+  int _count = 0;
+  bool _autoPlay = false;
+  Timer? _timer;
 
   @override
   void dispose() {
+    _timer?.cancel();
     _controller.dispose();
     super.dispose();
+  }
+
+  /// Enciende o apaga el paso solo, según lo que haya para mostrar.
+  ///
+  /// Con movimiento reducido no se mueve nunca: un carrusel que avanza solo es
+  /// exactamente la clase de movimiento que nadie pidió, y ahí las páginas
+  /// quedan a mano — se pasan arrastrando, como siempre.
+  void _syncAutoPlay({required int count, required bool reduceMotion}) {
+    _count = count;
+    final shouldPlay = count > 1 && !reduceMotion;
+    if (shouldPlay == _autoPlay) return;
+    _autoPlay = shouldPlay;
+    if (shouldPlay) {
+      _schedule();
+    } else {
+      _timer?.cancel();
+      _timer = null;
+    }
+  }
+
+  /// Un temporizador de una sola vez, reprogramado en cada cambio de página.
+  ///
+  /// Con `Timer.periodic` el reloj sigue corriendo mientras la persona arrastra:
+  /// pasabas una página a mano y medio segundo después el carrusel te la
+  /// cambiaba de nuevo. Así el conteo arranca de cero cada vez.
+  void _schedule() {
+    _timer?.cancel();
+    if (!_autoPlay) return;
+    _timer = Timer(_interval, _advance);
+  }
+
+  void _advance() {
+    if (!mounted || _count < 2 || !_controller.hasClients) return;
+    _controller.animateToPage(
+      (_page + 1) % _count,
+      duration: const Duration(milliseconds: 420),
+      curve: Curves.easeOutCubic,
+    );
   }
 
   Future<void> _open(PromoBanner banner) async {
@@ -63,6 +114,10 @@ class _BannerCarouselState extends ConsumerState<BannerCarousel> {
   @override
   Widget build(BuildContext context) {
     final banners = ref.watch(bannersProvider(widget.slot)).value ?? const [];
+    _syncAutoPlay(
+      count: banners.length,
+      reduceMotion: MediaQuery.disableAnimationsOf(context),
+    );
     if (banners.isEmpty) {
       final fallback = widget.fallback;
       if (fallback == null) return const SizedBox.shrink();
@@ -80,7 +135,10 @@ class _BannerCarouselState extends ConsumerState<BannerCarousel> {
               key: ValueKey('banner-carousel-${widget.slot.id}'),
               controller: _controller,
               itemCount: banners.length,
-              onPageChanged: (page) => setState(() => _page = page),
+              onPageChanged: (page) {
+                setState(() => _page = page);
+                _schedule();
+              },
               itemBuilder: (context, index) {
                 final banner = banners[index];
                 return Padding(

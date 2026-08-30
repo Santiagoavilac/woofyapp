@@ -80,7 +80,7 @@ Future<void> _pumpBell(
                   const NotificationsBell(),
                   // En Inicio la campana tiene el botón de perfil a su derecha:
                   // no está pegada al borde, y de ahí salía el desborde.
-                  if (trailing case final trailing?) trailing,
+                  ?trailing,
                 ],
               ),
             ),

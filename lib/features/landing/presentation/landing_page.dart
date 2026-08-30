@@ -82,6 +82,7 @@ class _LandingPageState extends ConsumerState<LandingPage>
               SliverToBoxAdapter(
                 child: _ImmersiveHeader(
                   searchController: _searchController,
+                  onSearchPressed: () => context.push(RoutePaths.search),
                   onAccountPressed: goToAccount,
                   onExplorePressed: () => context.go(RoutePaths.dogs),
                   onServicesPressed: () => context.push(RoutePaths.services),
@@ -140,6 +141,14 @@ class _LandingPageState extends ConsumerState<LandingPage>
                     // Cada sección desaparece entera si no hay nada que
                     // mostrar, para no dejar filas vacías en Inicio.
                     const _LandingVetsPreview(),
+                    // Segunda tanda de publicidad, entre las dos secciones de
+                    // aliados. Sin `fallback`: acá, si no hay nada cargado, no
+                    // se muestra nada. Un respaldo inventado en el medio de la
+                    // pantalla se leería como relleno.
+                    const BannerCarousel(
+                      slot: BannerSlot.homeSecondary,
+                      padding: EdgeInsets.only(bottom: WoofySpacing.xxxl),
+                    ),
                     const _LandingServicesPreview(),
                     const _LandingMerchPreview(),
                   ]),
@@ -160,12 +169,14 @@ class _LandingPageState extends ConsumerState<LandingPage>
 class _ImmersiveHeader extends StatelessWidget {
   const _ImmersiveHeader({
     required this.searchController,
+    required this.onSearchPressed,
     required this.onAccountPressed,
     required this.onExplorePressed,
     required this.onServicesPressed,
   });
 
   final TextEditingController searchController;
+  final VoidCallback onSearchPressed;
   final VoidCallback onAccountPressed;
   final VoidCallback onExplorePressed;
   final VoidCallback onServicesPressed;
@@ -216,9 +227,15 @@ class _ImmersiveHeader extends StatelessWidget {
             const SizedBox(height: WoofySpacing.lg),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: WoofySpacing.xl),
+              // Acá no se escribe: el campo abre el buscador general y ahí se
+              // teclea. Antes se podía escribir y no pasaba absolutamente
+              // nada, que es peor que no tener buscador.
               child: WoofySearchField(
+                key: const ValueKey('home-search-field'),
                 controller: searchController,
-                hintText: 'Buscar animales, refugios o razas',
+                readOnly: true,
+                hintText: 'Buscar animales, poleras, veterinarias…',
+                onTap: onSearchPressed,
               ),
             ),
             const SizedBox(height: WoofySpacing.xl),

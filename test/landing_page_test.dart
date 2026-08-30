@@ -30,7 +30,10 @@ void main() {
     await _pumpApp(tester, dogs: _sampleDogs);
 
     expect(find.text('Hola 👋'), findsOneWidget);
-    expect(find.text('Buscar animales, refugios o razas'), findsOneWidget);
+    expect(
+      find.text('Buscar animales, poleras, veterinarias…'),
+      findsOneWidget,
+    );
     expect(
       find.text('Adoptá felicidad,\nuna patita a la vez.'),
       findsOneWidget,
