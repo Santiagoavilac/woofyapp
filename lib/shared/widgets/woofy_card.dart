@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:woofy/shared/widgets/woofy_press.dart';
 
 class WoofyCard extends StatelessWidget {
   const WoofyCard({
@@ -17,11 +18,14 @@ class WoofyCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final content = Padding(padding: padding, child: child);
-    return Card(
+    final card = Card(
       clipBehavior: Clip.antiAlias,
       child: onTap == null
           ? content
           : InkWell(key: tapKey, onTap: onTap, child: content),
     );
+    // El hundido va por fuera de la `Card` para que la sombra acompañe; la
+    // `tapKey` se queda en el `InkWell`, que es lo que buscan los tests.
+    return onTap == null ? card : WoofyPressable(child: card);
   }
 }
