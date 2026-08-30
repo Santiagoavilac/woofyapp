@@ -52,7 +52,9 @@ class _CartPageState extends ConsumerState<CartPage> {
             ? WoofyEmptyState(
                 icon: Icons.shopping_bag_outlined,
                 title: 'Tu carrito está vacío',
-                message: 'Agregá productos desde el perfil de una veterinaria.',
+                message:
+                    'Agregá productos desde una veterinaria o desde la tienda '
+                    'de Woofy.',
                 actionLabel: 'Ver veterinarias',
                 onAction: () => context.go(RoutePaths.vets),
               )
@@ -101,7 +103,11 @@ class _CartPageState extends ConsumerState<CartPage> {
             partnerId: group.partnerId,
             items: [
               for (final line in group.lines)
-                (productId: line.productId, quantity: line.quantity),
+                (
+                  productId: line.productId,
+                  variantId: line.variantId,
+                  quantity: line.quantity,
+                ),
             ],
           );
 
@@ -115,6 +121,7 @@ class _CartPageState extends ConsumerState<CartPage> {
             for (final item in order.items)
               (
                 name: item.nameSnapshot,
+                sizeLabel: item.sizeSnapshot,
                 quantity: item.quantity,
                 unitPriceCents: item.unitPriceCents,
               ),
@@ -223,6 +230,13 @@ class _CartGroupCard extends ConsumerWidget {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
+                      if (line.sizeLabel case final size?)
+                        Text(
+                          'Talle $size',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
                       Text(
                         Money.fromCents(line.lineTotalCents),
                         style: theme.textTheme.bodyMedium?.copyWith(
@@ -234,18 +248,18 @@ class _CartGroupCard extends ConsumerWidget {
                   ),
                 ),
                 IconButton(
-                  key: ValueKey('cart-decrement-${line.productId}'),
+                  key: ValueKey('cart-decrement-${line.lineKey}'),
                   tooltip: 'Quitar uno',
                   onPressed: () =>
-                      cart.decrement(group.partnerId, line.productId),
+                      cart.decrement(group.partnerId, line.lineKey),
                   icon: const Icon(Icons.remove_circle_outline),
                 ),
                 Text('${line.quantity}', style: theme.textTheme.titleSmall),
                 IconButton(
-                  key: ValueKey('cart-increment-${line.productId}'),
+                  key: ValueKey('cart-increment-${line.lineKey}'),
                   tooltip: 'Agregar uno',
                   onPressed: () =>
-                      cart.increment(group.partnerId, line.productId),
+                      cart.increment(group.partnerId, line.lineKey),
                   icon: const Icon(Icons.add_circle_outline),
                 ),
               ],

@@ -40,7 +40,10 @@ abstract final class WhatsappMessage {
 
   static String orderText({
     required String partnerName,
-    required List<({String name, int quantity, int unitPriceCents})> lines,
+    required List<
+      ({String name, String? sizeLabel, int quantity, int unitPriceCents})
+    >
+    lines,
     required int totalCents,
     String? customerName,
     String? notes,
@@ -49,8 +52,11 @@ abstract final class WhatsappMessage {
       ..writeln('¡Hola $partnerName! Te hago un pedido desde Woofy.')
       ..writeln();
     for (final line in lines) {
+      // El talle sólo aparece cuando el producto lo tiene: los pedidos de
+      // veterinaria salen exactamente igual que antes.
+      final size = line.sizeLabel == null ? '' : ' (Talle ${line.sizeLabel})';
       buffer.writeln(
-        '• ${line.quantity}x ${line.name} — '
+        '• ${line.quantity}x ${line.name}$size — '
         '${Money.fromCents(line.unitPriceCents * line.quantity)}',
       );
     }

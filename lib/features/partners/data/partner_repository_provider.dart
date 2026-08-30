@@ -23,6 +23,10 @@ final partnerDetailProvider = FutureProvider.family<PartnerDetail?, String>(
   (ref, slug) => ref.watch(partnerRepositoryProvider).fetchPartnerBySlug(slug),
 );
 
+final officialStoreProvider = FutureProvider<PartnerDetail?>((ref) {
+  return ref.watch(partnerRepositoryProvider).fetchOfficialStore();
+});
+
 final myPartnerOrdersProvider = FutureProvider<List<PartnerOrder>>(
   (ref) => ref.watch(partnerRepositoryProvider).fetchMyOrders(),
 );

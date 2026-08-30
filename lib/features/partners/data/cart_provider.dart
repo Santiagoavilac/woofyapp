@@ -13,6 +13,8 @@ class CartLine {
     required this.unitPriceCents,
     required this.quantity,
     this.imageUrl,
+    this.variantId,
+    this.sizeLabel,
   });
 
   final String productId;
@@ -20,6 +22,16 @@ class CartLine {
   final int unitPriceCents;
   final int quantity;
   final String? imageUrl;
+
+  /// Talle elegido, cuando el producto lo tiene. Los productos de veterinaria
+  /// no usan variantes y dejan ambos campos en `null`.
+  final String? variantId;
+  final String? sizeLabel;
+
+  /// Identifica la línea dentro del carrito. Incluye la variante porque la
+  /// misma remera en S y en M son dos líneas: sin esto, agregar la M le subiría
+  /// la cantidad a la S y el pedido saldría con el talle equivocado.
+  String get lineKey => variantId == null ? productId : '$productId:$variantId';
 
   int get lineTotalCents => unitPriceCents * quantity;
 
@@ -29,6 +41,8 @@ class CartLine {
     unitPriceCents: unitPriceCents,
     quantity: quantity ?? this.quantity,
     imageUrl: imageUrl,
+    variantId: variantId,
+    sizeLabel: sizeLabel,
   );
 }
 
@@ -75,7 +89,12 @@ class Cart extends Notifier<Map<String, CartGroup>> {
   int get totalItemCount =>
       state.values.fold(0, (total, group) => total + group.itemCount);
 
-  void add(Partner partner, PartnerProduct product, {int quantity = 1}) {
+  void add(
+    Partner partner,
+    PartnerProduct product, {
+    int quantity = 1,
+    PartnerProductVariant? variant,
+  }) {
     if (quantity <= 0) return;
     final next = Map<String, CartGroup>.from(state);
     final group =
@@ -88,22 +107,24 @@ class Cart extends Notifier<Map<String, CartGroup>> {
           lines: const [],
         );
 
+    final line = CartLine(
+      productId: product.id,
+      name: product.name,
+      unitPriceCents: product.priceCents,
+      quantity: quantity,
+      imageUrl: product.imageUrl,
+      variantId: variant?.id,
+      sizeLabel: variant?.sizeLabel,
+    );
+
     final lines = List<CartLine>.from(group.lines);
-    final index = lines.indexWhere((line) => line.productId == product.id);
+    final index = lines.indexWhere((item) => item.lineKey == line.lineKey);
     if (index >= 0) {
       lines[index] = lines[index].copyWith(
         quantity: lines[index].quantity + quantity,
       );
     } else {
-      lines.add(
-        CartLine(
-          productId: product.id,
-          name: product.name,
-          unitPriceCents: product.priceCents,
-          quantity: quantity,
-          imageUrl: product.imageUrl,
-        ),
-      );
+      lines.add(line);
     }
 
     next[partner.id] = group.copyWith(lines: lines);
@@ -113,13 +134,13 @@ class Cart extends Notifier<Map<String, CartGroup>> {
   /// Fija la cantidad. Con `quantity <= 0` la línea se va, y si era la última
   /// de esa veterinaria el grupo entero desaparece: un carrito con un grupo
   /// vacío mostraría un botón "Comprar" que no compra nada.
-  void setQuantity(String partnerId, String productId, int quantity) {
+  void setQuantity(String partnerId, String lineKey, int quantity) {
     final group = state[partnerId];
     if (group == null) return;
 
     final lines = group.lines
         .map(
-          (line) => line.productId == productId
+          (line) => line.lineKey == lineKey
               ? line.copyWith(quantity: quantity)
               : line,
         )
@@ -135,36 +156,29 @@ class Cart extends Notifier<Map<String, CartGroup>> {
     state = next;
   }
 
-  void increment(String partnerId, String productId) {
-    final line = state[partnerId]?.lines.firstWhere(
-      (line) => line.productId == productId,
-      orElse: () => const CartLine(
-        productId: '',
-        name: '',
-        unitPriceCents: 0,
-        quantity: 0,
-      ),
-    );
-    if (line == null || line.productId.isEmpty) return;
-    setQuantity(partnerId, productId, line.quantity + 1);
+  void increment(String partnerId, String lineKey) {
+    final line = _lineOrNull(partnerId, lineKey);
+    if (line == null) return;
+    setQuantity(partnerId, lineKey, line.quantity + 1);
   }
 
-  void decrement(String partnerId, String productId) {
-    final line = state[partnerId]?.lines.firstWhere(
-      (line) => line.productId == productId,
-      orElse: () => const CartLine(
-        productId: '',
-        name: '',
-        unitPriceCents: 0,
-        quantity: 0,
-      ),
-    );
-    if (line == null || line.productId.isEmpty) return;
-    setQuantity(partnerId, productId, line.quantity - 1);
+  void decrement(String partnerId, String lineKey) {
+    final line = _lineOrNull(partnerId, lineKey);
+    if (line == null) return;
+    setQuantity(partnerId, lineKey, line.quantity - 1);
   }
 
-  void removeLine(String partnerId, String productId) =>
-      setQuantity(partnerId, productId, 0);
+  void removeLine(String partnerId, String lineKey) =>
+      setQuantity(partnerId, lineKey, 0);
+
+  CartLine? _lineOrNull(String partnerId, String lineKey) {
+    final lines = state[partnerId]?.lines;
+    if (lines == null) return null;
+    for (final line in lines) {
+      if (line.lineKey == lineKey) return line;
+    }
+    return null;
+  }
 
   /// Vacía el carrito de una veterinaria. Se llama después de comprar, para no
   /// tocar lo que el usuario tenga cargado de las demás.

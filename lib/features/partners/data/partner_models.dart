@@ -63,6 +63,7 @@ class Partner {
     this.verified = false,
     this.status,
     this.categories = const [],
+    this.isWoofyStore = false,
   });
 
   factory Partner.fromJson(Map<String, dynamic> json) => Partner(
@@ -84,6 +85,7 @@ class Partner {
     verified: _bool(json['verified']) ?? false,
     status: _nullableString(json['status']),
     categories: PartnerCategory.parseList(json['categories']),
+    isWoofyStore: _bool(json['is_woofy_store']) ?? false,
   );
 
   final String id;
@@ -106,6 +108,7 @@ class Partner {
   final bool verified;
   final String? status;
   final List<PartnerCategory> categories;
+  final bool isWoofyStore;
 
   /// Hay algo escrito con qué buscar al aliado en el mapa.
   bool get hasLocation =>
@@ -134,7 +137,38 @@ class Partner {
     verified: verified,
     status: status,
     categories: categories,
+    isWoofyStore: isWoofyStore,
   );
+}
+
+class PartnerProductVariant {
+  const PartnerProductVariant({
+    required this.id,
+    required this.productId,
+    required this.sizeLabel,
+    required this.stock,
+    this.position = 0,
+    this.isActive = true,
+  });
+
+  factory PartnerProductVariant.fromJson(Map<String, dynamic> json) =>
+      PartnerProductVariant(
+        id: _string(json['id']),
+        productId: _string(json['product_id']),
+        sizeLabel: _string(json['size_label']),
+        stock: _int(json['stock']) ?? 0,
+        position: _int(json['position']) ?? 0,
+        isActive: _bool(json['is_active']) ?? true,
+      );
+
+  final String id;
+  final String productId;
+  final String sizeLabel;
+  final int stock;
+  final int position;
+  final bool isActive;
+
+  bool get isAvailable => isActive && stock > 0;
 }
 
 class PartnerProduct {
@@ -146,6 +180,9 @@ class PartnerProduct {
     this.description,
     this.imagePath,
     this.imageUrl,
+    this.imagePaths = const [],
+    this.imageUrls = const [],
+    this.variants = const [],
     this.stock,
     this.position = 0,
   });
@@ -157,6 +194,13 @@ class PartnerProduct {
     priceCents: _int(json['price_cents']) ?? 0,
     description: _nullableString(json['description']),
     imagePath: _nullableString(json['image_path']),
+    imagePaths: (json['image_paths'] as List? ?? const [])
+        .map((value) => value.toString())
+        .where((value) => value.isNotEmpty)
+        .toList(),
+    variants: _mapList(
+      json['variants'] ?? json['partner_product_variants'],
+    ).map(PartnerProductVariant.fromJson).toList(),
     stock: _int(json['stock']),
     position: _int(json['position']) ?? 0,
   );
@@ -168,23 +212,32 @@ class PartnerProduct {
   final String? description;
   final String? imagePath;
   final String? imageUrl;
+  final List<String> imagePaths;
+  final List<String> imageUrls;
+  final List<PartnerProductVariant> variants;
   final int? stock;
   final int position;
 
   /// `stock` nulo significa "sin control de stock", no "sin unidades".
-  bool get isAvailable => stock == null || stock! > 0;
+  bool get isAvailable => variants.isNotEmpty
+      ? variants.any((variant) => variant.isAvailable)
+      : stock == null || stock! > 0;
 
-  PartnerProduct copyWith({String? imageUrl}) => PartnerProduct(
-    id: id,
-    partnerId: partnerId,
-    name: name,
-    priceCents: priceCents,
-    description: description,
-    imagePath: imagePath,
-    imageUrl: imageUrl ?? this.imageUrl,
-    stock: stock,
-    position: position,
-  );
+  PartnerProduct copyWith({String? imageUrl, List<String>? imageUrls}) =>
+      PartnerProduct(
+        id: id,
+        partnerId: partnerId,
+        name: name,
+        priceCents: priceCents,
+        description: description,
+        imagePath: imagePath,
+        imageUrl: imageUrl ?? this.imageUrl,
+        imagePaths: imagePaths,
+        imageUrls: imageUrls ?? this.imageUrls,
+        variants: variants,
+        stock: stock,
+        position: position,
+      );
 }
 
 class PartnerService {
@@ -281,6 +334,7 @@ class PartnerOrderItem {
     required this.unitPriceCents,
     required this.quantity,
     required this.lineTotalCents,
+    this.sizeSnapshot,
   });
 
   factory PartnerOrderItem.fromJson(Map<String, dynamic> json) =>
@@ -290,6 +344,7 @@ class PartnerOrderItem {
         unitPriceCents: _int(json['unit_price_cents']) ?? 0,
         quantity: _int(json['quantity']) ?? 0,
         lineTotalCents: _int(json['line_total_cents']) ?? 0,
+        sizeSnapshot: _nullableString(json['size_snapshot']),
       );
 
   final String id;
@@ -297,6 +352,10 @@ class PartnerOrderItem {
   final int unitPriceCents;
   final int quantity;
   final int lineTotalCents;
+
+  /// Talle congelado al momento del pedido: el historial no puede cambiar
+  /// porque la tienda edite o borre la variante después.
+  final String? sizeSnapshot;
 }
 
 class PartnerOrder {

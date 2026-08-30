@@ -24,6 +24,9 @@ abstract final class RouteNames {
   static const cart = 'cart';
   static const partnerProduct = 'partner-product';
   static const partnerReservation = 'partner-reservation';
+  static const store = 'store';
+  static const storeProduct = 'store-product';
+  static const orders = 'orders';
 }
 
 abstract final class RoutePaths {
@@ -47,6 +50,7 @@ abstract final class RoutePaths {
   static const forgotPassword = '/auth/recuperar';
   static const newPassword = '/auth/nueva-contrasena';
   static const blockedAccounts = '/perfil/bloqueados';
+  static const orders = '/perfil/pedidos';
 
   // Veterinarias y Servicios son dos vistas del mismo padrón de aliados: la
   // primera lista negocios del rubro `vet`, la segunda lista servicios sueltos
@@ -58,6 +62,8 @@ abstract final class RoutePaths {
   static const partnerDetailPattern = '/aliados/:slug';
   static const partnerReservationPattern = '/aliados/:slug/reservar';
   static const partnerProductPattern = '/aliados/:slug/producto/:productId';
+  static const store = '/tienda';
+  static const storeProductPattern = '/tienda/producto/:productId';
 
   static String partnerDetail(String slug) =>
       '/aliados/${Uri.encodeComponent(slug)}';
@@ -67,6 +73,9 @@ abstract final class RoutePaths {
 
   static String partnerProduct(String slug, String productId) =>
       '${partnerDetail(slug)}/producto/${Uri.encodeComponent(productId)}';
+
+  static String storeProduct(String productId) =>
+      '/tienda/producto/${Uri.encodeComponent(productId)}';
 
   static String dogDetail(String slug) =>
       '/perros/${Uri.encodeComponent(slug)}';

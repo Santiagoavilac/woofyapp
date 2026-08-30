@@ -436,6 +436,23 @@ void main() {
     expect(router.routeInformationProvider.value.uri.path, RoutePaths.auth);
   });
 
+  testWidgets('the order history requires a session', (tester) async {
+    final auth = FakeAuthRepository();
+    addTearDown(auth.dispose);
+    final container = _container(auth);
+    addTearDown(container.dispose);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(container: container, child: const WoofyApp()),
+    );
+    final router = container.read(routerProvider);
+
+    // El historial se lee con RLS por `auth.uid()`: sin sesión no hay nada que
+    // mostrar, así que la ruta manda al login.
+    router.go(RoutePaths.orders);
+    await tester.pumpAndSettle();
+    expect(router.routeInformationProvider.value.uri.path, RoutePaths.auth);
+  });
+
   testWidgets('the cart route wins over the vet slug pattern', (tester) async {
     const user = AppUser(id: 'user-1', email: 'ana@example.com');
     final auth = FakeAuthRepository(user: user);
@@ -511,9 +528,12 @@ class _EmptyPartnerRepository implements PartnerRepository {
   Future<PartnerDetail?> fetchPartnerBySlug(String slug) async => null;
 
   @override
+  Future<PartnerDetail?> fetchOfficialStore() async => null;
+
+  @override
   Future<PartnerOrder> createOrder({
     required String partnerId,
-    required List<({String productId, int quantity})> items,
+    required List<({String productId, String? variantId, int quantity})> items,
     String? contactPhone,
     String? notes,
   }) => throw UnimplementedError('No se usa en esta prueba.');

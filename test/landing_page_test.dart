@@ -79,6 +79,68 @@ void main() {
     expect(find.text('Todo lo que tu perro necesita'), findsOneWidget);
   });
 
+  testWidgets('home shows active Woofy merch after services', (tester) async {
+    await _pumpApp(
+      tester,
+      dogs: _sampleDogs,
+      partners: FakePartnerRepository(
+        services: const [_sampleService],
+        detail: const PartnerDetail(
+          partner: _sampleStore,
+          products: [_sampleMerch],
+        ),
+      ),
+      viewSize: const Size(420, 5000),
+    );
+
+    expect(find.text('Merch oficial Woofy'), findsOneWidget);
+    expect(find.text('Polera Woofy negra'), findsOneWidget);
+    final servicesTop = tester.getTopLeft(
+      find.text('Servicios para tu mascota'),
+    );
+    final merchTop = tester.getTopLeft(find.text('Merch oficial Woofy'));
+    expect(merchTop.dy, greaterThan(servicesTop.dy));
+  });
+
+  testWidgets('home hides merch while the official store is pending', (
+    tester,
+  ) async {
+    await _pumpApp(
+      tester,
+      dogs: _sampleDogs,
+      partners: FakePartnerRepository(
+        detail: const PartnerDetail(
+          partner: Partner(
+            id: 'store-1',
+            name: 'Woofy Merch',
+            slug: 'woofy-merch',
+            status: 'pending',
+            isWoofyStore: true,
+          ),
+          products: [_sampleMerch],
+        ),
+      ),
+      viewSize: const Size(420, 4000),
+    );
+
+    expect(find.text('Merch oficial Woofy'), findsNothing);
+    expect(find.text('Polera Woofy negra'), findsNothing);
+  });
+
+  testWidgets('home hides the merch section when its request fails', (
+    tester,
+  ) async {
+    await _pumpApp(
+      tester,
+      dogs: _sampleDogs,
+      partners: FakePartnerRepository(error: StateError('offline')),
+      viewSize: const Size(420, 4000),
+    );
+
+    expect(find.text('Merch oficial Woofy'), findsNothing);
+    expect(find.text('Polera Woofy negra'), findsNothing);
+  });
+
   testWidgets('home shows the promo banners loaded by the admin', (
     tester,
   ) async {
@@ -280,6 +342,30 @@ const _sampleService = PartnerService(
   priceCents: 7000,
   partnerName: 'Clínica Patitas',
   partnerSlug: 'clinica-patitas',
+);
+
+const _sampleStore = Partner(
+  id: 'store-1',
+  name: 'Woofy Merch',
+  slug: 'woofy-merch',
+  status: 'active',
+  isWoofyStore: true,
+  categories: [PartnerCategory.shop],
+);
+
+const _sampleMerch = PartnerProduct(
+  id: 'merch-1',
+  partnerId: 'store-1',
+  name: 'Polera Woofy negra',
+  priceCents: 12500,
+  variants: [
+    PartnerProductVariant(
+      id: 'size-m',
+      productId: 'merch-1',
+      sizeLabel: 'M',
+      stock: 3,
+    ),
+  ],
 );
 
 Future<ProviderContainer> _pumpApp(

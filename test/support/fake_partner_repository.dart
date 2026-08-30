@@ -13,6 +13,7 @@ class FakePartnerRepository implements PartnerRepository {
     this.detail,
     this.error,
     this.partnersFuture,
+    this.orders = const [],
   });
 
   final List<Partner> partners;
@@ -20,9 +21,13 @@ class FakePartnerRepository implements PartnerRepository {
   final PartnerDetail? detail;
   final Object? error;
   final Future<List<Partner>>? partnersFuture;
+  final List<PartnerOrder> orders;
 
   final List<
-    ({String partnerId, List<({String productId, int quantity})> items})
+    ({
+      String partnerId,
+      List<({String productId, String? variantId, int quantity})> items,
+    })
   >
   createdOrders = [];
 
@@ -49,9 +54,19 @@ class FakePartnerRepository implements PartnerRepository {
   }
 
   @override
+  Future<PartnerDetail?> fetchOfficialStore() {
+    if (error != null) return Future.error(error!);
+    return Future.value(
+      detail?.partner.isWoofyStore == true && detail?.partner.status == 'active'
+          ? detail
+          : null,
+    );
+  }
+
+  @override
   Future<PartnerOrder> createOrder({
     required String partnerId,
-    required List<({String productId, int quantity})> items,
+    required List<({String productId, String? variantId, int quantity})> items,
     String? contactPhone,
     String? notes,
   }) async {
@@ -84,7 +99,10 @@ class FakePartnerRepository implements PartnerRepository {
   );
 
   @override
-  Future<List<PartnerOrder>> fetchMyOrders() async => const [];
+  Future<List<PartnerOrder>> fetchMyOrders() async {
+    if (error != null) throw error!;
+    return orders;
+  }
 
   @override
   Future<List<PartnerReservation>> fetchMyReservations() async => const [];

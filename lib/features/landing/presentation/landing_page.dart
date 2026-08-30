@@ -12,6 +12,7 @@ import 'package:woofy/features/banners/presentation/widgets/banner_carousel.dart
 import 'package:woofy/features/dogs/data/dog_models.dart';
 import 'package:woofy/features/dogs/data/dog_repository_provider.dart';
 import 'package:woofy/features/partners/data/partner_models.dart';
+import 'package:woofy/features/merch/presentation/merch_store_page.dart';
 import 'package:woofy/features/partners/data/partner_repository_provider.dart';
 import 'package:woofy/features/partners/presentation/widgets/partner_card.dart';
 import 'package:woofy/features/partners/presentation/widgets/service_card.dart';
@@ -22,6 +23,7 @@ import 'package:woofy/shared/widgets/woofy_bottom_navigation.dart';
 import 'package:woofy/shared/widgets/woofy_button.dart';
 import 'package:woofy/shared/widgets/woofy_circle_icon_button.dart';
 import 'package:woofy/shared/widgets/woofy_promo_banner.dart';
+import 'package:woofy/shared/widgets/woofy_reveal.dart';
 import 'package:woofy/shared/widgets/woofy_refresh.dart';
 import 'package:woofy/shared/widgets/woofy_search_field.dart';
 import 'package:woofy/shared/widgets/woofy_section_header.dart';
@@ -51,6 +53,7 @@ class _LandingPageState extends ConsumerState<LandingPage>
       ..invalidate(publishedDogsProvider)
       ..invalidate(activePartnersProvider)
       ..invalidate(servicesProvider)
+      ..invalidate(officialStoreProvider)
       ..invalidate(bannersProvider(BannerSlot.home));
     // Solo se espera el catálogo de animales: es lo que ocupa la pantalla y lo
     // que justifica el gesto. Las demás secciones se van llenando solas y
@@ -139,6 +142,7 @@ class _LandingPageState extends ConsumerState<LandingPage>
                     // mostrar, para no dejar filas vacías en Inicio.
                     const _LandingVetsPreview(),
                     const _LandingServicesPreview(),
+                    const _LandingMerchPreview(),
                   ]),
                 ),
               ),
@@ -629,6 +633,37 @@ class _LandingServicesPreview extends ConsumerWidget {
   }
 }
 
+/// Merch oficial al final del Inicio. Si la tienda sigue pendiente, falla o
+/// no tiene productos, no reserva espacio ni desplaza la adopción y servicios.
+class _LandingMerchPreview extends ConsumerWidget {
+  const _LandingMerchPreview();
+
+  static const _limit = 6;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final detail = ref.watch(officialStoreProvider).value;
+    if (detail == null || detail.products.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return _LandingCarouselSection(
+      title: 'Merch oficial Woofy',
+      subtitle: 'Tu compra ayuda a sostener adopciones siempre gratuitas.',
+      onSeeAll: () => context.push(RoutePaths.store),
+      height: 280,
+      itemWidth: 210,
+      children: [
+        for (final product in detail.products.take(_limit))
+          MerchProductTile(
+            product: product,
+            onTap: () => context.push(RoutePaths.storeProduct(product.id)),
+          ),
+      ],
+    );
+  }
+}
+
 /// Encabezado con "Ver todos" y una fila horizontal de tarjetas de ancho fijo.
 class _LandingCarouselSection extends StatelessWidget {
   const _LandingCarouselSection({
@@ -664,11 +699,7 @@ class _LandingCarouselSection extends StatelessWidget {
         const SizedBox(height: WoofySpacing.md),
         SizedBox(
           height: height,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            // Las tarjetas tienen sombra: recortarlas al borde de la fila las
-            // deja con el contorno cortado.
-            clipBehavior: Clip.none,
+          child: WoofyStaggeredRow(
             itemCount: children.length,
             separatorBuilder: (context, index) =>
                 const SizedBox(width: WoofySpacing.md),

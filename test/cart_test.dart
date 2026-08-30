@@ -33,6 +33,36 @@ const _juguete = PartnerProduct(
   priceCents: 3000,
 );
 
+const _store = Partner(
+  id: 'store-1',
+  name: 'Woofy Merch',
+  slug: 'woofy-merch',
+  isWoofyStore: true,
+  categories: [PartnerCategory.shop],
+);
+
+const _talleS = PartnerProductVariant(
+  id: 'size-s',
+  productId: 'p4',
+  sizeLabel: 'S',
+  stock: 4,
+);
+
+const _talleM = PartnerProductVariant(
+  id: 'size-m',
+  productId: 'p4',
+  sizeLabel: 'M',
+  stock: 4,
+);
+
+const _polera = PartnerProduct(
+  id: 'p4',
+  partnerId: 'store-1',
+  name: 'Polera Woofy negra',
+  priceCents: 12500,
+  variants: [_talleS, _talleM],
+);
+
 void main() {
   late ProviderContainer container;
   late Cart cart;
@@ -141,6 +171,69 @@ void main() {
 
       expect(get()['vet-a']!.lines.single.quantity, 1);
       expect(get().keys, ['vet-a']);
+    });
+  });
+
+  group('talles', () {
+    test('la misma polera en S y en M son dos líneas', () {
+      cart.add(_store, _polera, variant: _talleS);
+      cart.add(_store, _polera, variant: _talleM);
+
+      // Sin la variante en la clave, la M le habría subido la cantidad a la S
+      // y el pedido saldría con el talle equivocado.
+      final lines = get()['store-1']!.lines;
+      expect(lines, hasLength(2));
+      expect(lines.map((line) => line.sizeLabel), ['S', 'M']);
+      expect(lines.every((line) => line.quantity == 1), isTrue);
+    });
+
+    test('el mismo talle sí suma cantidad', () {
+      cart.add(_store, _polera, variant: _talleM);
+      cart.add(_store, _polera, quantity: 2, variant: _talleM);
+
+      final line = get()['store-1']!.lines.single;
+      expect(line.quantity, 3);
+      expect(line.lineKey, 'p4:size-m');
+    });
+
+    test('un producto sin variante conserva su id como clave', () {
+      cart.add(_vetA, _alimento);
+
+      final line = get()['vet-a']!.lines.single;
+      expect(line.lineKey, 'p1');
+      expect(line.variantId, isNull);
+      expect(line.sizeLabel, isNull);
+    });
+
+    test('mover un talle no toca el otro', () {
+      cart.add(_store, _polera, quantity: 2, variant: _talleS);
+      cart.add(_store, _polera, quantity: 2, variant: _talleM);
+
+      cart.increment('store-1', 'p4:size-s');
+      cart.decrement('store-1', 'p4:size-m');
+
+      final lines = get()['store-1']!.lines;
+      expect(lines.firstWhere((line) => line.sizeLabel == 'S').quantity, 3);
+      expect(lines.firstWhere((line) => line.sizeLabel == 'M').quantity, 1);
+    });
+
+    test('sacar un talle deja el otro en el carrito', () {
+      cart.add(_store, _polera, variant: _talleS);
+      cart.add(_store, _polera, variant: _talleM);
+
+      cart.removeLine('store-1', 'p4:size-s');
+
+      expect(get()['store-1']!.lines.single.sizeLabel, 'M');
+    });
+
+    test('la merch y la veterinaria quedan en grupos separados', () {
+      cart.add(_store, _polera, variant: _talleM);
+      cart.add(_vetA, _alimento);
+
+      cart.clearVet('store-1');
+
+      expect(get().containsKey('store-1'), isFalse);
+      expect(get()['vet-a']!.lines.single.name, 'Alimento Premium');
     });
   });
 

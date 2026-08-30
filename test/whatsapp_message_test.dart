@@ -61,8 +61,13 @@ void main() {
       final text = WhatsappMessage.orderText(
         partnerName: 'Partner Santa Cruz',
         lines: const [
-          (name: 'Alimento Premium', quantity: 2, unitPriceCents: 15000),
-          (name: 'Collar', quantity: 1, unitPriceCents: 4550),
+          (
+            name: 'Alimento Premium',
+            sizeLabel: null,
+            quantity: 2,
+            unitPriceCents: 15000,
+          ),
+          (name: 'Collar', sizeLabel: null, quantity: 1, unitPriceCents: 4550),
         ],
         totalCents: 34550,
       );
@@ -73,6 +78,27 @@ void main() {
       expect(text, contains('1x Collar'));
       expect(text, contains(Money.fromCents(4550)));
       expect(text, contains('Total: ${Money.fromCents(34550)}'));
+      // Sin talle el renglón no lo inventa: los pedidos de veterinaria salen
+      // igual que siempre.
+      expect(text, isNot(contains('Talle')));
+    });
+
+    test('writes the size next to the product when the line has one', () {
+      final text = WhatsappMessage.orderText(
+        partnerName: 'Woofy Merch',
+        lines: const [
+          (
+            name: 'Polera Woofy negra',
+            sizeLabel: 'M',
+            quantity: 2,
+            unitPriceCents: 12500,
+          ),
+        ],
+        totalCents: 25000,
+      );
+
+      expect(text, contains('2x Polera Woofy negra (Talle M)'));
+      expect(text, contains('Total: ${Money.fromCents(25000)}'));
     });
   });
 

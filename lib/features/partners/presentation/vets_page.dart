@@ -263,19 +263,33 @@ class _CartButton extends ConsumerWidget {
             Positioned(
               right: -6,
               top: -4,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                decoration: const BoxDecoration(
-                  color: WoofyColors.accent,
-                  shape: BoxShape.rectangle,
-                  borderRadius: BorderRadius.all(Radius.circular(999)),
-                ),
-                child: Text(
-                  '$count',
-                  style: const TextStyle(
-                    color: WoofyColors.white,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
+              // El globo pega un salto cada vez que cambia la cuenta. Agregar
+              // algo pasa en otra pantalla, así que sin este golpe de vista el
+              // carrito sube en silencio y el usuario no se entera.
+              child: TweenAnimationBuilder<double>(
+                key: ValueKey(count),
+                tween: Tween<double>(begin: 0.6, end: 1),
+                duration: const Duration(milliseconds: 260),
+                curve: Curves.easeOutBack,
+                builder: (context, scale, child) =>
+                    Transform.scale(scale: scale, child: child),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 5,
+                    vertical: 1,
+                  ),
+                  decoration: const BoxDecoration(
+                    color: WoofyColors.accent,
+                    shape: BoxShape.rectangle,
+                    borderRadius: BorderRadius.all(Radius.circular(999)),
+                  ),
+                  child: Text(
+                    '$count',
+                    style: const TextStyle(
+                      color: WoofyColors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ),

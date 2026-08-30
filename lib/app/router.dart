@@ -16,6 +16,8 @@ import 'package:woofy/features/landing/presentation/landing_page.dart';
 import 'package:woofy/features/favorites/presentation/favorites_page.dart';
 import 'package:woofy/features/messages/presentation/conversation_page.dart';
 import 'package:woofy/features/messages/presentation/messages_page.dart';
+import 'package:woofy/features/merch/presentation/merch_product_page.dart';
+import 'package:woofy/features/merch/presentation/merch_store_page.dart';
 import 'package:woofy/features/publisher/data/publisher_providers.dart';
 import 'package:woofy/features/auth/presentation/adopter_edit_profile_page.dart';
 import 'package:woofy/features/legal/presentation/delete_account_page.dart';
@@ -24,6 +26,7 @@ import 'package:woofy/features/publisher/presentation/publisher_page.dart';
 import 'package:woofy/features/publisher/presentation/shelter_edit_profile_page.dart';
 import 'package:woofy/features/publisher/presentation/shelter_login_page.dart';
 import 'package:woofy/features/partners/presentation/cart_page.dart';
+import 'package:woofy/features/partners/presentation/my_orders_page.dart';
 import 'package:woofy/features/partners/presentation/partner_detail_page.dart';
 import 'package:woofy/features/partners/presentation/partner_product_page.dart';
 import 'package:woofy/features/partners/presentation/partner_reservation_page.dart';
@@ -89,6 +92,23 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: RouteNames.cart,
         path: RoutePaths.cart,
         builder: (context, state) => const CartPage(),
+      ),
+      GoRoute(
+        name: RouteNames.store,
+        path: RoutePaths.store,
+        builder: (context, state) => const MerchStorePage(),
+      ),
+      GoRoute(
+        name: RouteNames.orders,
+        path: RoutePaths.orders,
+        builder: (context, state) => const MyOrdersPage(),
+      ),
+      GoRoute(
+        name: RouteNames.storeProduct,
+        path: RoutePaths.storeProductPattern,
+        builder: (context, state) => MerchProductPage(
+          productId: state.pathParameters['productId'] ?? '',
+        ),
       ),
       GoRoute(
         name: RouteNames.partnerReservation,
@@ -230,6 +250,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         return RoutePaths.auth;
       }
       if (location == RoutePaths.blockedAccounts && !hasSession) {
+        return RoutePaths.auth;
+      }
+      // El historial se lee con RLS por `auth.uid()`: sin sesión no hay nada
+      // que mostrar, así que se pide el login antes de entrar.
+      if (location == RoutePaths.orders && !hasSession) {
         return RoutePaths.auth;
       }
       if (location == RoutePaths.deleteAccount && !hasSession) {

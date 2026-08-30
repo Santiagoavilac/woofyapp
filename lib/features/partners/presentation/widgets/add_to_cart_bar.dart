@@ -16,16 +16,18 @@ class AddToCartBar extends StatelessWidget {
     required this.onDecrement,
     required this.onIncrement,
     required this.onAdd,
+    this.submitLabel = 'Agregar',
     super.key,
   });
 
   final int unitPriceCents;
   final int quantity;
   final VoidCallback onDecrement;
-  final VoidCallback onIncrement;
+  final VoidCallback? onIncrement;
 
   /// `null` deja el botón apagado (por ejemplo, sin stock).
   final VoidCallback? onAdd;
+  final String submitLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -56,11 +58,27 @@ class AddToCartBar extends StatelessWidget {
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
-                  Text(
-                    Money.fromCents(unitPriceCents * quantity),
-                    key: const ValueKey('add-bar-total'),
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: WoofyColors.primary,
+                  // El total no salta: recorre los centavos hasta el nuevo
+                  // valor. Se anima el número, no el widget, así el texto
+                  // conserva su key y siempre muestra el importe real al
+                  // terminar.
+                  TweenAnimationBuilder<int>(
+                    // `begin` es el precio de una unidad, que es como abre la
+                    // barra: así la primera pintada no arranca contando desde
+                    // cero. Después `TweenAnimationBuilder` sale del valor
+                    // actual cada vez que cambia `end`.
+                    tween: IntTween(
+                      begin: unitPriceCents,
+                      end: unitPriceCents * quantity,
+                    ),
+                    duration: const Duration(milliseconds: 240),
+                    curve: Curves.easeOutCubic,
+                    builder: (context, cents, child) => Text(
+                      Money.fromCents(cents),
+                      key: const ValueKey('add-bar-total'),
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: WoofyColors.primary,
+                      ),
                     ),
                   ),
                 ],
@@ -78,7 +96,7 @@ class AddToCartBar extends StatelessWidget {
                     child: FilledButton(
                       key: const ValueKey('add-bar-submit'),
                       onPressed: onAdd,
-                      child: const Text('Agregar'),
+                      child: Text(submitLabel),
                     ),
                   ),
                 ],
@@ -100,7 +118,7 @@ class _Stepper extends StatelessWidget {
 
   final int quantity;
   final VoidCallback onDecrement;
-  final VoidCallback onIncrement;
+  final VoidCallback? onIncrement;
 
   @override
   Widget build(BuildContext context) {
